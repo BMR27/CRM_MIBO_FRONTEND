@@ -9,31 +9,7 @@ export async function POST(request: Request) {
 
     // Validate input
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 },
-      )
-    }
-
-    // Authenticate user
-    const user = await authenticateUser(email, password)
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      )
-    }
-
-    // Generate JWT token
-    const secret = (process.env.JWT_SECRET || "secret") as Secret
-    const expiresIn = (process.env.JWT_EXPIRATION || "7d") as SignOptions["expiresIn"]
-    const token = jwt.sign(
-      { email: user.email, sub: user.id },
-      secret,
-      { expiresIn },
-    )
-
+    // Eliminado: ahora el login se maneja solo por el backend NestJS
     return NextResponse.json(
       {
         access_token: token,
