@@ -26,7 +26,7 @@ export default function SignupPage() {
 
     try {
       // Call backend NestJS instead of frontend endpoint
-      const backendUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/$/, "")
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
       const response = await fetch(`${backendUrl}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
