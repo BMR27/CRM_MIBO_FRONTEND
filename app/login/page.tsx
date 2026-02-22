@@ -253,7 +253,7 @@ function LoginForm() {
               </Link>
             </div>
               <div className="mt-2">
-                <Link href="/PRIVACY_POLICY.md" target="_blank" className="text-xs text-muted-foreground hover:underline">
+                <Link href="/privacy-policy" target="_blank" className="text-xs text-muted-foreground hover:underline">
                   Política de privacidad
                 </Link>
               </div>
