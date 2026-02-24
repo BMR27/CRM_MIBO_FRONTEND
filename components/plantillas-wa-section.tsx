@@ -73,7 +73,7 @@ export default function PlantillasWASection() {
   return (
     <div className="flex gap-4 h-full">
       {/* Panel izquierdo */}
-      <div className="w-64 flex flex-col gap-4 px-4 py-2">
+      <div className="w-80 flex flex-col gap-4 px-4 py-2">
         <div className="flex items-center justify-between">
           <span className="font-semibold">Plantillas Twilio</span>
           <Button size="sm" variant="outline" className="gap-1">
@@ -131,7 +131,7 @@ export default function PlantillasWASection() {
       </div>
 
       {/* Panel central */}
-      <div className="flex-1 flex flex-col items-center justify-center border rounded-md min-h-[400px]">
+      <div className="min-w-[320px] max-w-[420px] flex-1 flex flex-col items-center justify-center border rounded-md min-h-[400px]">
         {!selectedTemplate ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             <span className="text-4xl mb-2">📄</span>
