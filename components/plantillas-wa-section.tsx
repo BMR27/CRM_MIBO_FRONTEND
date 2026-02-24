@@ -71,7 +71,7 @@ export default function PlantillasWASection() {
   }
 
   return (
-    <div className="flex gap-4 h-full">
+    <div className="flex gap-4 h-full w-full">
       {/* Panel izquierdo */}
       <div className="w-80 flex flex-col gap-4 px-4 py-2">
         <div className="flex items-center justify-between">
@@ -143,7 +143,7 @@ export default function PlantillasWASection() {
       </div>
 
       {/* Panel derecho */}
-      <div className="w-64 flex flex-col gap-2">
+      <div className="w-64 flex flex-col gap-2 flex-1 max-w-xs">
         <div className="flex items-center justify-between mb-2">
           <span className="font-semibold">Contactos</span>
           <Button size="sm" variant="outline" onClick={handleSelectAll}>Seleccionar todos</Button>
