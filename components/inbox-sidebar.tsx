@@ -125,9 +125,6 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
               <Send className="h-5 w-5" />
               {!collapsed && <span className="ml-3">Envíos masivos</span>}
             </Button>
-            <Button
-              variant="ghost"
-            {/* Eliminada pestaña Plantillas WA */}
           </>
         )}
         
