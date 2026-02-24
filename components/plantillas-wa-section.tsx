@@ -73,7 +73,7 @@ export default function PlantillasWASection() {
   return (
     <div className="flex gap-4 h-full">
       {/* Panel izquierdo */}
-      <div className="w-64 flex flex-col gap-4">
+      <div className="w-64 flex flex-col gap-4 px-4 py-2">
         <div className="flex items-center justify-between">
           <span className="font-semibold">Plantillas Twilio</span>
           <Button size="sm" variant="outline" className="gap-1">
@@ -86,7 +86,7 @@ export default function PlantillasWASection() {
           <Button size="sm" variant="outline">Pendientes</Button>
         </div>
         <ScrollArea className="h-full">
-          <div className="space-y-3 p-1 pr-2">
+          <div className="space-y-4 p-1 pr-2">
             {WA_TEMPLATES.map((tpl) => (
               <div
                 key={tpl.id}
