@@ -58,7 +58,7 @@ export default function ContactosPage() {
 
       // 2. Envía plantilla de bienvenida aprobada (ajusta el nombre según tu backend)
       const phone = contact.phone_number || contact.phone || ""
-      const templateName = "bienvenida" // Cambia por el nombre real de la plantilla aprobada
+      const templateName = "bienvenida_optin_es_hx6d98a259b100a6d054dd035368def400" // Nombre real de la plantilla
       const sendTpl = await fetch("/api/whatsapp/send-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
