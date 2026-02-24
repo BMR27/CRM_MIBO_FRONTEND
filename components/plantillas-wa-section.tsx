@@ -163,7 +163,7 @@ export default function PlantillasWASection() {
       </div>
 
       {/* Panel derecho */}
-      <div className="w-64 flex flex-col gap-2 max-w-xs flex-shrink-0">
+      <div className="w-64 flex flex-col gap-2 max-w-xs flex-grow border rounded-md bg-white h-full">
         <div className="flex items-center justify-between mb-2">
           <span className="font-semibold">Contactos</span>
           <Button size="sm" variant="outline" onClick={handleSelectAll}>Seleccionar todos</Button>
