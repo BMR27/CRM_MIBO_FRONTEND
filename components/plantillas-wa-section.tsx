@@ -151,7 +151,7 @@ export default function PlantillasWASection() {
       </div>
 
       {/* Panel central */}
-      <div className="min-w-[320px] max-w-[420px] flex-1 flex flex-col items-center justify-center border rounded-md min-h-[400px]">
+      <div className="flex-1 flex flex-col items-center justify-center border rounded-md min-h-[400px] mx-2">
         {!selectedTemplate ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             <span className="text-4xl mb-2">📄</span>
@@ -163,7 +163,7 @@ export default function PlantillasWASection() {
       </div>
 
       {/* Panel derecho */}
-      <div className="w-64 flex flex-col gap-2 flex-1 max-w-xs">
+      <div className="w-64 flex flex-col gap-2 max-w-xs flex-shrink-0">
         <div className="flex items-center justify-between mb-2">
           <span className="font-semibold">Contactos</span>
           <Button size="sm" variant="outline" onClick={handleSelectAll}>Seleccionar todos</Button>
