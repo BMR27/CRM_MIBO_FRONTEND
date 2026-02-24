@@ -57,10 +57,14 @@ function getInitials(name: string) {
     .slice(0, 2)
 }
 
+
 export default function PlantillasWASection() {
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
   const [selectedContacts, setSelectedContacts] = useState<number[]>([])
   const [searchContact, setSearchContact] = useState("")
+
+  // Buscar la plantilla de bienvenida (la primera por defecto)
+  const bienvenidaTemplate = WA_TEMPLATES[0]
 
   const filteredContacts = CONTACTS.filter((c) =>
     c.name.toLowerCase().includes(searchContact.toLowerCase())
@@ -68,6 +72,22 @@ export default function PlantillasWASection() {
 
   const handleSelectAll = () => {
     setSelectedContacts(filteredContacts.map((c) => c.id))
+    // Si no hay plantilla seleccionada, seleccionar bienvenida
+    if (selectedTemplate == null) {
+      setSelectedTemplate(bienvenidaTemplate.id)
+    }
+  }
+
+  // Cuando seleccionas un contacto individual, si no hay plantilla seleccionada, seleccionar bienvenida
+  const handleContactCheck = (contactId: number) => {
+    setSelectedContacts((prev) =>
+      prev.includes(contactId)
+        ? prev.filter((id) => id !== contactId)
+        : [...prev, contactId]
+    )
+    if (selectedTemplate == null) {
+      setSelectedTemplate(bienvenidaTemplate.id)
+    }
   }
 
   return (
@@ -161,13 +181,7 @@ export default function PlantillasWASection() {
                 <input
                   type="checkbox"
                   checked={selectedContacts.includes(contact.id)}
-                  onChange={() => {
-                    setSelectedContacts((prev) =>
-                      prev.includes(contact.id)
-                        ? prev.filter((id) => id !== contact.id)
-                        : [...prev, contact.id]
-                    )
-                  }}
+                  onChange={() => handleContactCheck(contact.id)}
                   className="accent-primary"
                 />
                 <Avatar className="h-8 w-8">
