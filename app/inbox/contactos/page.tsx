@@ -35,31 +35,44 @@ export default function ContactosPage() {
     setSelectedContactId(String(contact.id))
   }
 
+  // Al chatear: crea conversación y envía plantilla de bienvenida aprobada
   const handleChatContact = async (contact: Contact) => {
     setSelectedContactId(String(contact.id))
-
     try {
+      // 1. Asegura/conecta la conversación
       const res = await fetch("/api/conversations/ensure", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contactId: String(contact.id) }),
       })
-
       const data = await res.json().catch(() => null)
       if (!res.ok) {
         toast({ title: "Error", description: data?.error || "No se pudo abrir la conversación", variant: "destructive" })
         return
       }
-
       const conversationId = data?.conversation?.id ? String(data.conversation.id) : ""
       if (!conversationId) {
         toast({ title: "Error", description: "No se pudo crear/obtener la conversación", variant: "destructive" })
         return
       }
 
+      // 2. Envía plantilla de bienvenida aprobada (ajusta el nombre según tu backend)
+      const phone = contact.phone_number || contact.phone || ""
+      const templateName = "bienvenida" // Cambia por el nombre real de la plantilla aprobada
+      const sendTpl = await fetch("/api/whatsapp/send-template", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone_number: phone, template_name: templateName, parameters: [] }),
+      })
+      const tplResult = await sendTpl.json().catch(() => null)
+      if (!sendTpl.ok) {
+        toast({ title: "Error al enviar plantilla", description: tplResult?.error || "No se pudo enviar la plantilla de bienvenida", variant: "destructive" })
+      }
+
+      // 3. Redirige a la conversación
       router.push(`/inbox/conversaciones?conversationId=${encodeURIComponent(conversationId)}`)
     } catch (e) {
-      toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo abrir la conversación", variant: "destructive" })
+      toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo abrir la conversación ni enviar la plantilla", variant: "destructive" })
     }
   }
 
