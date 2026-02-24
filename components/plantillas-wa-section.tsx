@@ -1,7 +1,8 @@
 
 "use client"
 
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -10,33 +11,11 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
 
-const WA_TEMPLATES = [
-  {
-    id: 1,
-    name: "Bienvenida",
-    content: "Hola {{1}}, bienvenido a LogiMarket. Estamos para ayudarte con tu pedido...",
-    status: "Aprobada",
-    category: "Marketing",
-    sid: "HX6d98a259b100a6..."
-  },
-  {
-    id: 2,
-    name: "Seguimiento de envio",
-    content: "Hola {{1}}, tu pedido {{2}} ha sido enviado. Tracking: {{3}}. Llegara el {{4}}.",
-    status: "Aprobada",
-    category: "Utilidad",
-    sid: "HX7e89b360c211b7..."
-  },
-  {
-    id: 3,
-    name: "Confirmacion de pago",
-    content: "Hola {{1}}, confirmamos tu pago de ${{2}} MXN para el pedido {{3}}. Gracias por tu compra!",
-    status: "Aprobada",
-    category: "Utilidad",
-    sid: "HX8f90c471d322c8..."
-  }
-]
+// Configuración para Railway/producción
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crm-mibo-backend-production.up.railway.app";
+const SERVICE_SID = process.env.NEXT_PUBLIC_TWILIO_SERVICE_SID || "" // Debe estar en .env
 
 const CONTACTS = [
   { id: 1, name: "Ana Martinez", phone: "+52 1 555 123 4567" },
@@ -62,9 +41,106 @@ export default function PlantillasWASection() {
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
   const [selectedContacts, setSelectedContacts] = useState<number[]>([])
   const [searchContact, setSearchContact] = useState("")
+  const [sending, setSending] = useState(false)
+  const [sendResult, setSendResult] = useState<string|null>(null)
 
+
+  const [waTemplates, setWATemplates] = useState<any[]>([])
+  const [loadingTemplates, setLoadingTemplates] = useState(false)
+  const router = useRouter()
   // Buscar la plantilla de bienvenida (la primera por defecto)
-  const bienvenidaTemplate = WA_TEMPLATES[0]
+
+  // Cargar plantillas aprobadas reales desde Twilio
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      setLoadingTemplates(true)
+      try {
+        const res = await fetch("/api/twilio/wa-templates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serviceSid: SERVICE_SID })
+        })
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setWATemplates(data)
+        } else {
+          setWATemplates([])
+        }
+      } catch {
+        setWATemplates([])
+      } finally {
+        setLoadingTemplates(false)
+      }
+    }
+    if (SERVICE_SID) fetchTemplates()
+  }, [])
+
+  // Buscar la plantilla de bienvenida (la primera aprobada)
+  const bienvenidaTemplate = waTemplates[0]
+  // Encuentra la plantilla seleccionada
+  const selectedTplObj = waTemplates.find((t) => t.sid === selectedTemplate) || bienvenidaTemplate
+  // Encuentra los contactos seleccionados
+  const selectedContactsObj = CONTACTS.filter(c => selectedContacts.includes(c.id))
+  // Enviar plantilla vía backend
+  const handleSendTemplate = async () => {
+    if (!selectedTplObj || selectedContactsObj.length === 0) return;
+    setSending(true)
+    setSendResult(null)
+    try {
+      const results = await Promise.all(selectedContactsObj.map(async (contact) => {
+        const variables = [contact.name]
+        const res = await fetch(`${BACKEND_URL}/api/twilio/send-wa-template`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: contact.phone.replace(/\s/g, ""),
+            from: process.env.NEXT_PUBLIC_TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886",
+            templateSid: selectedTplObj.sid,
+            variables
+          })
+        })
+        if (!res.ok) throw new Error(`Error enviando a ${contact.name}`)
+        return `Mensaje enviado a ${contact.name}`
+      }))
+      setSendResult(results.join("\n"))
+    } catch (err: any) {
+      setSendResult(err.message || "Error enviando mensajes")
+    } finally {
+      setSending(false)
+    }
+  }
+
+
+  // Abrir chat y enviar plantilla de bienvenida
+  const handleChat = async (contact: any) => {
+    try {
+      // 1. Crear/obtener conversación
+      const res = await fetch("/api/conversations/ensure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId: String(contact.id) })
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.conversation?.id) throw new Error("No se pudo abrir la conversación")
+      // 2. Enviar plantilla de bienvenida como primer mensaje
+      if (bienvenidaTemplate) {
+        await fetch(`${BACKEND_URL}/api/twilio/send-wa-template`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: contact.phone.replace(/\s/g, ""),
+            from: process.env.NEXT_PUBLIC_TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886",
+            templateSid: bienvenidaTemplate.sid,
+            variables: [contact.name]
+          })
+        })
+      }
+      // 3. Redirigir al chat
+      router.push(`/inbox/conversaciones?conversationId=${encodeURIComponent(data.conversation.id)}`)
+    } catch (e: any) {
+      setSendResult(e.message || "Error abriendo chat")
+    }
+  }
 
   const filteredContacts = CONTACTS.filter((c) =>
     c.name.toLowerCase().includes(searchContact.toLowerCase())
@@ -107,13 +183,17 @@ export default function PlantillasWASection() {
         </div>
         <ScrollArea className="h-full">
           <div className="space-y-4 p-1 pr-2">
-            {WA_TEMPLATES.map((tpl) => (
+            {loadingTemplates ? (
+              <div className="text-xs text-muted-foreground p-4">Cargando plantillas...</div>
+            ) : waTemplates.length === 0 ? (
+              <div className="text-xs text-muted-foreground p-4">No hay plantillas aprobadas configuradas en Twilio.</div>
+            ) : waTemplates.map((tpl) => (
               <div
-                key={tpl.id}
-                onClick={() => setSelectedTemplate(tpl.id)}
+                key={tpl.sid}
+                onClick={() => setSelectedTemplate(tpl.sid)}
                 className={cn(
                   "relative w-full rounded-lg border bg-background px-4 py-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10",
-                  selectedTemplate === tpl.id
+                  selectedTemplate === tpl.sid
                     ? "z-10 border-primary/60 bg-primary/10 ring-2 ring-inset ring-primary/25 shadow-md"
                     : "border-border/70 hover:border-border hover:shadow-md",
                 )}
@@ -122,22 +202,22 @@ export default function PlantillasWASection() {
                   <div className="relative flex-shrink-0">
                     <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
                       <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm">
-                        {tpl.name.slice(0,2).toUpperCase()}
+                        {tpl.friendlyName?.slice(0,2).toUpperCase() || tpl.sid.slice(0,2)}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <h3 className="min-w-0 truncate font-bold text-sm text-foreground">
-                        {tpl.name}
+                        {tpl.friendlyName || tpl.sid}
                       </h3>
                       <div className="flex gap-1">
-                        <Badge variant="outline" className="text-xs">{tpl.status}</Badge>
-                        <Badge variant="secondary" className="text-xs">{tpl.category}</Badge>
+                        <Badge variant="outline" className="text-xs">Aprobada</Badge>
+                        {tpl.category && <Badge variant="secondary" className="text-xs">{tpl.category}</Badge>}
                       </div>
                     </div>
                     <p className="text-muted-foreground text-xs leading-relaxed">
-                      {tpl.content}
+                      {tpl.bodyText || tpl.content || ""}
                     </p>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] text-muted-foreground">SID: {tpl.sid}</span>
@@ -158,7 +238,22 @@ export default function PlantillasWASection() {
             <span>Selecciona una plantilla para configurar el envío</span>
           </div>
         ) : (
-          <div className="p-8">Configurar envío para plantilla seleccionada</div>
+          <div className="p-8 flex flex-col gap-4 items-center w-full max-w-md">
+            <div className="text-center">
+              <div className="font-bold text-lg mb-2">{selectedTplObj.name}</div>
+              <div className="bg-muted rounded p-3 text-sm mb-2 whitespace-pre-line">{selectedTplObj.content}</div>
+              <div className="text-xs text-muted-foreground mb-2">SID: {selectedTplObj.sid}</div>
+            </div>
+            <Button onClick={handleSendTemplate} disabled={sending || selectedContactsObj.length === 0} className="w-full">
+              {sending ? "Enviando..." : `Enviar plantilla a ${selectedContactsObj.length} contacto(s)`}
+            </Button>
+            {selectedContactsObj.length === 1 && (
+              <Button variant="secondary" className="w-full mt-2" onClick={() => handleChat(selectedContactsObj[0])}>
+                Chatear con plantilla de bienvenida
+              </Button>
+            )}
+            {sendResult && <div className="text-xs text-center mt-2 whitespace-pre-line">{sendResult}</div>}
+          </div>
         )}
       </div>
 
