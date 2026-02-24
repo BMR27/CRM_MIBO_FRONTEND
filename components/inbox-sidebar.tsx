@@ -136,8 +136,8 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
                   : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
               )}
             >
-              {/* Puedes cambiar el ícono si tienes uno más representativo */}
-              <span className="inline-block w-5 h-5 text-lg font-bold">WA</span>
+              {/* Usar el mismo estilo de ícono que las otras pestañas, aquí Send como placeholder */}
+              <Send className="h-5 w-5" />
               {!collapsed && <span className="ml-3">Plantillas WA</span>}
             </Button>
           </>
