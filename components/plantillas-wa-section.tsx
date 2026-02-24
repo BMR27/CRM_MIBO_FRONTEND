@@ -44,11 +44,34 @@ export default function PlantillasWASection() {
   const [sending, setSending] = useState(false)
   const [sendResult, setSendResult] = useState<string|null>(null)
 
-
   const [waTemplates, setWATemplates] = useState<any[]>([])
   const [loadingTemplates, setLoadingTemplates] = useState(false)
+  const [contacts, setContacts] = useState<any[]>([])
+  const [loadingContacts, setLoadingContacts] = useState(false)
   const router = useRouter()
-  // Buscar la plantilla de bienvenida (la primera por defecto)
+
+  // Cargar contactos reales desde backend
+  useEffect(() => {
+    const fetchContacts = async () => {
+      setLoadingContacts(true)
+      try {
+        const res = await fetch("/api/contacts", { method: "GET" })
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setContacts(data)
+        } else if (Array.isArray(data.contacts)) {
+          setContacts(data.contacts)
+        } else {
+          setContacts([])
+        }
+      } catch {
+        setContacts([])
+      } finally {
+        setLoadingContacts(false)
+      }
+    }
+    fetchContacts()
+  }, [])
 
   // Cargar plantillas aprobadas reales desde Twilio
   useEffect(() => {
@@ -80,7 +103,7 @@ export default function PlantillasWASection() {
   // Encuentra la plantilla seleccionada
   const selectedTplObj = waTemplates.find((t) => t.sid === selectedTemplate) || bienvenidaTemplate
   // Encuentra los contactos seleccionados
-  const selectedContactsObj = CONTACTS.filter(c => selectedContacts.includes(c.id))
+  const selectedContactsObj = contacts.filter(c => selectedContacts.includes(c.id))
   // Enviar plantilla vía backend
   const handleSendTemplate = async () => {
     if (!selectedTplObj || selectedContactsObj.length === 0) return;
@@ -142,8 +165,8 @@ export default function PlantillasWASection() {
     }
   }
 
-  const filteredContacts = CONTACTS.filter((c) =>
-    c.name.toLowerCase().includes(searchContact.toLowerCase())
+  const filteredContacts = contacts.filter((c) =>
+    c.name?.toLowerCase().includes(searchContact.toLowerCase())
   )
 
   const handleSelectAll = () => {
@@ -271,8 +294,12 @@ export default function PlantillasWASection() {
         />
         <ScrollArea className="flex-1 h-80 rounded-md border">
           <div className="flex flex-col gap-2 p-2">
-            {filteredContacts.map((contact) => (
-              <label key={contact.id} className="flex items-center gap-2 cursor-pointer">
+            {loadingContacts ? (
+              <div className="text-xs text-muted-foreground p-4">Cargando contactos...</div>
+            ) : filteredContacts.length === 0 ? (
+              <div className="text-xs text-muted-foreground p-4">No hay contactos disponibles.</div>
+            ) : filteredContacts.map((contact) => (
+              <div key={contact.id} className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedContacts.includes(contact.id)}
@@ -282,11 +309,14 @@ export default function PlantillasWASection() {
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>{getInitials(contact.name)}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1">
                   <div className="font-medium text-sm">{contact.name}</div>
-                  <div className="text-xs text-muted-foreground">{contact.phone}</div>
+                  <div className="text-xs text-muted-foreground">{contact.phone_number || contact.phone}</div>
                 </div>
-              </label>
+                <Button size="sm" variant="secondary" onClick={() => handleChat(contact)}>
+                  Chatear
+                </Button>
+              </div>
             ))}
           </div>
         </ScrollArea>
