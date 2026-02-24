@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -8,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Plus } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const WA_TEMPLATES = [
   {
