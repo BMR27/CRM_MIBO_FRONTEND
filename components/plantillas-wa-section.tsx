@@ -83,24 +83,46 @@ export default function PlantillasWASection() {
           <Button size="sm" variant="outline">Aprobadas</Button>
           <Button size="sm" variant="outline">Pendientes</Button>
         </div>
-        <ScrollArea className="flex-1 h-80 rounded-md border">
-          <div className="flex flex-col gap-2 p-2">
+        <ScrollArea className="h-full">
+          <div className="space-y-3 p-1 pr-2">
             {WA_TEMPLATES.map((tpl) => (
-              <Card
+              <div
                 key={tpl.id}
-                className={`p-3 cursor-pointer border ${selectedTemplate === tpl.id ? 'border-primary' : ''}`}
                 onClick={() => setSelectedTemplate(tpl.id)}
+                className={cn(
+                  "relative w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10",
+                  selectedTemplate === tpl.id
+                    ? "z-10 border-primary/60 bg-primary/10 ring-2 ring-inset ring-primary/25 shadow-md"
+                    : "border-border/70 hover:border-border hover:shadow-md",
+                )}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm">{tpl.name}</span>
-                  <div className="flex gap-1">
-                    <Badge variant="outline" className="text-xs">{tpl.status}</Badge>
-                    <Badge variant="secondary" className="text-xs">{tpl.category}</Badge>
+                <div className="flex items-start gap-3">
+                  <div className="relative flex-shrink-0">
+                    <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm">
+                        {tpl.name.slice(0,2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 mb-1">
+                      <h3 className="min-w-0 truncate font-bold text-sm text-foreground">
+                        {tpl.name}
+                      </h3>
+                      <div className="flex gap-1">
+                        <Badge variant="outline" className="text-xs">{tpl.status}</Badge>
+                        <Badge variant="secondary" className="text-xs">{tpl.category}</Badge>
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground text-xs leading-relaxed mb-1">
+                      {tpl.content}
+                    </p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-muted-foreground">SID: {tpl.sid}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground truncate mt-1">{tpl.content}</div>
-                <div className="text-[10px] text-muted-foreground mt-1">SID: {tpl.sid}</div>
-              </Card>
+              </div>
             ))}
           </div>
         </ScrollArea>
