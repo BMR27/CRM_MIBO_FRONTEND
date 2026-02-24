@@ -1,0 +1,428 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/calls/[id]",
+      "regex": "^/api/calls/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/calls/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/contacts/[id]",
+      "regex": "^/api/contacts/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/contacts/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/conversations/[id]",
+      "regex": "^/api/conversations/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/conversations/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/conversations/[id]/assign",
+      "regex": "^/api/conversations/([^/]+?)/assign(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/conversations/(?<nxtPid>[^/]+?)/assign(?:/)?$"
+    },
+    {
+      "page": "/api/conversations/[id]/comments",
+      "regex": "^/api/conversations/([^/]+?)/comments(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/conversations/(?<nxtPid>[^/]+?)/comments(?:/)?$"
+    },
+    {
+      "page": "/api/conversations/[id]/messages",
+      "regex": "^/api/conversations/([^/]+?)/messages(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/conversations/(?<nxtPid>[^/]+?)/messages(?:/)?$"
+    },
+    {
+      "page": "/api/conversations/[id]/messages/[messageId]",
+      "regex": "^/api/conversations/([^/]+?)/messages/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid",
+        "nxtPmessageId": "nxtPmessageId"
+      },
+      "namedRegex": "^/api/conversations/(?<nxtPid>[^/]+?)/messages/(?<nxtPmessageId>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/conversations/[id]/priority",
+      "regex": "^/api/conversations/([^/]+?)/priority(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/conversations/(?<nxtPid>[^/]+?)/priority(?:/)?$"
+    },
+    {
+      "page": "/api/conversations/[id]/send-media",
+      "regex": "^/api/conversations/([^/]+?)/send\\-media(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/conversations/(?<nxtPid>[^/]+?)/send\\-media(?:/)?$"
+    },
+    {
+      "page": "/api/conversations/[id]/status",
+      "regex": "^/api/conversations/([^/]+?)/status(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/conversations/(?<nxtPid>[^/]+?)/status(?:/)?$"
+    },
+    {
+      "page": "/api/macros/[id]/use",
+      "regex": "^/api/macros/([^/]+?)/use(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/macros/(?<nxtPid>[^/]+?)/use(?:/)?$"
+    },
+    {
+      "page": "/api/orders/[id]",
+      "regex": "^/api/orders/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/orders/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/sessions/[id]",
+      "regex": "^/api/sessions/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/sessions/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/whatsapp/media/[mediaId]",
+      "regex": "^/api/whatsapp/media/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPmediaId": "nxtPmediaId"
+      },
+      "namedRegex": "^/api/whatsapp/media/(?<nxtPmediaId>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/auth/login",
+      "regex": "^/api/auth/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/login(?:/)?$"
+    },
+    {
+      "page": "/api/auth/logout",
+      "regex": "^/api/auth/logout(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/logout(?:/)?$"
+    },
+    {
+      "page": "/api/auth/me",
+      "regex": "^/api/auth/me(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/me(?:/)?$"
+    },
+    {
+      "page": "/api/auth/resend-verification",
+      "regex": "^/api/auth/resend\\-verification(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/resend\\-verification(?:/)?$"
+    },
+    {
+      "page": "/api/auth/session",
+      "regex": "^/api/auth/session(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/session(?:/)?$"
+    },
+    {
+      "page": "/api/auth/signup",
+      "regex": "^/api/auth/signup(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/signup(?:/)?$"
+    },
+    {
+      "page": "/api/auth/verify-email",
+      "regex": "^/api/auth/verify\\-email(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/verify\\-email(?:/)?$"
+    },
+    {
+      "page": "/api/calls",
+      "regex": "^/api/calls(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/calls(?:/)?$"
+    },
+    {
+      "page": "/api/campaigns",
+      "regex": "^/api/campaigns(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/campaigns(?:/)?$"
+    },
+    {
+      "page": "/api/campaigns/delivery",
+      "regex": "^/api/campaigns/delivery(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/campaigns/delivery(?:/)?$"
+    },
+    {
+      "page": "/api/campaigns/schedule",
+      "regex": "^/api/campaigns/schedule(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/campaigns/schedule(?:/)?$"
+    },
+    {
+      "page": "/api/campaigns/send",
+      "regex": "^/api/campaigns/send(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/campaigns/send(?:/)?$"
+    },
+    {
+      "page": "/api/campaigns/stats",
+      "regex": "^/api/campaigns/stats(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/campaigns/stats(?:/)?$"
+    },
+    {
+      "page": "/api/contacts",
+      "regex": "^/api/contacts(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/contacts(?:/)?$"
+    },
+    {
+      "page": "/api/conversations",
+      "regex": "^/api/conversations(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/conversations(?:/)?$"
+    },
+    {
+      "page": "/api/conversations/ensure",
+      "regex": "^/api/conversations/ensure(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/conversations/ensure(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/send",
+      "regex": "^/api/facebook/send(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/send(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/webhook",
+      "regex": "^/api/facebook/webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/webhook(?:/)?$"
+    },
+    {
+      "page": "/api/macros",
+      "regex": "^/api/macros(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/macros(?:/)?$"
+    },
+    {
+      "page": "/api/migrate",
+      "regex": "^/api/migrate(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/migrate(?:/)?$"
+    },
+    {
+      "page": "/api/orders",
+      "regex": "^/api/orders(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/orders(?:/)?$"
+    },
+    {
+      "page": "/api/sessions",
+      "regex": "^/api/sessions(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/sessions(?:/)?$"
+    },
+    {
+      "page": "/api/users/agents",
+      "regex": "^/api/users/agents(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/users/agents(?:/)?$"
+    },
+    {
+      "page": "/api/users/agents/stats",
+      "regex": "^/api/users/agents/stats(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/users/agents/stats(?:/)?$"
+    },
+    {
+      "page": "/api/whatsapp/send",
+      "regex": "^/api/whatsapp/send(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/whatsapp/send(?:/)?$"
+    },
+    {
+      "page": "/api/whatsapp/webhook",
+      "regex": "^/api/whatsapp/webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/whatsapp/webhook(?:/)?$"
+    },
+    {
+      "page": "/api/whatsapp/webhook-logs",
+      "regex": "^/api/whatsapp/webhook\\-logs(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/whatsapp/webhook\\-logs(?:/)?$"
+    },
+    {
+      "page": "/inbox",
+      "regex": "^/inbox(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox(?:/)?$"
+    },
+    {
+      "page": "/inbox/agentes",
+      "regex": "^/inbox/agentes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/agentes(?:/)?$"
+    },
+    {
+      "page": "/inbox/calendario",
+      "regex": "^/inbox/calendario(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/calendario(?:/)?$"
+    },
+    {
+      "page": "/inbox/citas",
+      "regex": "^/inbox/citas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/citas(?:/)?$"
+    },
+    {
+      "page": "/inbox/configuracion",
+      "regex": "^/inbox/configuracion(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/configuracion(?:/)?$"
+    },
+    {
+      "page": "/inbox/contactos",
+      "regex": "^/inbox/contactos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/contactos(?:/)?$"
+    },
+    {
+      "page": "/inbox/conversaciones",
+      "regex": "^/inbox/conversaciones(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/conversaciones(?:/)?$"
+    },
+    {
+      "page": "/inbox/envios",
+      "regex": "^/inbox/envios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/envios(?:/)?$"
+    },
+    {
+      "page": "/inbox/llamadas",
+      "regex": "^/inbox/llamadas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/llamadas(?:/)?$"
+    },
+    {
+      "page": "/inbox/plantillas-wa",
+      "regex": "^/inbox/plantillas\\-wa(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/plantillas\\-wa(?:/)?$"
+    },
+    {
+      "page": "/inbox/sesiones",
+      "regex": "^/inbox/sesiones(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inbox/sesiones(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/privacy-policy",
+      "regex": "^/privacy\\-policy(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/privacy\\-policy(?:/)?$"
+    },
+    {
+      "page": "/signup",
+      "regex": "^/signup(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/signup(?:/)?$"
+    },
+    {
+      "page": "/verify-email",
+      "regex": "^/verify\\-email(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/verify\\-email(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
