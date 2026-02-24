@@ -80,10 +80,10 @@ export default function PlantillasWASection() {
             <Plus className="w-4 h-4" /> Nueva
           </Button>
         </div>
-        <div className="flex gap-2 mb-2">
-          <Button size="sm" variant="secondary">Todas</Button>
-          <Button size="sm" variant="outline">Aprobadas</Button>
-          <Button size="sm" variant="outline">Pendientes</Button>
+        <div className="flex flex-wrap gap-2 mb-2 min-w-0">
+          <Button size="sm" variant="secondary" className="min-w-[90px]">Todas</Button>
+          <Button size="sm" variant="outline" className="min-w-[90px]">Aprobadas</Button>
+          <Button size="sm" variant="outline" className="min-w-[90px]">Pendientes</Button>
         </div>
         <ScrollArea className="h-full">
           <div className="space-y-4 p-1 pr-2">
@@ -92,7 +92,7 @@ export default function PlantillasWASection() {
                 key={tpl.id}
                 onClick={() => setSelectedTemplate(tpl.id)}
                 className={cn(
-                  "relative w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10",
+                  "relative w-full rounded-lg border bg-background px-4 py-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10",
                   selectedTemplate === tpl.id
                     ? "z-10 border-primary/60 bg-primary/10 ring-2 ring-inset ring-primary/25 shadow-md"
                     : "border-border/70 hover:border-border hover:shadow-md",
@@ -106,8 +106,8 @@ export default function PlantillasWASection() {
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 mb-1">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <h3 className="min-w-0 truncate font-bold text-sm text-foreground">
                         {tpl.name}
                       </h3>
@@ -116,7 +116,7 @@ export default function PlantillasWASection() {
                         <Badge variant="secondary" className="text-xs">{tpl.category}</Badge>
                       </div>
                     </div>
-                    <p className="text-muted-foreground text-xs leading-relaxed mb-1">
+                    <p className="text-muted-foreground text-xs leading-relaxed">
                       {tpl.content}
                     </p>
                     <div className="flex items-center gap-1.5 flex-wrap">
