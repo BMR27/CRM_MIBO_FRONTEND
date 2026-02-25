@@ -77,7 +77,7 @@ export default function ContactosPage() {
       const templateSid = "HX6d98a259b100a6d054dd035368def400" // SID real de la plantilla (minúsculas)
       const from = "whatsapp:+5215521836941"
       const variables = { "1": contact.name || "" }
-      const sendTpl = await fetch(`${BACKEND_URL}/api/send-wa-template`, {
+      const sendTpl = await fetch(`${BACKEND_URL}/api/twilio/send-wa-template`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -128,7 +128,7 @@ export default function ContactosPage() {
       }
 
       // 3. Redirige a la conversación
-      router.push(`/inbox/conversaciones?conversationId=${encodeURIComponent(conversationId)}`)
+      router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`)
     } catch (e) {
       toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo abrir la conversación ni enviar la plantilla", variant: "destructive" })
     }
