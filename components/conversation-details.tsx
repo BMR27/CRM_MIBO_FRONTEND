@@ -84,7 +84,8 @@ export function ConversationDetails({
 
   // Cargar comentarios
   useEffect(() => {
-    if (!conversationId) return
+    if (!conversationId) 
+      return
 
     const loadComments = async () => {
       setCommentsLoading(true)
