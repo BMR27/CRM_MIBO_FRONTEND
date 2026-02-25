@@ -36,6 +36,12 @@ export default function ContactosPage() {
   }
 
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crm-mibobackend-production.up.railway.app"
+  // DEBUG: Mostrar el valor real de la variable en consola
+  if (typeof window !== "undefined") {
+    // Solo en cliente
+    console.log("[DEBUG] NEXT_PUBLIC_BACKEND_URL:", process.env.NEXT_PUBLIC_BACKEND_URL)
+    console.log("[DEBUG] BACKEND_URL usado:", BACKEND_URL)
+  }
 
   // Al chatear: crea conversación y envía plantilla de bienvenida aprobada
   const handleChatContact = async (contact: Contact) => {
