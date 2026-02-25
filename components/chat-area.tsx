@@ -174,12 +174,16 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        console.error('[ChatArea] No se encontró token JWT en localStorage ni sessionStorage');
+        return;
+      }
       const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Authorization': `Bearer ${token}`
         }
       });
       const data = await response.json();
