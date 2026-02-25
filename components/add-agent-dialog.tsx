@@ -31,7 +31,7 @@ export function AddAgentDialog() {
     setLoading(true)
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
+      const backendUrl = "https://crmmibobackend-production.up.railway.app"
       const response = await fetch(`${backendUrl}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

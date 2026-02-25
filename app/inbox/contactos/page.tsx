@@ -35,7 +35,7 @@ export default function ContactosPage() {
     setSelectedContactId(String(contact.id))
   }
 
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crm-mibobackend-production.up.railway.app"
+  const BACKEND_URL = "https://crmmibobackend-production.up.railway.app"
   // DEBUG: Mostrar el valor real de la variable en consola
   if (typeof window !== "undefined") {
     // Solo en cliente

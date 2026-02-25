@@ -19,7 +19,7 @@ export function useUserRole() {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://crmbackend-production-4e4d.up.railway.app"
+        const backendUrl = "https://crmmibobackend-production.up.railway.app"
         const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
         
         if (!token) {

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 
 // Configuración para Railway/producción
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crm-mibo-backend-production.up.railway.app";
+const BACKEND_URL = "https://crmmibobackend-production.up.railway.app";
 const SERVICE_SID = process.env.NEXT_PUBLIC_TWILIO_SERVICE_SID || "" // Debe estar en .env
 
 const CONTACTS = [

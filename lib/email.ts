@@ -52,7 +52,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
       <h2>¡Hola, ${name}!</h2>
       <p>Tu correo ha sido verificado exitosamente.</p>
       <p>Ya puedes iniciar sesión en tu cuenta y comenzar a usar Internal Chat MVP.</p>
-      <a href="${process.env.NEXT_PUBLIC_API_URL}/login" style="display: inline-block; padding: 12px 30px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">
+      <a href="https://crmmibobackend-production.up.railway.app/login" style="display: inline-block; padding: 12px 30px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">
         Ir a Login
       </a>
     </div>
