@@ -174,19 +174,19 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      const token = localStorage.getItem('token'); // O usa tu método de obtención de token
+      const token = localStorage.getItem('token');
       const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
         }
-      })
-      const data = await response.json()
-      
+      });
+      const data = await response.json();
       if (!response.ok) {
-        console.error("[ChatArea] Fetch messages error:", response.status, data)
-        return
+        console.error("[ChatArea] Fetch messages error:", response.status, data);
+        return;
       }
-      
       // Ordenar por fecha ascendente (más viejos primero, más recientes último)
       const sortedMessages = (data.messages || []).sort((a: Message, b: Message) => {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
