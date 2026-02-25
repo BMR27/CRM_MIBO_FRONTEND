@@ -59,7 +59,12 @@ export default function ContactosPage() {
       }
 
       // 2. Envía plantilla de bienvenida aprobada usando API local (evita CORS)
-      const phone = contact.phone_number || ""
+      // El campo 'to' debe ser solo el número, sin el prefijo 'whatsapp:'
+      let phone = contact.phone_number || ""
+      // Si el número viene con prefijo 'whatsapp:', lo quitamos
+      if (phone.startsWith("whatsapp:")) {
+        phone = phone.replace("whatsapp:", "")
+      }
       const templateSid = "HX6D98A259B100A6D054DD035368DEF400" // SID real de la plantilla
       const from = "whatsapp:+5215521836941" // Remitente configurado en Twilio
       const variables = [contact.name || ""]
@@ -67,7 +72,7 @@ export default function ContactosPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: phone,
+          to: phone, // solo el número, igual que en Postman
           from,
           contentSid: templateSid,
           variables
