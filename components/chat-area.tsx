@@ -55,6 +55,7 @@ interface ChatAreaProps {
 }
 
 export function ChatArea({ conversationId, contactName, currentAgentId, channel = 'whatsapp', externalUserId, onUpdate, onConversationDeleted }: ChatAreaProps) {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(false)
@@ -104,7 +105,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       if (!conversationId) return
       if (!shouldResolve(resolvedContactName)) return
       try {
-        const res = await fetch(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
+        const res = await fetch(`${BACKEND_URL}/api/conversations/${encodeURIComponent(String(conversationId))}`)
         const data = await res.json().catch(() => null)
         const name = data?.contact_name ? String(data.contact_name) : ""
         if (name.trim()) setResolvedContactName(name.trim())
@@ -123,7 +124,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
     try {
       setDeletingConversation(true)
-      const res = await fetch(`/api/conversations/${encodeURIComponent(String(conversationId))}`, {
+      const res = await fetch(`${BACKEND_URL}/api/conversations/${encodeURIComponent(String(conversationId))}`, {
         method: "DELETE",
       })
 
@@ -173,7 +174,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      const response = await fetch(`/api/conversations/${conversationId}/messages`)
+      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`)
       const data = await response.json()
       
       if (!response.ok) {
@@ -215,7 +216,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         setPendingPreviewUrl(null)
         setNewMessage("")
 
-        const response = await fetch(`/api/conversations/${conversationId}/send-media`, {
+        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/send-media`, {
           method: "POST",
           body: form,
         })
@@ -331,7 +332,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         ])
       } else {
         // Enviar via endpoint normal (WhatsApp u otros)
-        const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content: messageContent }),
@@ -415,7 +416,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!editingContent.trim() || !conversationId) return
 
     try {
-      const response = await fetch(`/api/conversations/${conversationId}/messages/${messageId}`, {
+      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages/${messageId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: editingContent.trim() }),
@@ -442,7 +443,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      const response = await fetch(`/api/conversations/${conversationId}/messages/${messageId}`, {
+      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages/${messageId}`, {
         method: "DELETE",
       })
 

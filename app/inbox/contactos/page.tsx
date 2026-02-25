@@ -35,7 +35,7 @@ export default function ContactosPage() {
     setSelectedContactId(String(contact.id))
   }
 
-  const BACKEND_URL = "https://crmmibobackend-production.up.railway.app"
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
   // DEBUG: Mostrar el valor real de la variable en consola
   if (typeof window !== "undefined") {
     // Solo en cliente
@@ -48,7 +48,7 @@ export default function ContactosPage() {
     setSelectedContactId(String(contact.id))
     try {
       // 1. Asegura/conecta la conversación
-      const res = await fetch("/api/conversations/ensure", {
+      const res = await fetch(`${BACKEND_URL}/api/conversations/ensure`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contactId: String(contact.id) }),
@@ -73,7 +73,7 @@ export default function ContactosPage() {
       const templateSid = "HX6d98a259b100a6d054dd035368def400" // SID real de la plantilla (minúsculas)
       const from = "whatsapp:+5215521836941"
       const variables = { "1": contact.name || "" }
-      const sendTpl = await fetch("/api/send-wa-template", {
+      const sendTpl = await fetch(`${BACKEND_URL}/api/send-wa-template`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -88,7 +88,7 @@ export default function ContactosPage() {
         toast({ title: "Error al enviar plantilla", description: tplResult?.error || "No se pudo enviar la plantilla de bienvenida", variant: "destructive" })
         // Registrar el mensaje en la conversación local aunque Twilio falle
         const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
-        const regRes = await fetch(`/api/conversations/${conversationId}/messages`, {
+        const regRes = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content }),
@@ -102,7 +102,7 @@ export default function ContactosPage() {
       } else {
         // Registrar el mensaje en la conversación local si Twilio responde éxito
         const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
-        const regRes = await fetch(`/api/conversations/${conversationId}/messages`, {
+        const regRes = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content }),

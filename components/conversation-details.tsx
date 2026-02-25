@@ -62,6 +62,7 @@ export function ConversationDetails({
   conversationId,
   onUpdate,
 }: DetailsPanelProps) {
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
   const [currentStatus, setCurrentStatus] = useState(status)
   const [currentPriority, setCurrentPriority] = useState(priority)
   const [meetings, setMeetings] = useState<Meeting[]>([])
@@ -88,7 +89,7 @@ export function ConversationDetails({
     const loadComments = async () => {
       setCommentsLoading(true)
       try {
-        const response = await fetch(`/api/conversations/${conversationId}`)
+        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}`)
         if (response.ok) {
           const data = await response.json()
           if (data.comments) {
@@ -180,7 +181,7 @@ export function ConversationDetails({
 
     if (conversationId) {
       try {
-        const response = await fetch(`/api/conversations/${conversationId}/status`, {
+        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/status`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: value }),
@@ -204,7 +205,7 @@ export function ConversationDetails({
 
     if (conversationId) {
       try {
-        const response = await fetch(`/api/conversations/${conversationId}/priority`, {
+        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/priority`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ priority: value }),
@@ -227,7 +228,7 @@ export function ConversationDetails({
 
     setLoading(true)
     try {
-      const response = await fetch(`/api/conversations/${conversationId}/comments`, {
+      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ comment: newComment }),
@@ -251,7 +252,7 @@ export function ConversationDetails({
 
     setLoading(true)
     try {
-      const response = await fetch(`/api/conversations/${conversationId}/comments`, {
+      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/comments`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ commentId }),
@@ -274,7 +275,7 @@ export function ConversationDetails({
 
     setLoading(true)
     try {
-      const response = await fetch(`/api/conversations/${conversationId}/comments`, {
+      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/comments`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ commentId, text: editingText }),
