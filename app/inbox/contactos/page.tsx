@@ -74,14 +74,33 @@ export default function ContactosPage() {
       const tplResult = await sendTpl.json().catch(() => null)
       if (!sendTpl.ok) {
         toast({ title: "Error al enviar plantilla", description: tplResult?.error || "No se pudo enviar la plantilla de bienvenida", variant: "destructive" })
-      } else {
-        // Registrar el mensaje en la conversación local
+        // Registrar el mensaje en la conversación local aunque Twilio falle
         const content = `Hola ${variables[0]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
-        await fetch(`/api/conversations/${conversationId}/messages`, {
+        const regRes = await fetch(`/api/conversations/${conversationId}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content }),
         })
+        const regData = await regRes.json().catch(() => null)
+        if (!regRes.ok) {
+          toast({ title: "Error al registrar mensaje", description: regData?.error || "No se pudo registrar el mensaje en la conversación", variant: "destructive" })
+        } else {
+          toast({ title: "Mensaje registrado", description: "El mensaje de plantilla se guardó en la conversación (aunque Twilio falló)." })
+        }
+      } else {
+        // Registrar el mensaje en la conversación local si Twilio responde éxito
+        const content = `Hola ${variables[0]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
+        const regRes = await fetch(`/api/conversations/${conversationId}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        })
+        const regData = await regRes.json().catch(() => null)
+        if (!regRes.ok) {
+          toast({ title: "Error al registrar mensaje", description: regData?.error || "No se pudo registrar el mensaje en la conversación", variant: "destructive" })
+        } else {
+          toast({ title: "Mensaje registrado", description: "El mensaje de plantilla se guardó en la conversación." })
+        }
       }
 
       // 3. Redirige a la conversación
