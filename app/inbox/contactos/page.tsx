@@ -88,9 +88,13 @@ export default function ContactosPage() {
         toast({ title: "Error al enviar plantilla", description: tplResult?.error || "No se pudo enviar la plantilla de bienvenida", variant: "destructive" })
         // Registrar el mensaje en la conversación local aunque Twilio falle
         const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
+        const token = localStorage.getItem('token'); // O usa tu método de obtención de token
         const regRes = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({ content }),
         })
         const regData = await regRes.json().catch(() => null)
@@ -102,9 +106,13 @@ export default function ContactosPage() {
       } else {
         // Registrar el mensaje en la conversación local si Twilio responde éxito
         const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
+        const token = localStorage.getItem('token'); // O usa tu método de obtención de token
         const regRes = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({ content }),
         })
         const regData = await regRes.json().catch(() => null)

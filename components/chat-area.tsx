@@ -174,7 +174,12 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`)
+      const token = localStorage.getItem('token'); // O usa tu método de obtención de token
+      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const data = await response.json()
       
       if (!response.ok) {
@@ -332,9 +337,13 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         ])
       } else {
         // Enviar via endpoint normal (WhatsApp u otros)
+        const token = localStorage.getItem('token'); // O usa tu método de obtención de token
         const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({ content: messageContent }),
         })
 
