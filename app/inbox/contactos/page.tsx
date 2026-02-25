@@ -35,6 +35,8 @@ export default function ContactosPage() {
     setSelectedContactId(String(contact.id))
   }
 
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crm-mibobackend-production.up.railway.app"
+
   // Al chatear: crea conversación y envía plantilla de bienvenida aprobada
   const handleChatContact = async (contact: Contact) => {
     setSelectedContactId(String(contact.id))
@@ -61,7 +63,7 @@ export default function ContactosPage() {
       const templateSid = "HX6D98A259B100A6D054DD035368DEF400" // SID real de la plantilla
       const from = "whatsapp:+5215521836941" // Remitente configurado en Twilio
       const variables = [contact.name || ""]
-      const sendTpl = await fetch("/api/twilio/send-wa-template", {
+      const sendTpl = await fetch(`${BACKEND_URL}/api/twilio/send-wa-template`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
