@@ -55,7 +55,7 @@ export default function ContactosPage() {
           "Content-Type": "application/json",
           "Authorization": token ? `Bearer ${token}` : ''
         },
-        body: JSON.stringify({ contactId: String(contact.id) }),
+        body: JSON.stringify({ contact_id: String(contact.id) }),
       })
       const data = await res.json().catch(() => null)
       if (!res.ok) {

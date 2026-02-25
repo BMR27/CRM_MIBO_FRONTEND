@@ -146,7 +146,7 @@ export default function PlantillasWASection() {
           "Content-Type": "application/json",
           "Authorization": token ? `Bearer ${token}` : ''
         },
-        body: JSON.stringify({ contactId: String(contact.id) })
+        body: JSON.stringify({ contact_id: String(contact.id) })
       })
       const data = await res.json()
       if (!res.ok || !data?.conversation?.id) throw new Error("No se pudo abrir la conversación")
