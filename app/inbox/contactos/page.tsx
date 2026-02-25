@@ -74,6 +74,14 @@ export default function ContactosPage() {
       const tplResult = await sendTpl.json().catch(() => null)
       if (!sendTpl.ok) {
         toast({ title: "Error al enviar plantilla", description: tplResult?.error || "No se pudo enviar la plantilla de bienvenida", variant: "destructive" })
+      } else {
+        // Registrar el mensaje en la conversación local
+        const content = `Hola ${variables[0]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
+        await fetch(`/api/conversations/${conversationId}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        })
       }
 
       // 3. Redirige a la conversación
