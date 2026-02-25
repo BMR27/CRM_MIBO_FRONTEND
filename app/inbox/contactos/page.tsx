@@ -48,9 +48,13 @@ export default function ContactosPage() {
     setSelectedContactId(String(contact.id))
     try {
       // 1. Asegura/conecta la conversación
-      const res = await fetch(`${BACKEND_URL}/api/conversations/ensure`, {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const res = await fetch(`${BACKEND_URL}/api/conversations`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : ''
+        },
         body: JSON.stringify({ contactId: String(contact.id) }),
       })
       const data = await res.json().catch(() => null)
