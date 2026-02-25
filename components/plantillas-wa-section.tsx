@@ -138,7 +138,8 @@ export default function PlantillasWASection() {
   const handleChat = async (contact: any) => {
     try {
       // 1. Crear/obtener conversación
-      const res = await fetch("/api/conversations/ensure", {
+      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
+      const res = await fetch(`${BACKEND_URL}/api/conversations/ensure`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contactId: String(contact.id) })
