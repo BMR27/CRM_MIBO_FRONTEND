@@ -67,18 +67,17 @@ export default function ContactosPage() {
       // 2. Envía plantilla de bienvenida aprobada usando API local (evita CORS)
       // El campo 'to' debe ser solo el número, sin el prefijo 'whatsapp:'
       let phone = contact.phone_number || ""
-      // Si el número viene con prefijo 'whatsapp:', lo quitamos
       if (phone.startsWith("whatsapp:")) {
         phone = phone.replace("whatsapp:", "")
       }
-      const templateSid = "HX6D98A259B100A6D054DD035368DEF400" // SID real de la plantilla
-      const from = "whatsapp:+5215521836941" // Remitente configurado en Twilio
-      const variables = [contact.name || ""]
+      const templateSid = "HX6d98a259b100a6d054dd035368def400" // SID real de la plantilla (minúsculas)
+      const from = "whatsapp:+5215521836941"
+      const variables = { "1": contact.name || "" }
       const sendTpl = await fetch("/api/send-wa-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: phone, // solo el número, igual que en Postman
+          to: phone,
           from,
           contentSid: templateSid,
           variables
@@ -88,7 +87,7 @@ export default function ContactosPage() {
       if (!sendTpl.ok) {
         toast({ title: "Error al enviar plantilla", description: tplResult?.error || "No se pudo enviar la plantilla de bienvenida", variant: "destructive" })
         // Registrar el mensaje en la conversación local aunque Twilio falle
-        const content = `Hola ${variables[0]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
+        const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
         const regRes = await fetch(`/api/conversations/${conversationId}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -102,7 +101,7 @@ export default function ContactosPage() {
         }
       } else {
         // Registrar el mensaje en la conversación local si Twilio responde éxito
-        const content = `Hola ${variables[0]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
+        const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
         const regRes = await fetch(`/api/conversations/${conversationId}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
