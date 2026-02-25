@@ -58,12 +58,12 @@ export default function ContactosPage() {
         return
       }
 
-      // 2. Envía plantilla de bienvenida aprobada usando Twilio
+      // 2. Envía plantilla de bienvenida aprobada usando API local (evita CORS)
       const phone = contact.phone_number || ""
       const templateSid = "HX6D98A259B100A6D054DD035368DEF400" // SID real de la plantilla
       const from = "whatsapp:+5215521836941" // Remitente configurado en Twilio
       const variables = [contact.name || ""]
-      const sendTpl = await fetch(`${BACKEND_URL}/api/twilio/send-wa-template`, {
+      const sendTpl = await fetch("/api/send-wa-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
