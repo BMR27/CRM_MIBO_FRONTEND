@@ -139,7 +139,7 @@ export default function PlantillasWASection() {
     try {
       // 1. Crear/obtener conversación
       const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
       const res = await fetch(`${BACKEND_URL}/api/conversations`, {
         method: "POST",
         headers: {

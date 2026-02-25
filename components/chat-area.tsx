@@ -174,7 +174,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
       if (!token) {
         console.error('[ChatArea] No se encontró token JWT en localStorage ni sessionStorage');
         return;
