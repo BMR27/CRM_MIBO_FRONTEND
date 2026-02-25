@@ -56,13 +56,20 @@ export default function ContactosPage() {
         return
       }
 
-      // 2. Envía plantilla de bienvenida aprobada (ajusta el nombre según tu backend)
-      const phone = contact.phone_number || contact.phone || ""
-      const templateName = "bienvenida_optin_es_hx6d98a259b100a6d054dd035368def400" // Nombre real de la plantilla
-      const sendTpl = await fetch("/api/whatsapp/send-template", {
+      // 2. Envía plantilla de bienvenida aprobada usando Twilio
+      const phone = contact.phone_number || ""
+      const templateSid = "HX6D98A259B100A6D054DD035368DEF400" // SID real de la plantilla
+      const from = "whatsapp:+5215521836941" // Remitente configurado en Twilio
+      const variables = [contact.name || ""]
+      const sendTpl = await fetch("/api/twilio/send-wa-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone_number: phone, template_name: templateName, parameters: [] }),
+        body: JSON.stringify({
+          to: phone,
+          from,
+          contentSid: templateSid,
+          variables
+        }),
       })
       const tplResult = await sendTpl.json().catch(() => null)
       if (!sendTpl.ok) {
