@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     const user = result[0]
 
     // Generar enlace de verificación
-    const verificationLink = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/verify-email?code=${verificationCode}&email=${encodeURIComponent(email)}`
+    const verificationLink = `${process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"}/verify-email?code=${verificationCode}&email=${encodeURIComponent(email)}`
 
     // Enviar email de verificación
     const emailSent = await sendVerificationEmail(
