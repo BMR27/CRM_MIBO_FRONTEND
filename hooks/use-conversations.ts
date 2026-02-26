@@ -54,15 +54,9 @@ export function useConversations(onlyAssigned?: boolean) {
         setRefreshing(false) // silent refresh
       }
       
-      // Fetch from local Next.js API endpoint
-      const response = await fetch(`/api/conversations`)
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch conversations: ${response.status}`)
-      }
-
-      const rawData = await response.json()
-      console.log("[useConversations] Raw data:", rawData)
+      // Usar cliente api centralizado
+      const { data } = await api.get("/api/conversations");
+      console.log("[useConversations] Raw data:", data);
       
       // Map backend response format to expected Conversation interface
       const conversationsArray = Array.isArray(rawData) ? rawData : (rawData.conversations || [])

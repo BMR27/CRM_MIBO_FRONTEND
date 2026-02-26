@@ -20,7 +20,7 @@ export function useUserRole() {
     const fetchUserInfo = async () => {
       try {
         const backendUrl = "https://crmmibobackend-production.up.railway.app"
-        const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
+          const token = typeof window !== "undefined" ? localStorage.getItem("jwt") : null
         
         if (!token) {
           setError("No authentication token found")
@@ -28,17 +28,11 @@ export function useUserRole() {
           return
         }
 
-        const response = await fetch(`${backendUrl}/api/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch user info")
-        }
-
-        const data = await response.json()
+          const { data } = await api.get("/api/auth/me", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
         
         // Mapear roles españoles a inglés
         const roleMap: Record<string, UserRole> = {

@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState, useRef } from "react"
+import { api } from "@/lib/api"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -80,10 +81,24 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     }
   }, [pendingPreviewUrl])
 
+
+  // Función para obtener mensajes
+  const fetchMessages = async () => {
+    if (!conversationId) return
+    setLoading(true)
+    try {
+      const { data } = await api.get(`/api/conversations/${conversationId}/messages`)
+      setMessages(data || [])
+    } catch (error) {
+      // Puedes mostrar un toast si quieres
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (conversationId) {
       fetchMessages()
-
       // Silent polling for new messages every 5s
       const intervalId = setInterval(() => fetchMessages(), 5000)
       return () => clearInterval(intervalId)
@@ -105,8 +120,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       if (!conversationId) return
       if (!shouldResolve(resolvedContactName)) return
       try {
-        const res = await fetch(`${BACKEND_URL}/api/conversations/${encodeURIComponent(String(conversationId))}`)
-        const data = await res.json().catch(() => null)
+        const { data } = await api.get(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
         const name = data?.contact_name ? String(data.contact_name) : ""
         if (name.trim()) setResolvedContactName(name.trim())
       } catch {
@@ -124,80 +138,22 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
     try {
       setDeletingConversation(true)
-      const res = await fetch(`${BACKEND_URL}/api/conversations/${encodeURIComponent(String(conversationId))}`, {
-        method: "DELETE",
-      })
-
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        const message = data?.error || "No se pudo eliminar la conversación"
-        toast({
-          title: "Error",
-          description: message,
-          variant: "destructive",
-        })
-        return
-      }
-
+      await api.delete(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
       toast({
         title: "Conversación eliminada",
         description: "Se eliminó correctamente.",
+        variant: "default",
       })
-
-      setDeleteConversationOpen(false)
       onConversationDeleted?.()
-      onUpdate?.()
-    } catch (err) {
+    } catch (error: any) {
+      const message = error?.response?.data?.error || "No se pudo eliminar la conversación"
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "No se pudo eliminar la conversación",
+        description: message,
         variant: "destructive",
       })
     } finally {
       setDeletingConversation(false)
-    }
-  }
-
-  // Auto-scroll al bottom cuando hay nuevos mensajes
-  useEffect(() => {
-    if (messages.length > 0) {
-      // Scroll al bottom cuando hay mensajes
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-        }
-      }, 50)
-    }
-  }, [messages])
-
-  const fetchMessages = async () => {
-    if (!conversationId) return
-
-    try {
-      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-      if (!token) {
-        console.error('[ChatArea] No se encontró token JWT en localStorage ni sessionStorage');
-        return;
-      }
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        console.error("[ChatArea] Fetch messages error:", response.status, data);
-        return;
-      }
-      // Ordenar por fecha ascendente (más viejos primero, más recientes último)
-      const sortedMessages = (data.messages || []).sort((a: Message, b: Message) => {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      })
-      setMessages(sortedMessages)
-    } catch (error) {
-      console.error("[ChatArea] Fetch messages error:", error)
     }
   }
 
@@ -209,7 +165,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     const hasFile = Boolean(pendingFile)
     if (!hasText && !hasFile) return
 
-    // If there is a pending attachment, send media. Text becomes caption.
+    // Si hay archivo adjunto, enviar como media
     if (pendingFile) {
       setSendingMedia(true)
       const fileToSend = pendingFile
@@ -225,67 +181,18 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         setPendingPreviewUrl(null)
         setNewMessage("")
 
-        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/send-media`, {
-          method: "POST",
-          body: form,
+        await api.post(`/api/conversations/${conversationId}/send-media`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         })
-
-        const data = await response.json().catch(() => null)
-        if (!response.ok) {
-          console.error("[ChatArea] Send media error:", response.status, data)
-
-          const detailsMessage =
-            data?.error ||
-            data?.details?.error?.message ||
-            data?.details?.message ||
-            (typeof data?.details === "string" ? data.details : null) ||
-            response.statusText ||
-            "No se pudo enviar el adjunto."
-
-          const hint = data?.hint ? String(data.hint) : ""
-          const description = hint ? `${String(detailsMessage)}\n${hint}` : String(detailsMessage)
-
-          toast({
-            title: "Error al enviar adjunto",
-            description,
-            variant: "destructive",
-          })
-
-          // Restore pending state for retry
-          setPendingFile(fileToSend)
-          if (previewToRevoke) setPendingPreviewUrl(previewToRevoke)
-          setNewMessage(caption)
-          return
-        }
-
-        if (data?.message) {
-          const msg = data.message
-          setMessages([
-            ...messages,
-            {
-              id: msg.id,
-              content: msg.content,
-              sender_type: msg.sender_type || "agent",
-              sender_name: msg.sender_name || "Agent",
-              created_at: msg.created_at || new Date().toISOString(),
-              message_type: msg.message_type,
-              metadata: msg.metadata,
-              media_url: msg.media_url,
-            },
-          ])
-        } else {
-          await fetchMessages()
-        }
+        await fetchMessages()
       } catch (error) {
         console.error("[ChatArea] Send media error:", error)
-
         toast({
           title: "Error al enviar adjunto",
           description: "Ocurrió un error inesperado al enviar el archivo.",
           variant: "destructive",
         })
-
-        // Restore pending state for retry
+        // Restaurar estado para reintento
         setPendingFile(fileToSend)
         if (previewToRevoke) setPendingPreviewUrl(previewToRevoke)
         setNewMessage(caption)
@@ -298,84 +205,21 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       return
     }
 
+    // Enviar mensaje de texto normal
     const messageContent = newMessage
     setSending(true)
-    setNewMessage("") // Clear input immediately for better UX
-    
+    setNewMessage("")
     try {
-      // Detectar canal y usar endpoint apropiado
       if (channel === 'facebook' && externalUserId) {
-        // Enviar via Facebook Messenger
-        const response = await fetch(`/api/facebook/send`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            recipientId: externalUserId,
-            message: messageContent,
-            conversationId: conversationId
-          }),
+        await api.post(`/api/facebook/send`, {
+          recipientId: externalUserId,
+          message: messageContent,
+          conversationId: conversationId
         })
-
-        if (!response.ok) {
-          console.error("[ChatArea] Facebook send error:", response.status, response.statusText)
-          toast({
-            title: "Error al enviar mensaje",
-            description: "No se pudo enviar el mensaje por Facebook.",
-            variant: "destructive",
-          })
-          setNewMessage(messageContent)
-          return
-        }
-
-        const data = await response.json()
-        // Agregar mensaje al UI
-        setMessages([
-          ...messages,
-          {
-            id: data.messageId || Date.now(),
-            content: messageContent,
-            sender_type: "agent",
-            sender_name: "Agent",
-            created_at: new Date().toISOString(),
-          },
-        ])
       } else {
-        // Enviar via endpoint normal (WhatsApp u otros)
-        const token = localStorage.getItem('token'); // O usa tu método de obtención de token
-        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ content: messageContent }),
-        })
-
-        if (!response.ok) {
-          console.error("[ChatArea] Send message error:", response.status, response.statusText)
-          toast({
-            title: "Error al enviar mensaje",
-            description: "No se pudo enviar el mensaje.",
-            variant: "destructive",
-          })
-          setNewMessage(messageContent)
-          return
-        }
-
-        const data = await response.json()
-        if (data.message) {
-          setMessages([
-            ...messages,
-            {
-              id: data.message.id,
-              content: data.message.content,
-              sender_type: data.message.sender_type || "agent",
-              sender_name: data.message.sender_name || "Agent",
-              created_at: data.message.created_at || new Date().toISOString(),
-            },
-          ])
-        }
+        await api.post(`/api/conversations/${conversationId}/messages`, { content: messageContent })
       }
+      await fetchMessages()
     } catch (error) {
       console.error("[ChatArea] Send message error:", error)
       toast({
@@ -427,26 +271,18 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
   const handleEditMessage = async (messageId: number | string) => {
     if (!editingContent.trim() || !conversationId) return
-
     try {
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages/${messageId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: editingContent.trim() }),
+      await api.put(`/api/conversations/${conversationId}/messages/${messageId}`, {
+        content: editingContent.trim(),
       })
-
-      if (response.ok) {
-        setMessages(
-          messages.map((msg) =>
-            msg.id === messageId ? { ...msg, content: editingContent.trim() } : msg
-          )
+      setMessages(
+        messages.map((msg: Message) =>
+          msg.id === messageId ? { ...msg, content: editingContent.trim() } : msg
         )
-        setEditingMessageId(null)
-        setEditingContent("")
-        onUpdate?.()
-      } else {
-        console.error("Error editing message:", response.status)
-      }
+      )
+      setEditingMessageId(null)
+      setEditingContent("")
+      onUpdate?.()
     } catch (error) {
       console.error("Error editing message:", error)
     }
@@ -454,18 +290,10 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
   const handleDeleteMessage = async (messageId: number | string) => {
     if (!conversationId) return
-
     try {
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages/${messageId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        setMessages(messages.filter((msg) => msg.id !== messageId))
-        onUpdate?.()
-      } else {
-        console.error("Error deleting message:", response.status)
-      }
+      await api.delete(`/api/conversations/${conversationId}/messages/${messageId}`)
+      setMessages(messages.filter((msg: Message) => msg.id !== messageId))
+      onUpdate?.()
     } catch (error) {
       console.error("Error deleting message:", error)
     }
