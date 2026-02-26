@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { api } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { InboxHeader } from "@/components/inbox-header"
 import { ContactsList } from "@/components/contacts-list"
@@ -48,24 +49,14 @@ export default function ContactosPage() {
     setSelectedContactId(String(contact.id))
     try {
       // 1. Asegura/conecta la conversación
-      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-      const res = await fetch(`${BACKEND_URL}/api/conversations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify({ contact_id: String(contact.id) }),
-      })
-      const data = await res.json().catch(() => null)
-      if (!res.ok) {
-        toast({ title: "Error", description: data?.error || "No se pudo abrir la conversación", variant: "destructive" })
-        return
-      }
-      const conversationId = data?.conversation?.id ? String(data.conversation.id) : ""
-      if (!conversationId) {
-        toast({ title: "Error", description: "No se pudo crear/obtener la conversación", variant: "destructive" })
-        return
+      let conversationId = ""
+      try {
+        const { data } = await api.post("/api/conversations", { contact_id: String(contact.id) });
+        conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
+        if (!conversationId) throw new Error("No se pudo crear/obtener la conversación");
+      } catch (err: any) {
+        toast({ title: "Error", description: err?.response?.data?.error || err?.message || "No se pudo abrir la conversación", variant: "destructive" });
+        return;
       }
 
       // 2. Envía plantilla de bienvenida aprobada usando API local (evita CORS)
@@ -77,55 +68,24 @@ export default function ContactosPage() {
       const templateSid = "HX6d98a259b100a6d054dd035368def400" // SID real de la plantilla (minúsculas)
       const from = "whatsapp:+5215521836941"
       const variables = { "1": contact.name || "" }
-      const sendTpl = await fetch(`${BACKEND_URL}/api/twilio/send-wa-template`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      try {
+        await api.post("/api/twilio/send-wa-template", {
           to: phone,
           from,
           contentSid: templateSid,
           variables
-        }),
-      })
-      const tplResult = await sendTpl.json().catch(() => null)
-      if (!sendTpl.ok) {
-        toast({ title: "Error al enviar plantilla", description: tplResult?.error || "No se pudo enviar la plantilla de bienvenida", variant: "destructive" })
-        // Registrar el mensaje en la conversación local aunque Twilio falle
-        const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
-        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-        const regRes = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ content }),
-        })
-        const regData = await regRes.json().catch(() => null)
-        if (!regRes.ok) {
-          toast({ title: "Error al registrar mensaje", description: regData?.error || "No se pudo registrar el mensaje en la conversación", variant: "destructive" })
-        } else {
-          toast({ title: "Mensaje registrado", description: "El mensaje de plantilla se guardó en la conversación (aunque Twilio falló)." })
-        }
-      } else {
-        // Registrar el mensaje en la conversación local si Twilio responde éxito
-        const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`
-        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-        const regRes = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ content }),
-        })
-        const regData = await regRes.json().catch(() => null)
-        if (!regRes.ok) {
-          toast({ title: "Error al registrar mensaje", description: regData?.error || "No se pudo registrar el mensaje en la conversación", variant: "destructive" })
-        } else {
-          toast({ title: "Mensaje registrado", description: "El mensaje de plantilla se guardó en la conversación." })
-        }
+        });
+      } catch (err: any) {
+        toast({ title: "Error al enviar plantilla", description: err?.response?.data?.error || err?.message || "No se pudo enviar la plantilla de bienvenida", variant: "destructive" });
       }
+      // Registrar el mensaje localmente (siempre)
+      const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`;
+      try {
+        await api.post(`/api/conversations/${conversationId}/messages`, { content });
+      } catch (err: any) {
+        toast({ title: "Error al registrar mensaje", description: err?.response?.data?.error || err?.message || "No se pudo registrar el mensaje en la conversación", variant: "destructive" });
+      }
+      toast({ title: "Mensaje registrado", description: "El mensaje de plantilla se guardó en la conversación." });
 
       // 3. Redirige a la conversación
       router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`)

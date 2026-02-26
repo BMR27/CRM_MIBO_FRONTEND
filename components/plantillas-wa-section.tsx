@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
+import { api } from "@/lib/api"
 
 // Configuración para Railway/producción
 const BACKEND_URL = "https://crmmibobackend-production.up.railway.app";
@@ -138,33 +139,29 @@ export default function PlantillasWASection() {
   const handleChat = async (contact: any) => {
     try {
       // 1. Crear/obtener conversación
-      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
-      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-      const res = await fetch(`${BACKEND_URL}/api/conversations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify({ contact_id: String(contact.id) })
-      })
-      const data = await res.json()
-      if (!res.ok || !data?.conversation?.id) throw new Error("No se pudo abrir la conversación")
+      let conversationId = ""
+      try {
+        const { data } = await api.post("/api/conversations", { contact_id: String(contact.id) });
+        conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
+        if (!conversationId) throw new Error("No se pudo abrir la conversación");
+      } catch (err: any) {
+        throw new Error(err?.response?.data?.error || err?.message || "No se pudo abrir la conversación");
+      }
       // 2. Enviar plantilla de bienvenida como primer mensaje
       if (bienvenidaTemplate) {
-        await fetch(`${BACKEND_URL}/api/twilio/send-wa-template`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        try {
+          await api.post("/api/twilio/send-wa-template", {
             to: contact.phone.replace(/\s/g, ""),
             from: process.env.NEXT_PUBLIC_TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886",
             templateSid: bienvenidaTemplate.sid,
             variables: [contact.name]
-          })
-        })
+          });
+        } catch (err: any) {
+          // Puedes mostrar un toast si quieres
+        }
       }
       // 3. Redirigir al chat
-      router.push(`/inbox/conversaciones?conversationId=${encodeURIComponent(data.conversation.id)}`)
+      router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`)
     } catch (e: any) {
       setSendResult(e.message || "Error abriendo chat")
     }
