@@ -56,7 +56,6 @@ function LoginForm() {
       // Guardar el token JWT de forma estándar
       if (data.token) {
         localStorage.setItem("jwt", data.token);
-        localStorage.removeItem("access_token");
       }
       // Construir un usuario mínimo para la sesión
       const userPayload = {
@@ -69,8 +68,6 @@ function LoginForm() {
 
       // Guardar token y crear cookie de sesión en el servidor
       if (typeof window !== "undefined") {
-        localStorage.setItem("access_token", data.access_token)
-
         await fetch("/api/auth/session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
