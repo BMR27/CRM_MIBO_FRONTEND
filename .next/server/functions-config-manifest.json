@@ -1,16 +1,16 @@
 {
   "version": 1,
   "functions": {
-    "/api/campaigns/stats": {},
-    "/api/campaigns/schedule": {},
+    "/api/campaigns/delivery": {},
     "/api/campaigns": {},
-    "/api/whatsapp/media/[mediaId]": {},
-    "/api/campaigns/send": {},
+    "/api/campaigns/schedule": {},
+    "/api/campaigns/stats": {},
     "/api/whatsapp/send-template": {},
     "/api/whatsapp/send": {},
     "/api/conversations/[id]/send-media": {},
     "/api/whatsapp/webhook-logs": {},
+    "/api/campaigns/send": {},
     "/api/whatsapp/webhook": {},
-    "/api/campaigns/delivery": {}
+    "/api/whatsapp/media/[mediaId]": {}
   }
 }
