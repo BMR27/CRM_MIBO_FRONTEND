@@ -1,5 +1,6 @@
 "use client"
 
+import { api } from "@/lib/api"
 import { useCallback, useEffect, useState } from "react"
 
 export interface Contact {
