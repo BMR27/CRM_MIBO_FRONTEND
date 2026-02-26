@@ -99,7 +99,7 @@ export default function ContactosPage() {
   const handleCreateContact = async () => {
     try {
       setCreating(true)
-      const res = await fetch("/api/contacts", {
+      const res = await fetch("/api/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

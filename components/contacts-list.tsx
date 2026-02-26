@@ -77,7 +77,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
     if (editId === null) return
     try {
       setEditing(true)
-      const res = await api.patch(`/api/contacts/${encodeURIComponent(String(editId))}`,
+      const res = await api.patch(`/api/api/contacts/${encodeURIComponent(String(editId))}`,
         {
           name: editName,
           phone_number: editPhone,
@@ -98,7 +98,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
     if (deleteId === null) return
     try {
       setDeleting(true)
-      await api.delete(`/api/contacts/${encodeURIComponent(String(deleteId))}`)
+      await api.delete(`/api/api/contacts/${encodeURIComponent(String(deleteId))}`)
       toast({ title: "Contacto eliminado" })
       setDeleteOpen(false)
       onDeleted?.(String(deleteId))

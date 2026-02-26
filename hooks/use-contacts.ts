@@ -20,7 +20,7 @@ export function useContacts() {
 
   const fetchContacts = useCallback(async () => {
     try {
-      const res = await api.get("/api/contacts", { params: {}, headers: {} })
+      const res = await api.get("/api/api/contacts", { params: {}, headers: {} })
       const data = res.data
       const list = Array.isArray(data) ? data : (data?.contacts || [])
       setContacts(list)
