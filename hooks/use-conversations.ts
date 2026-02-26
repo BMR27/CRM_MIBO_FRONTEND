@@ -1,7 +1,6 @@
 
-import { api } from "@/lib/api"
 "use client"
-
+import { api } from "@/lib/api"
 import { useState, useEffect, useCallback } from "react"
 
 const POLL_INTERVAL = 5000 // 5s refresh in background
@@ -61,7 +60,7 @@ export function useConversations(onlyAssigned?: boolean) {
       console.log("[useConversations] Raw data:", data);
       
       // Map backend response format to expected Conversation interface
-      const conversationsArray = Array.isArray(rawData) ? rawData : (rawData.conversations || [])
+      const conversationsArray = Array.isArray(data) ? data : (data.conversations || [])
       
       const mappedConversations: Conversation[] = conversationsArray.map((conv: any) => ({
         id: String(conv.id),
