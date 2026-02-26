@@ -54,8 +54,8 @@ function LoginForm() {
       }
 
       // Guardar el token JWT de forma estándar
-      if (data.token) {
-        localStorage.setItem("jwt", data.token);
+      if (data.access_token) {
+        localStorage.setItem("jwt", data.access_token);
       }
       // Construir un usuario mínimo para la sesión
       const userPayload = {
