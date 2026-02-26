@@ -52,8 +52,16 @@ export function useConversations(onlyAssigned = false) {
   const fetchConversations = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await api.get("/api/conversations")
-      const conversationsArray = Array.isArray(data) ? data : (data.conversations || [])
+      // Verificar token
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      if (!token) {
+        setError("No hay token de acceso. Inicia sesión.");
+        setConversations([]);
+        setLoading(false);
+        return;
+      }
+      const { data } = await api.get("/api/conversations");
+      const conversationsArray = Array.isArray(data) ? data : (data.conversations || []);
       const mappedConversations: Conversation[] = conversationsArray.map((conv: any) => ({
         id: String(conv.id),
         customer_name: conv.customer_name || conv.contact_name || conv.name || conv.phone_number || "Sin nombre",
@@ -74,20 +82,20 @@ export function useConversations(onlyAssigned = false) {
         unread_count: conv.unread_count || 0,
         created_at: conv.created_at || new Date().toISOString(),
         updated_at: conv.last_message_at || new Date().toISOString(),
-      }))
+      }));
       const filtered = onlyAssigned && userId
         ? mappedConversations.filter((conv) => conv.assigned_agent_id === userId)
-        : mappedConversations
-      setConversations(filtered)
-      setError(null)
+        : mappedConversations;
+      setConversations(filtered);
+      setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error al obtener conversaciones"
-      setError(errorMessage)
-      setConversations([])
+      const errorMessage = err instanceof Error ? err.message : "Error al obtener conversaciones";
+      setError(errorMessage);
+      setConversations([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [onlyAssigned, userId])
+  }, [onlyAssigned, userId]);
 
   useEffect(() => {
     fetchConversations()
