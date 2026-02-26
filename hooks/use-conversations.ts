@@ -29,14 +29,14 @@ export interface Conversation {
   external_user_id?: string // Facebook PSID or WhatsApp number
 }
 
-export function useConversations(onlyAssigned?: boolean) {
+
+export function useConversations(onlyAssigned = false) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
 
-  // Get current user ID from localStorage
+  // Obtener el usuario actual desde localStorage
   useEffect(() => {
     try {
       const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null
@@ -45,23 +45,15 @@ export function useConversations(onlyAssigned?: boolean) {
         setUserId(user.id)
       }
     } catch (err) {
-      console.error("Error parsing user from localStorage:", err)
+      console.error("[useConversations] Error al leer usuario:", err)
     }
   }, [])
 
-  const fetchConversations = useCallback(async (isRefresh = false) => {
+  const fetchConversations = useCallback(async () => {
+    setLoading(true)
     try {
-      if (isRefresh) {
-        setRefreshing(false) // silent refresh
-      }
-      
-      // Usar cliente api centralizado
-      const { data } = await api.get("/api/conversations");
-      console.log("[useConversations] Raw data:", data);
-      
-      // Map backend response format to expected Conversation interface
+      const { data } = await api.get("/api/conversations")
       const conversationsArray = Array.isArray(data) ? data : (data.conversations || [])
-      
       const mappedConversations: Conversation[] = conversationsArray.map((conv: any) => ({
         id: String(conv.id),
         customer_name: conv.customer_name || conv.contact_name || conv.name || conv.phone_number || "Sin nombre",
@@ -83,48 +75,24 @@ export function useConversations(onlyAssigned?: boolean) {
         created_at: conv.created_at || new Date().toISOString(),
         updated_at: conv.last_message_at || new Date().toISOString(),
       }))
-      
-      console.log("[useConversations] Mapped conversations:", mappedConversations)
-      
-      // Filter conversations if onlyAssigned is true and userId is available
-      const filtered = onlyAssigned && userId 
+      const filtered = onlyAssigned && userId
         ? mappedConversations.filter((conv) => conv.assigned_agent_id === userId)
         : mappedConversations
-      
       setConversations(filtered)
       setError(null)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred"
-      console.error("[useConversations] Error:", errorMessage, err)
+      const errorMessage = err instanceof Error ? err.message : "Error al obtener conversaciones"
       setError(errorMessage)
+      setConversations([])
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
   }, [onlyAssigned, userId])
 
   useEffect(() => {
-    // Initial fetch
-    fetchConversations(false)
+    fetchConversations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onlyAssigned, userId])
 
-    // Silent refresh on focus/visibility
-    const handleFocus = () => fetchConversations(true)
-    const handleVisibility = () => {
-      if (!document.hidden) fetchConversations(true)
-    }
-
-    window.addEventListener("focus", handleFocus)
-    document.addEventListener("visibilitychange", handleVisibility)
-
-    // Background polling (silent)
-    const intervalId = setInterval(() => fetchConversations(true), POLL_INTERVAL)
-
-    return () => {
-      window.removeEventListener("focus", handleFocus)
-      document.removeEventListener("visibilitychange", handleVisibility)
-      clearInterval(intervalId)
-    }
-  }, [fetchConversations])
-
-  return { conversations, loading, refreshing, error, refetch: fetchConversations }
+  return { conversations, loading, error, refetch: fetchConversations }
 }

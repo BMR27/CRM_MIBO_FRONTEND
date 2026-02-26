@@ -5,6 +5,7 @@ import { InboxHeader } from "@/components/inbox-header"
 import { ConversationList } from "@/components/conversation-list"
 import { ChatArea } from "@/components/chat-area"
 import { OrdersPanel } from "@/components/orders-panel"
+import { useConversations } from "@/hooks/use-conversations"
 
 interface ConversationData {
   id: string
@@ -40,65 +41,51 @@ export default function InboxPage() {
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  // Auto-select first conversation
+  // Usar hook para obtener conversaciones y seleccionar la primera automáticamente
+  const { conversations } = useConversations()
+
   useEffect(() => {
-    if (selectedConversationId) return
-
-    const pickFirstConversation = async () => {
-      try {
-        const res = await fetch("/api/conversations")
-        const data = await res.json()
-        const first = data.conversations?.[0]
-        if (first) {
-          setSelectedConversationId(String(first.id))
-          setSelectedContactName(first.contact_name)
-          setSelectedContactId(first.contact_id)
-          setCurrentAgentId(first.assigned_agent_id)
-          setConversationDetails({
-            id: String(first.id),
-            status: first.status,
-            priority: first.priority,
-            agent_name: first.agent_name,
-            created_at: first.created_at,
-            last_message_at: first.last_message_at,
-            contact_name: first.contact_name,
-            phone_number: first.phone_number,
-            contact_id: first.contact_id,
-            assigned_agent_id: first.assigned_agent_id,
-          })
-        }
-      } catch (error) {
-        console.error("[inbox] Error auto-select:", error)
-      }
+    if (!selectedConversationId && conversations.length > 0) {
+      const first = conversations[0]
+      setSelectedConversationId(String(first.id))
+      setSelectedContactName(first.customer_name)
+      setSelectedContactId(undefined)
+      setCurrentAgentId(first.assigned_agent_id ? Number(first.assigned_agent_id) : undefined)
+      setConversationDetails({
+        id: String(first.id),
+        status: first.status,
+        priority: first.priority,
+        agent_name: undefined,
+        created_at: first.created_at,
+        last_message_at: first.updated_at,
+        contact_name: first.customer_name,
+        phone_number: first.customer_phone,
+        contact_id: undefined,
+        assigned_agent_id: first.assigned_agent_id ? Number(first.assigned_agent_id) : undefined,
+      })
     }
-
-    pickFirstConversation()
-  }, [selectedConversationId, refreshKey])
+  }, [selectedConversationId, conversations])
 
   const handleSelectConversation = (id: string) => {
     setSelectedConversationId(id)
-    fetch("/api/conversations")
-      .then((res) => res.json())
-      .then((data) => {
-        const conv = data.conversations.find((c: any) => c.id === id || c.id === Number(id))
-        if (conv) {
-          setSelectedContactName(conv.contact_name)
-          setSelectedContactId(conv.contact_id)
-          setCurrentAgentId(conv.assigned_agent_id)
-          setConversationDetails({
-            id: String(conv.id),
-            status: conv.status,
-            priority: conv.priority,
-            agent_name: conv.agent_name,
-            created_at: conv.created_at,
-            last_message_at: conv.last_message_at,
-            contact_name: conv.contact_name,
-            phone_number: conv.phone_number,
-            contact_id: conv.contact_id,
-            assigned_agent_id: conv.assigned_agent_id,
-          })
-        }
+    const conv = conversations.find((c) => c.id === id)
+    if (conv) {
+      setSelectedContactName(conv.customer_name)
+      setSelectedContactId(undefined)
+      setCurrentAgentId(conv.assigned_agent_id ? Number(conv.assigned_agent_id) : undefined)
+      setConversationDetails({
+        id: String(conv.id),
+        status: conv.status,
+        priority: conv.priority,
+        agent_name: undefined,
+        created_at: conv.created_at,
+        last_message_at: conv.updated_at,
+        contact_name: conv.customer_name,
+        phone_number: conv.customer_phone,
+        contact_id: undefined,
+        assigned_agent_id: conv.assigned_agent_id ? Number(conv.assigned_agent_id) : undefined,
       })
+    }
   }
 
   const handleUpdate = () => {

@@ -6,21 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { cn, formatContactDisplayName, getContactAvatarText } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
-import { useConversations } from "@/hooks/use-conversations"
 
-interface Conversation {
-  id: string
-  contact_name: string
-  phone_number: string
-  contact_avatar?: string
-  last_message: string
-  last_message_at: string
-  unread_count: number
-  status: string
-  priority: string
-  agent_name?: string
-  channel?: string
-}
+import { useConversations, Conversation } from "@/hooks/use-conversations"
 
 interface ConversationListProps {
   selectedId?: string
@@ -33,22 +20,9 @@ export function ConversationList({
   onSelectConversation,
   onlyAssigned,
 }: ConversationListProps) {
-  const { conversations: backendConversations, loading, error } =
-    useConversations(onlyAssigned)
 
-  const conversations: Conversation[] = backendConversations.map((conv) => ({
-    id: String(conv.id),
-    contact_name: conv.customer_name,
-    phone_number: conv.customer_phone,
-    contact_avatar: undefined,
-    last_message: conv.last_message?.content || "Sin mensajes",
-    last_message_at: conv.last_message?.created_at || conv.created_at,
-    unread_count: conv.unread_count,
-    status: conv.status,
-    priority: conv.priority,
-    agent_name: undefined,
-    channel: conv.channel || "whatsapp",
-  }))
+  const { conversations, loading, error } = useConversations(onlyAssigned)
+
 
   const getDisplayName = (name: string, channel?: string) =>
     formatContactDisplayName(name, channel)
@@ -124,7 +98,8 @@ export function ConversationList({
     )
   }
 
-  if (conversations.length === 0) {
+
+  if (!loading && conversations.length === 0) {
     return (
       <div className="h-full p-3">
         <div className="h-full rounded-xl border bg-card shadow-sm flex items-center justify-center p-4">
@@ -156,7 +131,7 @@ export function ConversationList({
                   <div className="relative flex-shrink-0">
                     <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
                       <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm">
-                        {getContactAvatarText(getDisplayName(conv.contact_name, conv.channel), conv.channel)}
+                        {getContactAvatarText(getDisplayName(conv.customer_name, conv.channel), conv.channel)}
                       </AvatarFallback>
                     </Avatar>
 
@@ -173,10 +148,10 @@ export function ConversationList({
                   <div className="min-w-0 flex-1">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 mb-1">
                       <h3 className="min-w-0 truncate font-bold text-sm text-foreground">
-                        {getDisplayName(conv.contact_name, conv.channel)}
+                        {getDisplayName(conv.customer_name, conv.channel)}
                       </h3>
                       <span className="whitespace-nowrap text-right text-muted-foreground text-xs font-medium">
-                        {formatDistanceToNow(new Date(conv.last_message_at), {
+                        {formatDistanceToNow(new Date(conv.last_message?.created_at || conv.created_at), {
                           addSuffix: true,
                           locale: es,
                         })}
@@ -184,7 +159,7 @@ export function ConversationList({
                     </div>
 
                     <p className="line-clamp-1 text-muted-foreground text-xs leading-relaxed mb-2">
-                      {conv.last_message || "Sin mensajes"}
+                      {conv.last_message?.content || "Sin mensajes"}
                     </p>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -204,11 +179,12 @@ export function ConversationList({
                         {getPriorityLabel(conv.priority)}
                       </Badge>
 
-                      {conv.agent_name && (
+                      {/* Puedes mostrar el agente si lo tienes disponible */}
+                      {/* {conv.agent_name && (
                         <span className="truncate text-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded-full">
                           👤 {conv.agent_name}
                         </span>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 </div>

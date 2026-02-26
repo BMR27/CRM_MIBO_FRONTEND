@@ -488,6 +488,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/api/send-wa-template/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/send-wa-template">> = Specific
+  const handler = {} as typeof import("../../app/api/send-wa-template/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/api/sessions/[id]/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/sessions/[id]">> = Specific
@@ -528,6 +537,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/whatsapp/media/[mediaId]">> = Specific
   const handler = {} as typeof import("../../app/api/whatsapp/media/[mediaId]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/whatsapp/send-template/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/whatsapp/send-template">> = Specific
+  const handler = {} as typeof import("../../app/api/whatsapp/send-template/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

@@ -280,6 +280,12 @@
       "namedRegex": "^/api/orders(?:/)?$"
     },
     {
+      "page": "/api/send-wa-template",
+      "regex": "^/api/send\\-wa\\-template(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/send\\-wa\\-template(?:/)?$"
+    },
+    {
       "page": "/api/sessions",
       "regex": "^/api/sessions(?:/)?$",
       "routeKeys": {},
@@ -302,6 +308,12 @@
       "regex": "^/api/whatsapp/send(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/whatsapp/send(?:/)?$"
+    },
+    {
+      "page": "/api/whatsapp/send-template",
+      "regex": "^/api/whatsapp/send\\-template(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/whatsapp/send\\-template(?:/)?$"
     },
     {
       "page": "/api/whatsapp/webhook",

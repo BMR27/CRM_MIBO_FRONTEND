@@ -33,6 +33,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+import { api } from "@/lib/api"
+
 interface Message {
   id: number | string
   content: string
@@ -174,30 +176,19 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-      if (!token) {
-        console.error('[ChatArea] No se encontró token JWT en localStorage ni sessionStorage');
-        return;
-      }
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        console.error("[ChatArea] Fetch messages error:", response.status, data);
-        return;
-      }
+      // El token ya lo añade el interceptor de axios
+      const { data } = await api.get(`/api/conversations/${conversationId}/messages`)
       // Ordenar por fecha ascendente (más viejos primero, más recientes último)
       const sortedMessages = (data.messages || []).sort((a: Message, b: Message) => {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       })
       setMessages(sortedMessages)
-    } catch (error) {
-      console.error("[ChatArea] Fetch messages error:", error)
+    } catch (error: any) {
+      if (error.response) {
+        console.error("[ChatArea] Fetch messages error:", error.response.status, error.response.data)
+      } else {
+        console.error("[ChatArea] Fetch messages error:", error)
+      }
     }
   }
 
