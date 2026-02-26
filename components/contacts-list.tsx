@@ -77,22 +77,13 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
     if (editId === null) return
     try {
       setEditing(true)
-      const res = await fetch(`/api/contacts/${encodeURIComponent(String(editId))}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const res = await api.patch(`/api/contacts/${encodeURIComponent(String(editId))}`,
+        {
           name: editName,
           phone_number: editPhone,
           external_user_id: editExternal,
-        }),
-      })
-
-      const data = await res.json().catch(() => null)
-      if (!res.ok) {
-        toast({ title: "Error", description: data?.error || "No se pudo actualizar el contacto", variant: "destructive" })
-        return
-      }
-
+        }
+      )
       toast({ title: "Contacto actualizado", description: "Se guardaron los cambios." })
       setEditOpen(false)
       await refetch()
@@ -107,15 +98,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
     if (deleteId === null) return
     try {
       setDeleting(true)
-      const res = await fetch(`/api/contacts/${encodeURIComponent(String(deleteId))}`, {
-        method: "DELETE",
-      })
-      const data = await res.json().catch(() => null)
-      if (!res.ok) {
-        toast({ title: "Error", description: data?.error || "No se pudo eliminar el contacto", variant: "destructive" })
-        return
-      }
-
+      await api.delete(`/api/contacts/${encodeURIComponent(String(deleteId))}`)
       toast({ title: "Contacto eliminado" })
       setDeleteOpen(false)
       onDeleted?.(String(deleteId))
