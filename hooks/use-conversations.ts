@@ -1,7 +1,6 @@
 
-import { api } from "@/lib/api"
 "use client"
-
+import { api } from "@/lib/api"
 import { useState, useEffect, useCallback } from "react"
 
 const POLL_INTERVAL = 5000 // 5s refresh in background
@@ -61,13 +60,13 @@ export function useConversations(onlyAssigned?: boolean) {
       console.log("[useConversations] Raw data:", data);
       
       // Map backend response format to expected Conversation interface
-      const conversationsArray = Array.isArray(rawData) ? rawData : (rawData.conversations || [])
+      const conversationsArray = Array.isArray(data) ? data : (data.conversations || [])
       
       const mappedConversations: Conversation[] = conversationsArray.map((conv: any) => ({
         id: String(conv.id),
-        customer_name: conv.contact_name || "Unknown",
-        customer_phone: conv.phone_number || "",
-        customer_email: undefined,
+        customer_name: conv.customer_name || conv.contact_name || conv.name || conv.phone_number || "Sin nombre",
+        customer_phone: conv.customer_phone || conv.phone_number || "",
+        customer_email: conv.customer_email || conv.email || undefined,
         status: (conv.status as "active" | "resolved") || "active",
         priority: (conv.priority as "low" | "medium" | "high") || "low",
         assigned_agent_id: conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined,
