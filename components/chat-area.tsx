@@ -177,9 +177,13 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
     try {
       // El token ya lo añade el interceptor de axios
-      const { data } = await api.get(`/api/conversations/${conversationId}/messages`)
+      const { data } = await api.get(`/api/api/messages`)
+      // Filtrar mensajes por conversationId
+      const filtered = Array.isArray(data)
+        ? data.filter((msg: any) => msg.conversation_id === conversationId)
+        : []
       // Ordenar por fecha ascendente (más viejos primero, más recientes último)
-      const sortedMessages = (data.messages || []).sort((a: Message, b: Message) => {
+      const sortedMessages = filtered.sort((a: Message, b: Message) => {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       })
       setMessages(sortedMessages)
