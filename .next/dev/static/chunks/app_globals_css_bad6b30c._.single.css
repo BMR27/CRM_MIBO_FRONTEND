@@ -953,10 +953,6 @@
     display: inline;
   }
 
-  .inline-block {
-    display: inline-block;
-  }
-
   .inline-flex {
     display: inline-flex;
   }
@@ -1126,10 +1122,6 @@
     height: calc(var(--spacing) * 64);
   }
 
-  .h-80 {
-    height: calc(var(--spacing) * 80);
-  }
-
   .h-96 {
     height: calc(var(--spacing) * 96);
   }
@@ -1244,10 +1236,6 @@
 
   .min-h-\[140px\] {
     min-height: 140px;
-  }
-
-  .min-h-\[400px\] {
-    min-height: 400px;
   }
 
   .min-h-full {
@@ -3174,10 +3162,6 @@
   .antialiased {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  .accent-primary {
-    accent-color: var(--primary);
   }
 
   .opacity-0 {

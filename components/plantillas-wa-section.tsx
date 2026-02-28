@@ -56,8 +56,7 @@ export default function PlantillasWASection() {
     const fetchContacts = async () => {
       setLoadingContacts(true)
       try {
-        const res = await fetch("/api/contacts", { method: "GET" })
-        const data = await res.json()
+        const { data } = await api.get("/api/contacts")
         if (Array.isArray(data)) {
           setContacts(data)
         } else if (Array.isArray(data.contacts)) {
@@ -79,12 +78,7 @@ export default function PlantillasWASection() {
     const fetchTemplates = async () => {
       setLoadingTemplates(true)
       try {
-        const res = await fetch("/api/twilio/wa-templates", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ serviceSid: SERVICE_SID })
-        })
-        const data = await res.json()
+        const { data } = await api.post("/api/twilio/wa-templates", { serviceSid: SERVICE_SID })
         if (Array.isArray(data)) {
           setWATemplates(data)
         } else {
@@ -113,18 +107,17 @@ export default function PlantillasWASection() {
     try {
       const results = await Promise.all(selectedContactsObj.map(async (contact) => {
         const variables = [contact.name]
-        const res = await fetch(`${BACKEND_URL}/api/twilio/send-wa-template`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        try {
+          await api.post(`/api/twilio/send-wa-template`, {
             to: contact.phone.replace(/\s/g, ""),
             from: process.env.NEXT_PUBLIC_TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886",
             templateSid: selectedTplObj.sid,
             variables
           })
-        })
-        if (!res.ok) throw new Error(`Error enviando a ${contact.name}`)
-        return `Mensaje enviado a ${contact.name}`
+          return `Mensaje enviado a ${contact.name}`
+        } catch (err: any) {
+          throw new Error(`Error enviando a ${contact.name}: ${err?.response?.data?.error || err.message}`)
+        }
       }))
       setSendResult(results.join("\n"))
     } catch (err: any) {

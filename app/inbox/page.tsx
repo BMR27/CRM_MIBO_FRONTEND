@@ -5,6 +5,7 @@ import { InboxHeader } from "@/components/inbox-header"
 import { ConversationList } from "@/components/conversation-list"
 import { ChatArea } from "@/components/chat-area"
 import { OrdersPanel } from "@/components/orders-panel"
+import { useSearchParams } from "next/navigation"
 import { useConversations } from "@/hooks/use-conversations"
 
 interface ConversationData {
@@ -26,7 +27,17 @@ export default function InboxPage() {
   const [selectedContactId, setSelectedContactId] = useState<number>()
   const [currentAgentId, setCurrentAgentId] = useState<number>()
   const [conversationDetails, setConversationDetails] = useState<ConversationData>()
-  const [refreshKey, setRefreshKey] = useState(0)
+    const searchParams = typeof window !== "undefined" ? useSearchParams() : { get: () => undefined }
+    const [refreshKey, setRefreshKey] = useState(0)
+    const { conversations } = useConversations()
+
+    useEffect(() => {
+      const queryConvId = searchParams.get("conversationId")
+      if (queryConvId && conversations.some(c => String(c.id) === queryConvId)) {
+        handleSelectConversation(queryConvId)
+        return
+      }
+    }, [searchParams, conversations])
   const [isMobile, setIsMobile] = useState(false)
   const [showOrdersPanel, setShowOrdersPanel] = useState(true)
 
@@ -42,7 +53,8 @@ export default function InboxPage() {
   }, [])
 
   // Usar hook para obtener conversaciones y seleccionar la primera automáticamente
-  const { conversations } = useConversations()
+  // Solo una instancia del hook
+  // Si ya existe una declaración previa, elimina la duplicada
 
   useEffect(() => {
     if (!selectedConversationId && conversations.length > 0) {

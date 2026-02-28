@@ -47,50 +47,46 @@ export default function ContactosPage() {
   // Al chatear: crea conversación y envía plantilla de bienvenida aprobada
   const handleChatContact = async (contact: Contact) => {
     setSelectedContactId(String(contact.id))
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    if (!token) {
+      toast({ title: "No autenticado", description: "Debes iniciar sesión para crear una conversación.", variant: "destructive" });
+      return;
+    }
     try {
-      // 1. Asegura/conecta la conversación
-      let conversationId = ""
-      try {
-        const { data } = await api.post("/api/conversations", { contact_id: String(contact.id) });
-        conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
-        if (!conversationId) throw new Error("No se pudo crear/obtener la conversación");
-      } catch (err: any) {
-        toast({ title: "Error", description: err?.response?.data?.error || err?.message || "No se pudo abrir la conversación", variant: "destructive" });
-        return;
-      }
+      // 1. Crear la conversación
+      console.log("[CHAT] Creando conversación para contacto:", contact)
+      const { data } = await api.post("/api/conversations", { contact_id: String(contact.id) });
+      console.log("[CHAT] Respuesta de creación de conversación:", data)
+      const conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
+      if (!conversationId) throw new Error("No se pudo crear/obtener la conversación");
+      toast({ title: "Conversación creada", description: `ID: ${conversationId}` })
 
-      // 2. Envía plantilla de bienvenida aprobada usando API local (evita CORS)
-      // El campo 'to' debe ser solo el número, sin el prefijo 'whatsapp:'
-      let phone = contact.phone_number || ""
+      // 2. Enviar plantilla de bienvenida
+      let phone = contact.phone_number || "";
       if (phone.startsWith("whatsapp:")) {
-        phone = phone.replace("whatsapp:", "")
+        phone = phone.replace("whatsapp:", "");
       }
-      const templateSid = "HX6d98a259b100a6d054dd035368def400" // SID real de la plantilla (minúsculas)
-      const from = "whatsapp:+5215521836941"
-      const variables = { "1": contact.name || "" }
-      try {
-        await api.post("/api/twilio/send-wa-template", {
-          to: phone,
-          from,
-          contentSid: templateSid,
-          variables
-        });
-      } catch (err: any) {
-        toast({ title: "Error al enviar plantilla", description: err?.response?.data?.error || err?.message || "No se pudo enviar la plantilla de bienvenida", variant: "destructive" });
-      }
-      // Registrar el mensaje localmente (siempre)
-      const content = `Hola ${variables["1"]} 👋\nBienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`;
-      try {
-        await api.post(`/api/conversations/${conversationId}/messages`, { content });
-      } catch (err: any) {
-        toast({ title: "Error al registrar mensaje", description: err?.response?.data?.error || err?.message || "No se pudo registrar el mensaje en la conversación", variant: "destructive" });
-      }
-      toast({ title: "Mensaje registrado", description: "El mensaje de plantilla se guardó en la conversación." });
+      // Usar siempre la plantilla aprobada
+      const approvedTemplateSid = "HX99ead19f74793c6b5f0e1777523f1815"; // bienvenido_logi
+      const from = "whatsapp:+15558046791";
+      const variables = [contact.name || ""];
+      console.log("[CHAT] Enviando plantilla aprobada:", { to: phone, from, contentSid: approvedTemplateSid, variables, conversation_id: conversationId })
+      const tplRes = await api.post("/api/twilio/send-wa-template", {
+        to: phone,
+        from,
+        contentSid: approvedTemplateSid,
+        variables,
+        conversation_id: conversationId
+      });
+      console.log("[CHAT] Respuesta de plantilla:", tplRes.data)
+      toast({ title: "Plantilla enviada", description: "Se envió la plantilla de bienvenida." })
 
-      // 3. Redirige a la conversación
-      router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`)
+      // 3. Redirigir a la conversación
+      console.log("[CHAT] Redirigiendo a /inbox?conversationId=", conversationId)
+      router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`);
     } catch (e) {
       toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo abrir la conversación ni enviar la plantilla", variant: "destructive" })
+      console.error("[CHAT] Error en handleChatContact:", e)
     }
   }
 
@@ -99,20 +95,15 @@ export default function ContactosPage() {
   const handleCreateContact = async () => {
     try {
       setCreating(true)
-      const res = await fetch("/api/api/contacts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newName,
-          channel: newChannel,
-          phone_number: newChannel === "whatsapp" ? newPhone : undefined,
-          external_user_id: newChannel === "facebook" ? newExternalUserId : undefined,
-        }),
+      const res = await api.post("/api/api/contacts", {
+        name: newName,
+        channel: newChannel,
+        phone_number: newChannel === "whatsapp" ? newPhone : undefined,
+        external_user_id: newChannel === "facebook" ? newExternalUserId : undefined,
       })
 
-      const data = await res.json().catch(() => null)
-      if (!res.ok) {
-        toast({ title: "Error", description: data?.error || "No se pudo crear el contacto", variant: "destructive" })
+      if (res.status !== 201 && res.status !== 200) {
+        toast({ title: "Error", description: res.data?.error || "No se pudo crear el contacto", variant: "destructive" })
         return
       }
 

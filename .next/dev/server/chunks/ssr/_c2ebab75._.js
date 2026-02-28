@@ -244,7 +244,7 @@ function useUserRole() {
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const fetchUserInfo = async ()=>{
             try {
-                const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://crmbackend-production-4e4d.up.railway.app";
+                const backendUrl = "https://crmmibobackend-production.up.railway.app";
                 const token = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : null;
                 if ("TURBOPACK compile-time truthy", 1) {
                     setError("No authentication token found");
@@ -253,7 +253,6 @@ function useUserRole() {
                 }
                 //TURBOPACK unreachable
                 ;
-                const response = undefined;
                 const data = undefined;
                 // Mapear roles españoles a inglés
                 const roleMap = undefined;
@@ -343,7 +342,7 @@ function InboxSidebar({ user }) {
     const isInbox = pathname === "/inbox";
     const isContactos = pathname.startsWith("/inbox/contactos");
     const isEnvios = pathname.startsWith("/inbox/envios");
-    const isPlantillasWA = pathname.startsWith("/inbox/plantillas-wa");
+    // const isPlantillasWA = pathname.startsWith("/inbox/plantillas-wa")
     const isCitas = pathname.startsWith("/inbox/citas");
     const isAgentes = pathname.startsWith("/inbox/agentes");
     const isConfiguracion = pathname.startsWith("/inbox/configuracion");
@@ -449,61 +448,33 @@ function InboxSidebar({ user }) {
                         columnNumber: 9
                     }, this),
                     isAdminOrSupervisor && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
-                        children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
-                                variant: "ghost",
-                                onClick: ()=>router.push("/inbox/envios"),
-                                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("w-full justify-start transition-colors", collapsed && "justify-center px-2", isEnvios ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium" : "text-foreground hover:bg-sidebar-accent hover:text-foreground"),
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Send$3e$__["Send"], {
-                                        className: "h-5 w-5"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/inbox-sidebar.tsx",
-                                        lineNumber: 125,
-                                        columnNumber: 15
-                                    }, this),
-                                    !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                        className: "ml-3",
-                                        children: "Envíos masivos"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/inbox-sidebar.tsx",
-                                        lineNumber: 126,
-                                        columnNumber: 30
-                                    }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 114,
-                                columnNumber: 13
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
-                                variant: "ghost",
-                                onClick: ()=>router.push("/inbox/plantillas-wa"),
-                                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("w-full justify-start transition-colors", collapsed && "justify-center px-2", isPlantillasWA ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium" : "text-foreground hover:bg-sidebar-accent hover:text-foreground"),
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Send$3e$__["Send"], {
-                                        className: "h-5 w-5"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/inbox-sidebar.tsx",
-                                        lineNumber: 140,
-                                        columnNumber: 15
-                                    }, this),
-                                    !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                        className: "ml-3",
-                                        children: "Plantillas WA"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/inbox-sidebar.tsx",
-                                        lineNumber: 141,
-                                        columnNumber: 30
-                                    }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 128,
-                                columnNumber: 13
-                            }, this)
-                        ]
-                    }, void 0, true),
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                            variant: "ghost",
+                            onClick: ()=>router.push("/inbox/envios"),
+                            className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("w-full justify-start transition-colors", collapsed && "justify-center px-2", isEnvios ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium" : "text-foreground hover:bg-sidebar-accent hover:text-foreground"),
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$send$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Send$3e$__["Send"], {
+                                    className: "h-5 w-5"
+                                }, void 0, false, {
+                                    fileName: "[project]/components/inbox-sidebar.tsx",
+                                    lineNumber: 125,
+                                    columnNumber: 15
+                                }, this),
+                                !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: "ml-3",
+                                    children: "Envíos masivos"
+                                }, void 0, false, {
+                                    fileName: "[project]/components/inbox-sidebar.tsx",
+                                    lineNumber: 126,
+                                    columnNumber: 30
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/components/inbox-sidebar.tsx",
+                            lineNumber: 114,
+                            columnNumber: 13
+                        }, this)
+                    }, void 0, false),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
                         variant: "ghost",
                         onClick: ()=>router.push("/inbox/citas"),
@@ -513,7 +484,7 @@ function InboxSidebar({ user }) {
                                 className: "h-5 w-5"
                             }, void 0, false, {
                                 fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 158,
+                                lineNumber: 143,
                                 columnNumber: 11
                             }, this),
                             !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -521,13 +492,13 @@ function InboxSidebar({ user }) {
                                 children: "Citas"
                             }, void 0, false, {
                                 fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 159,
+                                lineNumber: 144,
                                 columnNumber: 26
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/inbox-sidebar.tsx",
-                        lineNumber: 147,
+                        lineNumber: 132,
                         columnNumber: 9
                     }, this),
                     isAdminOrSupervisor && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -539,7 +510,7 @@ function InboxSidebar({ user }) {
                                 className: "h-5 w-5"
                             }, void 0, false, {
                                 fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 175,
+                                lineNumber: 160,
                                 columnNumber: 13
                             }, this),
                             !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -547,13 +518,13 @@ function InboxSidebar({ user }) {
                                 children: "Agentes"
                             }, void 0, false, {
                                 fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 176,
+                                lineNumber: 161,
                                 columnNumber: 28
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/inbox-sidebar.tsx",
-                        lineNumber: 164,
+                        lineNumber: 149,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -565,7 +536,7 @@ function InboxSidebar({ user }) {
                                 className: "h-5 w-5"
                             }, void 0, false, {
                                 fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 191,
+                                lineNumber: 176,
                                 columnNumber: 11
                             }, this),
                             !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -573,13 +544,13 @@ function InboxSidebar({ user }) {
                                 children: "Configuración"
                             }, void 0, false, {
                                 fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 192,
+                                lineNumber: 177,
                                 columnNumber: 26
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/inbox-sidebar.tsx",
-                        lineNumber: 180,
+                        lineNumber: 165,
                         columnNumber: 9
                     }, this)
                 ]
@@ -592,7 +563,7 @@ function InboxSidebar({ user }) {
                 className: "bg-sidebar-border"
             }, void 0, false, {
                 fileName: "[project]/components/inbox-sidebar.tsx",
-                lineNumber: 196,
+                lineNumber: 181,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -608,12 +579,12 @@ function InboxSidebar({ user }) {
                                     children: getInitials(user.name)
                                 }, void 0, false, {
                                     fileName: "[project]/components/inbox-sidebar.tsx",
-                                    lineNumber: 202,
+                                    lineNumber: 187,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 201,
+                                lineNumber: 186,
                                 columnNumber: 11
                             }, this),
                             !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -624,7 +595,7 @@ function InboxSidebar({ user }) {
                                         children: user.name
                                     }, void 0, false, {
                                         fileName: "[project]/components/inbox-sidebar.tsx",
-                                        lineNumber: 206,
+                                        lineNumber: 191,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -632,19 +603,19 @@ function InboxSidebar({ user }) {
                                         children: getStatusLabel(user.status)
                                     }, void 0, false, {
                                         fileName: "[project]/components/inbox-sidebar.tsx",
-                                        lineNumber: 207,
+                                        lineNumber: 192,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 205,
+                                lineNumber: 190,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/inbox-sidebar.tsx",
-                        lineNumber: 200,
+                        lineNumber: 185,
                         columnNumber: 9
                     }, this),
                     !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -657,20 +628,20 @@ function InboxSidebar({ user }) {
                                 className: "mr-2 h-4 w-4"
                             }, void 0, false, {
                                 fileName: "[project]/components/inbox-sidebar.tsx",
-                                lineNumber: 218,
+                                lineNumber: 203,
                                 columnNumber: 13
                             }, this),
                             "Cerrar sesión"
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/inbox-sidebar.tsx",
-                        lineNumber: 212,
+                        lineNumber: 197,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/inbox-sidebar.tsx",
-                lineNumber: 199,
+                lineNumber: 184,
                 columnNumber: 7
             }, this)
         ]

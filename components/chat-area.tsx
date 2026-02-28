@@ -107,8 +107,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       if (!conversationId) return
       if (!shouldResolve(resolvedContactName)) return
       try {
-        const res = await fetch(`${BACKEND_URL}/api/conversations/${encodeURIComponent(String(conversationId))}`)
-        const data = await res.json().catch(() => null)
+        const { data } = await api.get(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
         const name = data?.contact_name ? String(data.contact_name) : ""
         if (name.trim()) setResolvedContactName(name.trim())
       } catch {
@@ -126,12 +125,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
     try {
       setDeletingConversation(true)
-      const res = await fetch(`${BACKEND_URL}/api/conversations/${encodeURIComponent(String(conversationId))}`, {
-        method: "DELETE",
-      })
-
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
+      const { data, status } = await api.delete(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
+      if (status !== 200) {
         const message = data?.error || "No se pudo eliminar la conversación"
         toast({
           title: "Error",
@@ -220,39 +215,10 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         setPendingPreviewUrl(null)
         setNewMessage("")
 
-        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/send-media`, {
-          method: "POST",
-          body: form,
+        const response = await api.post(`/api/conversations/${conversationId}/send-media`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         })
-
-        const data = await response.json().catch(() => null)
-        if (!response.ok) {
-          console.error("[ChatArea] Send media error:", response.status, data)
-
-          const detailsMessage =
-            data?.error ||
-            data?.details?.error?.message ||
-            data?.details?.message ||
-            (typeof data?.details === "string" ? data.details : null) ||
-            response.statusText ||
-            "No se pudo enviar el adjunto."
-
-          const hint = data?.hint ? String(data.hint) : ""
-          const description = hint ? `${String(detailsMessage)}\n${hint}` : String(detailsMessage)
-
-          toast({
-            title: "Error al enviar adjunto",
-            description,
-            variant: "destructive",
-          })
-
-          // Restore pending state for retry
-          setPendingFile(fileToSend)
-          if (previewToRevoke) setPendingPreviewUrl(previewToRevoke)
-          setNewMessage(caption)
-          return
-        }
-
+        const data = response.data
         if (data?.message) {
           const msg = data.message
           setMessages([
@@ -301,29 +267,11 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       // Detectar canal y usar endpoint apropiado
       if (channel === 'facebook' && externalUserId) {
         // Enviar via Facebook Messenger
-        const response = await fetch(`/api/facebook/send`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            recipientId: externalUserId,
-            message: messageContent,
-            conversationId: conversationId
-          }),
+        const { data } = await api.post(`/api/facebook/send`, {
+          recipientId: externalUserId,
+          message: messageContent,
+          conversationId: conversationId
         })
-
-        if (!response.ok) {
-          console.error("[ChatArea] Facebook send error:", response.status, response.statusText)
-          toast({
-            title: "Error al enviar mensaje",
-            description: "No se pudo enviar el mensaje por Facebook.",
-            variant: "destructive",
-          })
-          setNewMessage(messageContent)
-          return
-        }
-
-        const data = await response.json()
-        // Agregar mensaje al UI
         setMessages([
           ...messages,
           {
@@ -336,28 +284,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         ])
       } else {
         // Enviar via endpoint normal (WhatsApp u otros)
-        const token = localStorage.getItem('token'); // O usa tu método de obtención de token
-        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ content: messageContent }),
-        })
-
-        if (!response.ok) {
-          console.error("[ChatArea] Send message error:", response.status, response.statusText)
-          toast({
-            title: "Error al enviar mensaje",
-            description: "No se pudo enviar el mensaje.",
-            variant: "destructive",
-          })
-          setNewMessage(messageContent)
-          return
-        }
-
-        const data = await response.json()
+        const response = await api.post(`/api/conversations/${conversationId}/messages`, { content: messageContent })
+        const data = response.data
         if (data.message) {
           setMessages([
             ...messages,
@@ -424,13 +352,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!editingContent.trim() || !conversationId) return
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages/${messageId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: editingContent.trim() }),
-      })
-
-      if (response.ok) {
+      const response = await api.put(`/api/conversations/${conversationId}/messages/${messageId}`, { content: editingContent.trim() })
+      if (response.status === 200) {
         setMessages(
           messages.map((msg) =>
             msg.id === messageId ? { ...msg, content: editingContent.trim() } : msg
@@ -451,11 +374,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/messages/${messageId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
+      const response = await api.delete(`/api/conversations/${conversationId}/messages/${messageId}`)
+      if (response.status === 200) {
         setMessages(messages.filter((msg) => msg.id !== messageId))
         onUpdate?.()
       } else {
@@ -563,12 +483,13 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
   }
 
   const getInitials = (name: string) => {
+    if (!name || typeof name !== "string") return "?";
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2)
+      .slice(0, 2);
   }
 
   if (!conversationId) {

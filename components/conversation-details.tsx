@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
@@ -89,29 +90,26 @@ export function ConversationDetails({
     const loadComments = async () => {
       setCommentsLoading(true)
       try {
-        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}`)
-        if (response.ok) {
-          const data = await response.json()
-          if (data.comments) {
-            try {
-              const parsed = JSON.parse(data.comments)
-              setComments(Array.isArray(parsed) ? parsed : [])
-            } catch (e) {
-              if (typeof data.comments === "string" && data.comments.trim()) {
-                const textComments = data.comments.split("\n").filter((line: string) => line.trim())
-                const jsonArray = textComments.map((text: string, index: number) => ({
-                  id: `${Date.now()}-${index}`,
-                  text: text.trim(),
-                  created_at: new Date().toISOString(),
-                }))
-                setComments(jsonArray)
-              } else {
-                setComments([])
-              }
+        const { data } = await api.get(`/api/conversations/${conversationId}`)
+        if (data.comments) {
+          try {
+            const parsed = JSON.parse(data.comments)
+            setComments(Array.isArray(parsed) ? parsed : [])
+          } catch (e) {
+            if (typeof data.comments === "string" && data.comments.trim()) {
+              const textComments = data.comments.split("\n").filter((line: string) => line.trim())
+              const jsonArray = textComments.map((text: string, index: number) => ({
+                id: `${Date.now()}-${index}`,
+                text: text.trim(),
+                created_at: new Date().toISOString(),
+              }))
+              setComments(jsonArray)
+            } else {
+              setComments([])
             }
-          } else {
-            setComments([])
           }
+        } else {
+          setComments([])
         }
       } catch (error) {
         console.error("Error loading comments:", error)
@@ -128,8 +126,7 @@ export function ConversationDetails({
 
     const loadCalls = async () => {
       try {
-        const response = await fetch(`/api/calls?conversation_id=${conversationId}`)
-        const data = await response.json()
+        const { data } = await api.get(`/api/calls?conversation_id=${conversationId}`)
         const mapped: Meeting[] = (data.calls || []).map((call: any) => {
           const d = new Date(call.scheduled_at)
           return {
@@ -140,13 +137,10 @@ export function ConversationDetails({
             type: call.call_type === "video" ? "video" : "phone",
           }
         })
-
         setMeetings(mapped)
-
         const nextPending = (data.calls || [])
           .filter((call: any) => call.status !== "completed" && call.status !== "cancelled")
           .sort((a: any, b: any) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0]
-
         if (nextPending) {
           const d = new Date(nextPending.scheduled_at)
           setScheduledSession({
@@ -181,13 +175,8 @@ export function ConversationDetails({
 
     if (conversationId) {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/status`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: value }),
-        })
-
-        if (response.ok) {
+        const response = await api.put(`/api/conversations/${conversationId}/status`, { status: value })
+        if (response.status === 200) {
           onUpdate?.()
         } else {
           setCurrentStatus(status)
@@ -205,13 +194,8 @@ export function ConversationDetails({
 
     if (conversationId) {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/priority`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ priority: value }),
-        })
-
-        if (response.ok) {
+        const response = await api.put(`/api/conversations/${conversationId}/priority`, { priority: value })
+        if (response.status === 200) {
           onUpdate?.()
         } else {
           setCurrentPriority(priority)
@@ -228,15 +212,9 @@ export function ConversationDetails({
 
     setLoading(true)
     try {
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment: newComment }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setComments(data.comments)
+      const response = await api.post(`/api/conversations/${conversationId}/comments`, { comment: newComment })
+      if (response.status === 200) {
+        setComments(response.data.comments)
         setNewComment("")
         onUpdate?.()
       }
@@ -252,15 +230,9 @@ export function ConversationDetails({
 
     setLoading(true)
     try {
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/comments`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ commentId }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setComments(data.comments)
+      const response = await api.delete(`/api/conversations/${conversationId}/comments`, { data: { commentId } })
+      if (response.status === 200) {
+        setComments(response.data.comments)
         onUpdate?.()
       }
     } catch (error) {
@@ -275,15 +247,9 @@ export function ConversationDetails({
 
     setLoading(true)
     try {
-      const response = await fetch(`${BACKEND_URL}/api/conversations/${conversationId}/comments`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ commentId, text: editingText }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setComments(data.comments)
+      const response = await api.put(`/api/conversations/${conversationId}/comments`, { commentId, text: editingText })
+      if (response.status === 200) {
+        setComments(response.data.comments)
         setEditingCommentId(null)
         setEditingText("")
         onUpdate?.()
