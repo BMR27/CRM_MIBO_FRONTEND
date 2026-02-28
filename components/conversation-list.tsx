@@ -159,7 +159,7 @@ export function ConversationList({
                     </div>
 
                     <p className="line-clamp-1 text-muted-foreground text-xs leading-relaxed mb-2">
-                      {conv.last_message?.content || "Sin mensajes"}
+                      {conv.last_message || "Sin mensajes"}
                     </p>
 
                     <div className="flex items-center gap-1.5 flex-wrap">

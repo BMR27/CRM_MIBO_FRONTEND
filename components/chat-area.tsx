@@ -633,17 +633,18 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
               const prevTime = prevMsg ? format(new Date(prevMsg.created_at), "dd MMM HH:mm", { locale: es }) : null
               const showTimestamp = !prevTime || currentTime !== prevTime
 
+              const isAgentMsg = msg.sender_type === "agent" || msg.sender_type === "user"
               return (
                 <div
                   key={msg.id}
-                  className={cn("flex gap-3 animate-fade-in-up flex-shrink-0 group", msg.sender_type === "agent" && "flex-row-reverse")}
+                  className={cn("flex gap-3 animate-fade-in-up flex-shrink-0 group", !isAgentMsg && "flex-row-reverse")}
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarFallback
                       className={cn(
                         "font-semibold",
-                        msg.sender_type === "agent" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+                        !isAgentMsg ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                       )}
                     >
                       {getInitials(msg.sender_name)}
@@ -652,7 +653,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
                   <div
                     className={cn(
                       "max-w-[70%] min-w-0 space-y-1 flex flex-col",
-                      msg.sender_type === "agent" && "items-end",
+                      !isAgentMsg && "items-end",
                     )}
                   >
                     {editingMessageId === msg.id ? (
@@ -689,7 +690,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
                         <div
                           className={cn(
                             "max-w-full rounded-lg px-4 py-2 shadow-sm transition-all hover:shadow-md group-hover:ring-2",
-                            msg.sender_type === "agent"
+                            !isAgentMsg
                               ? "bg-primary text-primary-foreground group-hover:ring-primary/50"
                               : "bg-card text-foreground border border-border group-hover:ring-muted-foreground/30",
                           )}

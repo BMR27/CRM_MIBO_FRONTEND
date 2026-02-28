@@ -1,28 +1,28 @@
 "use client"
-
 import { useState, useEffect } from "react"
-import { api } from "@/lib/api"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { api } from "../lib/api"
 import {
   Info,
   FileText,
+  Zap,
   User,
   FolderOpen,
-  Zap,
   Calendar,
-  Plus,
   Video,
   Link,
   ExternalLink,
-  Copy,
-  Check,
+  Plus,
   MessageSquare,
+  Check,
+  Copy,
   Phone,
   Trash2,
   Edit2,
 } from "lucide-react"
+import { Button } from "../components/ui/button"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select"
+import { Textarea } from "../components/ui/textarea"
+   
 
 interface Meeting {
   id: number
