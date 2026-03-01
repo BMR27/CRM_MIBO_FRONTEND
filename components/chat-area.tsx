@@ -86,8 +86,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (conversationId) {
       fetchMessages()
 
-      // Silent polling for new messages every 5s
-      const intervalId = setInterval(() => fetchMessages(), 5000)
+      // Silent polling for new messages every 2s
+      const intervalId = setInterval(() => fetchMessages(), 2000)
       return () => clearInterval(intervalId)
     }
   }, [conversationId])
@@ -172,15 +172,11 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
     try {
       // El token ya lo añade el interceptor de axios
-      const { data } = await api.get(`/api/api/messages`)
-      // Filtrar mensajes por conversationId
-      const filtered = Array.isArray(data)
-        ? data.filter((msg: any) => msg.conversation_id === conversationId)
-        : []
+      const { data } = await api.get(`/api/conversations/${conversationId}/messages`)
       // Ordenar por fecha ascendente (más viejos primero, más recientes último)
-      const sortedMessages = filtered.sort((a: Message, b: Message) => {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      })
+      const sortedMessages = Array.isArray(data)
+        ? data.sort((a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        : []
       setMessages(sortedMessages)
     } catch (error: any) {
       if (error.response) {
@@ -192,123 +188,140 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
   }
 
   const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!conversationId || sending || sendingMedia) return
+    e.preventDefault();
+    console.log("[ChatArea] handleSendMessage called", { conversationId, sending, sendingMedia, newMessage, pendingFile });
+    if (!conversationId || sending || sendingMedia) {
+      console.log("[ChatArea] Blocked: missing conversationId or already sending", { conversationId, sending, sendingMedia });
+      return;
+    }
 
-    const hasText = Boolean(newMessage.trim())
-    const hasFile = Boolean(pendingFile)
-    if (!hasText && !hasFile) return
+    const hasText = Boolean(newMessage.trim());
+    const hasFile = Boolean(pendingFile);
+    console.log("[ChatArea] hasText:", hasText, "hasFile:", hasFile);
+    if (!hasText && !hasFile) {
+      console.log("[ChatArea] Blocked: no text or file");
+      return;
+    }
 
     // If there is a pending attachment, send media. Text becomes caption.
     if (pendingFile) {
-      setSendingMedia(true)
-      const fileToSend = pendingFile
-      const previewToRevoke = pendingPreviewUrl
-      const caption = newMessage.trim()
-
+      setSendingMedia(true);
+      const fileToSend = pendingFile;
+      const previewToRevoke = pendingPreviewUrl;
+      const caption = newMessage.trim();
+      console.log("[ChatArea] Sending media", { fileToSend, caption, conversationId });
       try {
-        const form = new FormData()
-        form.append("file", fileToSend)
-        if (caption) form.append("caption", caption)
+        const form = new FormData();
+        form.append("file", fileToSend);
+        if (caption) form.append("caption", caption);
 
-        setPendingFile(null)
-        setPendingPreviewUrl(null)
-        setNewMessage("")
+        setPendingFile(null);
+        setPendingPreviewUrl(null);
+        setNewMessage("");
 
         const response = await api.post(`/api/conversations/${conversationId}/send-media`, form, {
           headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        const data = response.data
+        });
+        const data = response.data;
+        console.log("[ChatArea] Media response", data);
         if (data?.message) {
-          const msg = data.message
-          setMessages([
-            ...messages,
-            {
-              id: msg.id,
-              content: msg.content,
-              sender_type: msg.sender_type || "agent",
-              sender_name: msg.sender_name || "Agent",
-              created_at: msg.created_at || new Date().toISOString(),
-              message_type: msg.message_type,
-              metadata: msg.metadata,
-              media_url: msg.media_url,
-            },
-          ])
+          fetchMessages();
         } else {
-          await fetchMessages()
+          console.log("[ChatArea] No message in media response, fetching messages");
+          await fetchMessages();
         }
       } catch (error) {
-        console.error("[ChatArea] Send media error:", error)
+        console.error("[ChatArea] Send media error:", error);
 
         toast({
           title: "Error al enviar adjunto",
           description: "Ocurrió un error inesperado al enviar el archivo.",
           variant: "destructive",
-        })
+        });
 
         // Restore pending state for retry
-        setPendingFile(fileToSend)
-        if (previewToRevoke) setPendingPreviewUrl(previewToRevoke)
-        setNewMessage(caption)
+        setPendingFile(fileToSend);
+        if (previewToRevoke) setPendingPreviewUrl(previewToRevoke);
+        setNewMessage(caption);
       } finally {
         if (previewToRevoke) {
-          try { URL.revokeObjectURL(previewToRevoke) } catch {}
+          try { URL.revokeObjectURL(previewToRevoke); } catch {}
         }
-        setSendingMedia(false)
+        setSendingMedia(false);
       }
-      return
+      return;
     }
 
-    const messageContent = newMessage
-    setSending(true)
-    setNewMessage("") // Clear input immediately for better UX
-    
+    const messageContent = newMessage;
+    setSending(true);
+    setNewMessage(""); // Clear input immediately for better UX
+    console.log("[ChatArea] Sending text message", { channel, externalUserId, messageContent, conversationId });
     try {
       // Detectar canal y usar endpoint apropiado
       if (channel === 'facebook' && externalUserId) {
-        // Enviar via Facebook Messenger
+        console.log("[ChatArea] Sending Facebook message", { externalUserId, messageContent, conversationId });
         const { data } = await api.post(`/api/facebook/send`, {
           recipientId: externalUserId,
           message: messageContent,
           conversationId: conversationId
-        })
-        setMessages([
-          ...messages,
-          {
-            id: data.messageId || Date.now(),
-            content: messageContent,
-            sender_type: "agent",
-            sender_name: "Agent",
-            created_at: new Date().toISOString(),
-          },
-        ])
+        });
+        console.log("[ChatArea] Facebook response", data);
+        fetchMessages();
+      } else if (channel === 'whatsapp' && externalUserId) {
+        // Enviar mensaje por WhatsApp usando el endpoint del backend real
+        const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app";
+        const token = localStorage.getItem('token') || '';
+        console.log("[ChatArea] Sending WhatsApp message", { externalUserId, messageContent, conversationId });
+        const { data } = await api.post(`${BACKEND_URL}/api/whatsapp/send`, {
+          phone_number: externalUserId,
+          message: messageContent
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        console.log("[ChatArea] WhatsApp response", data);
+        if (data.success) {
+          fetchMessages();
+        } else {
+          console.log("[ChatArea] WhatsApp error", data.error);
+          toast({
+            title: "Error al enviar mensaje WhatsApp",
+            description: data.error || "No se pudo enviar el mensaje.",
+            variant: "destructive",
+          });
+          setNewMessage(messageContent);
+        }
       } else {
-        // Enviar via endpoint normal (WhatsApp u otros)
-        const response = await api.post(`/api/conversations/${conversationId}/messages`, { content: messageContent })
-        const data = response.data
+        // Enviar via endpoint normal (otros canales)
+        console.log("[ChatArea] Sending generic message", { messageContent, conversationId });
+        const response = await api.post(`/api/conversations/${conversationId}/messages`, { content: messageContent });
+        const data = response.data;
+        console.log("[ChatArea] Generic response", data);
+        if (data.success === false) {
+          console.log("[ChatArea] Error in generic response", data.error, data.hint);
+          toast({
+            title: "Error al enviar mensaje",
+            description: data.error + (data.hint ? ` (${data.hint})` : ""),
+            variant: "destructive",
+          });
+          setNewMessage(messageContent);
+          return;
+        }
         if (data.message) {
-          setMessages([
-            ...messages,
-            {
-              id: data.message.id,
-              content: data.message.content,
-              sender_type: data.message.sender_type || "agent",
-              sender_name: data.message.sender_name || "Agent",
-              created_at: data.message.created_at || new Date().toISOString(),
-            },
-          ])
+          fetchMessages();
         }
       }
     } catch (error) {
-      console.error("[ChatArea] Send message error:", error)
+      console.error("[ChatArea] Send message error:", error);
       toast({
         title: "Error al enviar mensaje",
         description: "Ocurrió un error inesperado.",
         variant: "destructive",
-      })
-      setNewMessage(messageContent)
+      });
+      setNewMessage(messageContent);
     } finally {
-      setSending(false)
+      setSending(false);
     }
   }
 
@@ -492,6 +505,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       .slice(0, 2);
   }
 
+  console.log('[ChatArea] Renderizando mensajes:', messages);
   if (!conversationId) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
@@ -626,6 +640,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
           ) : messages.length === 0 ? (
             <p className="text-center text-muted-foreground text-sm">No hay mensajes aún</p>
           ) : (
+            
             messages.map((msg, index) => {
               // Comparar hora con el mensaje anterior
               const prevMsg = index > 0 ? messages[index - 1] : null
@@ -637,7 +652,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
               return (
                 <div
                   key={msg.id}
-                  className={cn("flex gap-3 animate-fade-in-up flex-shrink-0 group", !isAgentMsg && "flex-row-reverse")}
+                  className={cn("flex gap-3 animate-fade-in-up flex-shrink-0 group", msg.sender_type === "contact" && "flex-row-reverse")}
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <Avatar className="h-8 w-8 flex-shrink-0">
@@ -690,7 +705,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
                         <div
                           className={cn(
                             "max-w-full rounded-lg px-4 py-2 shadow-sm transition-all hover:shadow-md group-hover:ring-2",
-                            !isAgentMsg
+                            msg.sender_type === "contact"
                               ? "bg-primary text-primary-foreground group-hover:ring-primary/50"
                               : "bg-card text-foreground border border-border group-hover:ring-muted-foreground/30",
                           )}

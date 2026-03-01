@@ -108,13 +108,27 @@ export default function PlantillasWASection() {
       const results = await Promise.all(selectedContactsObj.map(async (contact) => {
         const variables = [contact.name]
         try {
+          // Enviar plantilla
           await api.post(`/api/twilio/send-wa-template`, {
             to: contact.phone.replace(/\s/g, ""),
             from: process.env.NEXT_PUBLIC_TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886",
             templateSid: selectedTplObj.sid,
             variables
           })
-          return `Mensaje enviado a ${contact.name}`
+          // Crear/obtener conversación antes de enviar el mensaje normal
+          let conversationId = contact.conversationId
+          if (!conversationId) {
+            const { data } = await api.post("/api/conversations", { contact_id: String(contact.id) });
+            conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
+          }
+          if (conversationId) {
+            await api.post(`/api/conversations/${conversationId}/messages`, {
+              content: "Mensaje de seguimiento después de la plantilla",
+              message_type: "text",
+              // sender_id: ... // si tienes el id del usuario/agente
+            })
+          }
+          return `Plantilla y mensaje enviados a ${contact.name}`
         } catch (err: any) {
           throw new Error(`Error enviando a ${contact.name}: ${err?.response?.data?.error || err.message}`)
         }

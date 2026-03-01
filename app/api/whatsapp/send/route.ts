@@ -31,31 +31,16 @@ export async function POST(request: Request) {
     const body = await request.json()
     const phoneNumberRaw = body.phone_number
     const message = body.message
-    const template = body.template
-
-    if (!phoneNumberRaw || (!message && !template)) {
-      return NextResponse.json(
-        { error: "phone_number and message or template are required" },
-        { status: 400 }
-      )
+    // Solo permitir envío de plantillas por Cloud API
+    if (!template) {
+      return NextResponse.json({ error: "Solo se permite envío de plantillas por Cloud API. Mensajes normales deben ir por Twilio/backend." }, { status: 400 })
     }
-
-    const phoneNumber = normalizePhoneNumber(phoneNumberRaw)
-
-    const payload = template
-      ? {
-          messaging_product: "whatsapp",
-          to: phoneNumber,
-          type: "template",
-          template,
-        }
-      : {
-          messaging_product: "whatsapp",
-          to: phoneNumber,
-          type: "text",
-          text: { body: message },
-        }
-
+    const payload = {
+      messaging_product: "whatsapp",
+      to: phoneNumber,
+      type: "template",
+      template,
+    }
     const response = await fetch(
       `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
       {
@@ -67,7 +52,15 @@ export async function POST(request: Request) {
         body: JSON.stringify(payload),
       }
     )
-
+    const data = await response.json().catch(() => null)
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data?.error?.message || "Failed to send WhatsApp template", details: data, to },
+        { status: response.status || 502 },
+      )
+    }
+    const externalMessageId = String(data?.messages?.[0]?.id || "") || null
+    return NextResponse.json({ ok: true, externalMessageId, to })
     const data = await response.json()
 
     if (!response.ok) {

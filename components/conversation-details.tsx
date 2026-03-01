@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import { useToast } from "../hooks/use-toast"
 import { api } from "../lib/api"
 import {
   Info,
@@ -49,6 +50,7 @@ interface DetailsPanelProps {
   onPriorityChange?: (priority: string) => void
   conversationId?: string | number
   onUpdate?: () => void
+  externalUserId?: string
 }
 
 export function ConversationDetails({
@@ -62,7 +64,18 @@ export function ConversationDetails({
   onPriorityChange,
   conversationId,
   onUpdate,
+  externalUserId,
 }: DetailsPanelProps) {
+  // LOG: Validar externalUserId
+  useEffect(() => {
+    // Suponiendo que externalUserId viene de props, de contexto, o de algún fetch/conversación
+    // Si existe en el scope, loguearlo
+    if (typeof externalUserId !== 'undefined') {
+      console.log('[ConversationDetails] externalUserId:', externalUserId);
+    } else {
+      console.log('[ConversationDetails] externalUserId is undefined');
+    }
+  }, [typeof externalUserId !== 'undefined' ? externalUserId : null]);
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
   const [currentStatus, setCurrentStatus] = useState(status)
   const [currentPriority, setCurrentPriority] = useState(priority)
@@ -83,6 +96,7 @@ export function ConversationDetails({
 
   const calendarBookingLink = "https://calendly.com/logimarket/sesion-cliente"
 
+  const { toast } = useToast();
   // Cargar comentarios
   useEffect(() => {
     if (!conversationId) return
@@ -111,8 +125,19 @@ export function ConversationDetails({
         } else {
           setComments([])
         }
-      } catch (error) {
-        console.error("Error loading comments:", error)
+      } catch (error: any) {
+          // Axios error: error.response, fetch error: error.status
+          const status = error?.response?.status || error?.status;
+          if (status === 404) {
+            toast({
+              title: "Conversación eliminada o no encontrada",
+              description: "La conversación ya no existe.",
+              variant: "destructive",
+            });
+            setComments([]);
+          } else {
+            console.error("Error loading comments:", error);
+          }
       } finally {
         setCommentsLoading(false)
       }

@@ -71,7 +71,7 @@ export function useConversations(onlyAssigned = false) {
         priority: (conv.priority as "low" | "medium" | "high") || "low",
         assigned_agent_id: conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined,
         channel: conv.channel || "whatsapp",
-        external_user_id: conv.external_user_id,
+        external_user_id: conv.external_user_id || conv.customer_phone,
         last_message: conv.last_message || undefined,
         unread_count: conv.unread_count || 0,
         created_at: conv.created_at || new Date().toISOString(),

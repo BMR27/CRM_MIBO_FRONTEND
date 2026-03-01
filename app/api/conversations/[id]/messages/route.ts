@@ -399,27 +399,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           return NextResponse.json({ error: "Recipient phone invalid" }, { status: 400 })
         }
 
-        const waRes = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(phoneNumberId)}/messages`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            to,
-            type: "text",
-            text: { body: content },
-          }),
-        })
-
-        const waData = await waRes.json().catch(() => null)
-        if (!waRes.ok) {
-          return NextResponse.json(
-            { error: waData?.error?.message || "Failed to send WhatsApp message", details: waData },
-            { status: waRes.status || 502 },
-          )
-        }
+        // El envío de mensajes normales debe ir por Twilio/backend, no por Cloud API
+        return NextResponse.json({ error: "Solo se permite envío de plantillas por Cloud API. Mensajes normales deben ir por Twilio/backend." }, { status: 400 })
       }
     }
 

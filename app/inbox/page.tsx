@@ -145,6 +145,15 @@ export default function InboxPage() {
             conversationId={selectedConversationId}
             contactName={selectedContactName}
             currentAgentId={currentAgentId}
+            channel={selectedConversationId ? conversations.find(c => String(c.id) === String(selectedConversationId))?.channel : undefined}
+            externalUserId={
+              selectedConversationId
+                ? (
+                    conversations.find(c => String(c.id) === String(selectedConversationId))?.external_user_id ||
+                    conversations.find(c => String(c.id) === String(selectedConversationId))?.customer_phone
+                  )
+                : undefined
+            }
             onUpdate={handleUpdate}
             onConversationDeleted={handleConversationDeleted}
           />
@@ -156,7 +165,15 @@ export default function InboxPage() {
           <div className="hidden xl:block w-4 flex-shrink-0 bg-muted/40" aria-hidden="true" />
           <div className="hidden xl:flex h-full w-72 flex-col border-l border-border bg-card flex-shrink-0 overflow-hidden">
               <OrdersPanel 
-                conversationDetails={conversationDetails}
+                conversationDetails={{
+                  ...conversationDetails,
+                  externalUserId: selectedConversationId
+                    ? (
+                        conversations.find(c => String(c.id) === String(selectedConversationId))?.external_user_id ||
+                        conversations.find(c => String(c.id) === String(selectedConversationId))?.customer_phone
+                      )
+                    : undefined
+                }}
                 onUpdate={handleUpdate}
                 onAgentChange={handleAgentChange}
               />
