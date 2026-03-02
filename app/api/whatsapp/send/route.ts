@@ -61,14 +61,6 @@ export async function POST(request: Request) {
     }
     const externalMessageId = String(data?.messages?.[0]?.id || "") || null
     return NextResponse.json({ ok: true, externalMessageId, to })
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: "Failed to send message", details: data },
-        { status: response.status }
-      )
-    }
 
     return NextResponse.json({ status: "ok", data })
   } catch (error) {

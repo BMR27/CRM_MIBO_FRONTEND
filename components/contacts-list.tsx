@@ -74,20 +74,23 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
   }
 
   const handleSaveEdit = async () => {
+    console.log('[ContactEdit] handleSaveEdit called', { editId, editName, editPhone, editExternal });
     if (editId === null) return
     try {
       setEditing(true)
-      const res = await api.patch(`/api/api/contacts/${encodeURIComponent(String(editId))}`,
+      const res = await api.patch(`/api/contacts/${encodeURIComponent(String(editId))}`,
         {
           name: editName,
           phone_number: editPhone,
           external_user_id: editExternal,
         }
       )
+      console.log('[ContactEdit] PATCH response', res);
       toast({ title: "Contacto actualizado", description: "Se guardaron los cambios." })
       setEditOpen(false)
       await refetch()
     } catch (e) {
+      console.error('[ContactEdit] PATCH error', e);
       toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo actualizar el contacto", variant: "destructive" })
     } finally {
       setEditing(false)
@@ -98,7 +101,9 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
     if (deleteId === null) return
     try {
       setDeleting(true)
-      await api.delete(`/api/api/contacts/${encodeURIComponent(String(deleteId))}`)
+      const res = await api.delete(`/api/api/contacts/${encodeURIComponent(String(deleteId))}`)
+      toast({ title: "Contacto eliminado", description: "El contacto fue eliminado correctamente." })
+      console.log('[ContactDelete] DELETE response', res);
       toast({ title: "Contacto eliminado" })
       setDeleteOpen(false)
       onDeleted?.(String(deleteId))
