@@ -23,6 +23,7 @@ export function useContacts() {
       const res = await api.get("/api/api/contacts", { params: {}, headers: {} })
       const data = res.data
       const list = Array.isArray(data) ? data : (data?.contacts || [])
+      console.log('[useContacts] fetchContacts result:', list);
       setContacts(list)
       setError(null)
     } catch (e: any) {

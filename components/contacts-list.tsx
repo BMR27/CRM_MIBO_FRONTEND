@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { api } from "@/lib/api"
+import { useMemo, useState, useEffect } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -43,6 +44,10 @@ interface ContactsListProps {
 
 export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }: ContactsListProps) {
   const { contacts, loading, error, refetch } = useContacts()
+  // Log automático cada vez que contacts cambia
+  useEffect(() => {
+    console.log('[ContactsList] contacts state changed:', contacts);
+  }, [contacts]);
   const [query, setQuery] = useState("")
 
   const [editOpen, setEditOpen] = useState(false)
@@ -76,13 +81,19 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
   const handleSaveEdit = async () => {
     console.log('[ContactEdit] handleSaveEdit called', { editId, editName, editPhone, editExternal });
     if (editId === null) return
+    // Normaliza el número antes de enviar (sin prefijo whatsapp:)
+    const cleanPhone = (phone: string) => {
+      if (!phone) return "";
+      let cleaned = phone.replace(/\s+/g, "");
+      if (!cleaned.startsWith("+")) cleaned = "+" + cleaned.replace(/^\+/, "");
+      return cleaned;
+    };
     try {
       setEditing(true)
-      const res = await api.patch(`/api/contacts/${encodeURIComponent(String(editId))}`,
+      const res = await api.patch(`/api/api/contacts/${encodeURIComponent(String(editId))}`,
         {
           name: editName,
-          phone_number: editPhone,
-          external_user_id: editExternal,
+          phone_number: cleanPhone(editPhone)
         }
       )
       console.log('[ContactEdit] PATCH response', res);
@@ -102,12 +113,26 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
     try {
       setDeleting(true)
       const res = await api.delete(`/api/api/contacts/${encodeURIComponent(String(deleteId))}`)
-      toast({ title: "Contacto eliminado", description: "El contacto fue eliminado correctamente." })
+      if (res.status === 200 || res.status === 204) {
+        toast({
+          title: "Contacto eliminado",
+          description: "El contacto fue eliminado correctamente. Si tienes dudas, contacta a soporte.",
+          variant: "success"
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: res.data?.error || `No se pudo eliminar el contacto (status ${res.status})`,
+          variant: "destructive"
+        })
+      }
       console.log('[ContactDelete] DELETE response', res);
-      toast({ title: "Contacto eliminado" })
       setDeleteOpen(false)
       onDeleted?.(String(deleteId))
       await refetch()
+      setTimeout(() => {
+        console.log('[ContactDelete] contacts after refetch:', contacts);
+      }, 500);
     } catch (e) {
       toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo eliminar el contacto", variant: "destructive" })
     } finally {

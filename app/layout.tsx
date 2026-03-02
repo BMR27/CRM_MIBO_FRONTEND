@@ -35,10 +35,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Importa el Toaster para mostrar los mensajes toast globales
+  const Toaster = require('../components/ui/toaster').Toaster;
   return (
     <html lang="es">
       <body className={`font-sans antialiased`}>
         {children}
+        <Toaster />
         <Analytics />
       </body>
     </html>

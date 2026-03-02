@@ -1032,163 +1032,6 @@ function useContacts() {
     };
 }
 }),
-"[project]/hooks/use-toast.ts [app-ssr] (ecmascript)", ((__turbopack_context__) => {
-"use strict";
-
-__turbopack_context__.s([
-    "reducer",
-    ()=>reducer,
-    "toast",
-    ()=>toast,
-    "useToast",
-    ()=>useToast
-]);
-// Inspired by react-hot-toast library
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
-'use client';
-;
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
-const actionTypes = {
-    ADD_TOAST: 'ADD_TOAST',
-    UPDATE_TOAST: 'UPDATE_TOAST',
-    DISMISS_TOAST: 'DISMISS_TOAST',
-    REMOVE_TOAST: 'REMOVE_TOAST'
-};
-let count = 0;
-function genId() {
-    count = (count + 1) % Number.MAX_SAFE_INTEGER;
-    return count.toString();
-}
-const toastTimeouts = new Map();
-const addToRemoveQueue = (toastId)=>{
-    if (toastTimeouts.has(toastId)) {
-        return;
-    }
-    const timeout = setTimeout(()=>{
-        toastTimeouts.delete(toastId);
-        dispatch({
-            type: 'REMOVE_TOAST',
-            toastId: toastId
-        });
-    }, TOAST_REMOVE_DELAY);
-    toastTimeouts.set(toastId, timeout);
-};
-const reducer = (state, action)=>{
-    switch(action.type){
-        case 'ADD_TOAST':
-            return {
-                ...state,
-                toasts: [
-                    action.toast,
-                    ...state.toasts
-                ].slice(0, TOAST_LIMIT)
-            };
-        case 'UPDATE_TOAST':
-            return {
-                ...state,
-                toasts: state.toasts.map((t)=>t.id === action.toast.id ? {
-                        ...t,
-                        ...action.toast
-                    } : t)
-            };
-        case 'DISMISS_TOAST':
-            {
-                const { toastId } = action;
-                // ! Side effects ! - This could be extracted into a dismissToast() action,
-                // but I'll keep it here for simplicity
-                if (toastId) {
-                    addToRemoveQueue(toastId);
-                } else {
-                    state.toasts.forEach((toast)=>{
-                        addToRemoveQueue(toast.id);
-                    });
-                }
-                return {
-                    ...state,
-                    toasts: state.toasts.map((t)=>t.id === toastId || toastId === undefined ? {
-                            ...t,
-                            open: false
-                        } : t)
-                };
-            }
-        case 'REMOVE_TOAST':
-            if (action.toastId === undefined) {
-                return {
-                    ...state,
-                    toasts: []
-                };
-            }
-            return {
-                ...state,
-                toasts: state.toasts.filter((t)=>t.id !== action.toastId)
-            };
-    }
-};
-const listeners = [];
-let memoryState = {
-    toasts: []
-};
-function dispatch(action) {
-    memoryState = reducer(memoryState, action);
-    listeners.forEach((listener)=>{
-        listener(memoryState);
-    });
-}
-function toast({ ...props }) {
-    const id = genId();
-    const update = (props)=>dispatch({
-            type: 'UPDATE_TOAST',
-            toast: {
-                ...props,
-                id
-            }
-        });
-    const dismiss = ()=>dispatch({
-            type: 'DISMISS_TOAST',
-            toastId: id
-        });
-    dispatch({
-        type: 'ADD_TOAST',
-        toast: {
-            ...props,
-            id,
-            open: true,
-            onOpenChange: (open)=>{
-                if (!open) dismiss();
-            }
-        }
-    });
-    return {
-        id: id,
-        dismiss,
-        update
-    };
-}
-function useToast() {
-    const [state, setState] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"](memoryState);
-    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"](()=>{
-        listeners.push(setState);
-        return ()=>{
-            const index = listeners.indexOf(setState);
-            if (index > -1) {
-                listeners.splice(index, 1);
-            }
-        };
-    }, [
-        state
-    ]);
-    return {
-        ...state,
-        toast,
-        dismiss: (toastId)=>dispatch({
-                type: 'DISMISS_TOAST',
-                toastId
-            })
-    };
-}
-;
-}),
 "[project]/components/contacts-list.tsx [app-ssr] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
@@ -1306,11 +1149,19 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
         try {
             setDeleting(true);
             const res = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].delete(`/api/api/contacts/${encodeURIComponent(String(deleteId))}`);
-            (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toast"])({
-                title: "Contacto eliminado",
-                description: "El contacto fue eliminado correctamente. Si tienes dudas, contacta a soporte.",
-                variant: "success"
-            });
+            if (res.status === 200 || res.status === 204) {
+                (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toast"])({
+                    title: "Contacto eliminado",
+                    description: "El contacto fue eliminado correctamente. Si tienes dudas, contacta a soporte.",
+                    variant: "success"
+                });
+            } else {
+                (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toast"])({
+                    title: "Error",
+                    description: res.data?.error || `No se pudo eliminar el contacto (status ${res.status})`,
+                    variant: "destructive"
+                });
+            }
             console.log('[ContactDelete] DELETE response', res);
             setDeleteOpen(false);
             onDeleted?.(String(deleteId));
@@ -1352,17 +1203,17 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                     children: "Cargando contactos..."
                 }, void 0, false, {
                     fileName: "[project]/components/contacts-list.tsx",
-                    lineNumber: 152,
+                    lineNumber: 160,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/contacts-list.tsx",
-                lineNumber: 151,
+                lineNumber: 159,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/contacts-list.tsx",
-            lineNumber: 150,
+            lineNumber: 158,
             columnNumber: 7
         }, this);
     }
@@ -1377,7 +1228,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/components/contacts-list.tsx",
-                        lineNumber: 162,
+                        lineNumber: 170,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -1387,18 +1238,18 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                         children: "Reintentar"
                     }, void 0, false, {
                         fileName: "[project]/components/contacts-list.tsx",
-                        lineNumber: 163,
+                        lineNumber: 171,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/contacts-list.tsx",
-                lineNumber: 161,
+                lineNumber: 169,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/contacts-list.tsx",
-            lineNumber: 160,
+            lineNumber: 168,
             columnNumber: 7
         }, this);
     }
@@ -1418,7 +1269,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                         children: "Contactos"
                                     }, void 0, false, {
                                         fileName: "[project]/components/contacts-list.tsx",
-                                        lineNumber: 176,
+                                        lineNumber: 184,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1426,13 +1277,13 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                         children: "Selecciona para chatear"
                                     }, void 0, false, {
                                         fileName: "[project]/components/contacts-list.tsx",
-                                        lineNumber: 177,
+                                        lineNumber: 185,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/contacts-list.tsx",
-                                lineNumber: 175,
+                                lineNumber: 183,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1440,13 +1291,13 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                 children: headerRight
                             }, void 0, false, {
                                 fileName: "[project]/components/contacts-list.tsx",
-                                lineNumber: 179,
+                                lineNumber: 187,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/contacts-list.tsx",
-                        lineNumber: 174,
+                        lineNumber: 182,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1458,7 +1309,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                 placeholder: "Buscar por nombre, teléfono o ID..."
                             }, void 0, false, {
                                 fileName: "[project]/components/contacts-list.tsx",
-                                lineNumber: 185,
+                                lineNumber: 193,
                                 columnNumber: 11
                             }, this),
                             !!query.trim() && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1474,7 +1325,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/contacts-list.tsx",
-                                        lineNumber: 192,
+                                        lineNumber: 200,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -1484,19 +1335,19 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                         children: "Limpiar"
                                     }, void 0, false, {
                                         fileName: "[project]/components/contacts-list.tsx",
-                                        lineNumber: 195,
+                                        lineNumber: 203,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/contacts-list.tsx",
-                                lineNumber: 191,
+                                lineNumber: 199,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/contacts-list.tsx",
-                        lineNumber: 184,
+                        lineNumber: 192,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollArea"], {
@@ -1508,7 +1359,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                 children: contacts.length === 0 ? "No hay contactos" : "Sin resultados"
                             }, void 0, false, {
                                 fileName: "[project]/components/contacts-list.tsx",
-                                lineNumber: 206,
+                                lineNumber: 214,
                                 columnNumber: 15
                             }, this) : filteredContacts.map((c)=>{
                                 const channel = String(c.channel || "whatsapp");
@@ -1535,12 +1386,12 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                                     children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getContactAvatarText"])(displayName, channel)
                                                 }, void 0, false, {
                                                     fileName: "[project]/components/contacts-list.tsx",
-                                                    lineNumber: 236,
+                                                    lineNumber: 244,
                                                     columnNumber: 25
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/contacts-list.tsx",
-                                                lineNumber: 235,
+                                                lineNumber: 243,
                                                 columnNumber: 23
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1554,7 +1405,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                                                 children: displayName || "Contacto"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/components/contacts-list.tsx",
-                                                                lineNumber: 243,
+                                                                lineNumber: 251,
                                                                 columnNumber: 27
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1562,13 +1413,13 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                                                 children: channel === 'facebook' ? 'Facebook' : 'WhatsApp'
                                                             }, void 0, false, {
                                                                 fileName: "[project]/components/contacts-list.tsx",
-                                                                lineNumber: 244,
+                                                                lineNumber: 252,
                                                                 columnNumber: 27
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/components/contacts-list.tsx",
-                                                        lineNumber: 242,
+                                                        lineNumber: 250,
                                                         columnNumber: 25
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1576,13 +1427,13 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                                         children: secondary
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/contacts-list.tsx",
-                                                        lineNumber: 252,
+                                                        lineNumber: 260,
                                                         columnNumber: 25
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/contacts-list.tsx",
-                                                lineNumber: 241,
+                                                lineNumber: 249,
                                                 columnNumber: 23
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1602,7 +1453,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                                             children: "Chatear"
                                                         }, void 0, false, {
                                                             fileName: "[project]/components/contacts-list.tsx",
-                                                            lineNumber: 257,
+                                                            lineNumber: 265,
                                                             columnNumber: 27
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -1620,12 +1471,12 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                                                 className: "h-4 w-4"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/components/contacts-list.tsx",
-                                                                lineNumber: 282,
+                                                                lineNumber: 290,
                                                                 columnNumber: 29
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/components/contacts-list.tsx",
-                                                            lineNumber: 270,
+                                                            lineNumber: 278,
                                                             columnNumber: 27
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -1643,51 +1494,51 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                                                 className: "h-4 w-4"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/components/contacts-list.tsx",
-                                                                lineNumber: 297,
+                                                                lineNumber: 305,
                                                                 columnNumber: 29
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/components/contacts-list.tsx",
-                                                            lineNumber: 285,
+                                                            lineNumber: 293,
                                                             columnNumber: 27
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/components/contacts-list.tsx",
-                                                    lineNumber: 256,
+                                                    lineNumber: 264,
                                                     columnNumber: 25
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/contacts-list.tsx",
-                                                lineNumber: 255,
+                                                lineNumber: 263,
                                                 columnNumber: 23
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/contacts-list.tsx",
-                                        lineNumber: 234,
+                                        lineNumber: 242,
                                         columnNumber: 21
                                     }, this)
                                 }, String(c.id), false, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 216,
+                                    lineNumber: 224,
                                     columnNumber: 19
                                 }, this);
                             })
                         }, void 0, false, {
                             fileName: "[project]/components/contacts-list.tsx",
-                            lineNumber: 204,
+                            lineNumber: 212,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/components/contacts-list.tsx",
-                        lineNumber: 203,
+                        lineNumber: 211,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/contacts-list.tsx",
-                lineNumber: 173,
+                lineNumber: 181,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Dialog"], {
@@ -1701,7 +1552,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                     children: "Actualizar contacto"
                                 }, void 0, false, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 313,
+                                    lineNumber: 321,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DialogDescription"], {
@@ -1712,20 +1563,20 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                             children: editChannel
                                         }, void 0, false, {
                                             fileName: "[project]/components/contacts-list.tsx",
-                                            lineNumber: 315,
+                                            lineNumber: 323,
                                             columnNumber: 76
                                         }, this),
                                         "."
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 314,
+                                    lineNumber: 322,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/contacts-list.tsx",
-                            lineNumber: 312,
+                            lineNumber: 320,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1738,7 +1589,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                             children: "Nombre"
                                         }, void 0, false, {
                                             fileName: "[project]/components/contacts-list.tsx",
-                                            lineNumber: 321,
+                                            lineNumber: 329,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -1747,13 +1598,13 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                             placeholder: "Ej. Ana Martínez"
                                         }, void 0, false, {
                                             fileName: "[project]/components/contacts-list.tsx",
-                                            lineNumber: 322,
+                                            lineNumber: 330,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 320,
+                                    lineNumber: 328,
                                     columnNumber: 13
                                 }, this),
                                 String(editChannel).toLowerCase() === "facebook" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1763,7 +1614,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                             children: "PSID (external_user_id)"
                                         }, void 0, false, {
                                             fileName: "[project]/components/contacts-list.tsx",
-                                            lineNumber: 327,
+                                            lineNumber: 335,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -1772,13 +1623,13 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                             placeholder: "Ej. 1234567890"
                                         }, void 0, false, {
                                             fileName: "[project]/components/contacts-list.tsx",
-                                            lineNumber: 328,
+                                            lineNumber: 336,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 326,
+                                    lineNumber: 334,
                                     columnNumber: 15
                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "grid gap-2",
@@ -1787,7 +1638,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                             children: "Teléfono"
                                         }, void 0, false, {
                                             fileName: "[project]/components/contacts-list.tsx",
-                                            lineNumber: 332,
+                                            lineNumber: 340,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -1796,7 +1647,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                             placeholder: "Ej. +52 1 5611 205 872"
                                         }, void 0, false, {
                                             fileName: "[project]/components/contacts-list.tsx",
-                                            lineNumber: 333,
+                                            lineNumber: 341,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1804,19 +1655,19 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                             children: "Se normaliza a formato WhatsApp automáticamente."
                                         }, void 0, false, {
                                             fileName: "[project]/components/contacts-list.tsx",
-                                            lineNumber: 334,
+                                            lineNumber: 342,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 331,
+                                    lineNumber: 339,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/contacts-list.tsx",
-                            lineNumber: 319,
+                            lineNumber: 327,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DialogFooter"], {
@@ -1828,7 +1679,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                     children: "Cancelar"
                                 }, void 0, false, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 340,
+                                    lineNumber: 348,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -1837,24 +1688,24 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                     children: editing ? "Guardando..." : "Guardar"
                                 }, void 0, false, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 343,
+                                    lineNumber: 351,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/contacts-list.tsx",
-                            lineNumber: 339,
+                            lineNumber: 347,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/contacts-list.tsx",
-                    lineNumber: 311,
+                    lineNumber: 319,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/contacts-list.tsx",
-                lineNumber: 310,
+                lineNumber: 318,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDialog"], {
@@ -1868,7 +1719,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                     children: "Eliminar contacto"
                                 }, void 0, false, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 353,
+                                    lineNumber: 361,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDialogDescription"], {
@@ -1879,20 +1730,20 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                             children: deleteLabel
                                         }, void 0, false, {
                                             fileName: "[project]/components/contacts-list.tsx",
-                                            lineNumber: 355,
+                                            lineNumber: 363,
                                             columnNumber: 74
                                         }, this),
                                         "."
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 354,
+                                    lineNumber: 362,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/contacts-list.tsx",
-                            lineNumber: 352,
+                            lineNumber: 360,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDialogFooter"], {
@@ -1902,7 +1753,7 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                     children: "Cancelar"
                                 }, void 0, false, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 359,
+                                    lineNumber: 367,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDialogAction"], {
@@ -1911,30 +1762,30 @@ function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }) 
                                     children: deleting ? "Eliminando..." : "Eliminar"
                                 }, void 0, false, {
                                     fileName: "[project]/components/contacts-list.tsx",
-                                    lineNumber: 360,
+                                    lineNumber: 368,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/contacts-list.tsx",
-                            lineNumber: 358,
+                            lineNumber: 366,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/contacts-list.tsx",
-                    lineNumber: 351,
+                    lineNumber: 359,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/contacts-list.tsx",
-                lineNumber: 350,
+                lineNumber: 358,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/contacts-list.tsx",
-        lineNumber: 172,
+        lineNumber: 180,
         columnNumber: 5
     }, this);
 }
@@ -2301,4 +2152,4 @@ function ContactosPage() {
 }),
 ];
 
-//# sourceMappingURL=%5Broot-of-the-server%5D__c3d50e24._.js.map
+//# sourceMappingURL=%5Broot-of-the-server%5D__dc035eb1._.js.map

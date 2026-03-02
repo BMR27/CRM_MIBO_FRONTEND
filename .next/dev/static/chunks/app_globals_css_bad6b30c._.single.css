@@ -173,7 +173,6 @@
     --color-black: #000;
     --color-white: #fff;
     --spacing: .25rem;
-    --container-xs: 20rem;
     --container-sm: 24rem;
     --container-md: 28rem;
     --container-lg: 32rem;
@@ -704,6 +703,10 @@
     right: calc(var(--spacing) * 4);
   }
 
+  .right-8 {
+    right: calc(var(--spacing) * 8);
+  }
+
   .-bottom-1 {
     bottom: calc(var(--spacing) * -1);
   }
@@ -714,6 +717,10 @@
 
   .bottom-0 {
     bottom: calc(var(--spacing) * 0);
+  }
+
+  .bottom-8 {
+    bottom: calc(var(--spacing) * 8);
   }
 
   .-left-12 {
@@ -954,10 +961,6 @@
     display: inline;
   }
 
-  .inline-block {
-    display: inline-block;
-  }
-
   .inline-flex {
     display: inline-flex;
   }
@@ -1127,10 +1130,6 @@
     height: calc(var(--spacing) * 64);
   }
 
-  .h-80 {
-    height: calc(var(--spacing) * 80);
-  }
-
   .h-96 {
     height: calc(var(--spacing) * 96);
   }
@@ -1247,10 +1246,6 @@
     min-height: 140px;
   }
 
-  .min-h-\[400px\] {
-    min-height: 400px;
-  }
-
   .min-h-full {
     min-height: 100%;
   }
@@ -1355,10 +1350,6 @@
     width: calc(var(--spacing) * 72);
   }
 
-  .w-80 {
-    width: calc(var(--spacing) * 80);
-  }
-
   .w-96 {
     width: calc(var(--spacing) * 96);
   }
@@ -1407,10 +1398,6 @@
     max-width: 70%;
   }
 
-  .max-w-\[420px\] {
-    max-width: 420px;
-  }
-
   .max-w-\[calc\(100\%-2rem\)\] {
     max-width: calc(100% - 2rem);
   }
@@ -1433,10 +1420,6 @@
 
   .max-w-sm {
     max-width: var(--container-sm);
-  }
-
-  .max-w-xs {
-    max-width: var(--container-xs);
   }
 
   .min-w-\(--cell-size\) {
@@ -1475,20 +1458,12 @@
     min-width: 12rem;
   }
 
-  .min-w-\[90px\] {
-    min-width: 90px;
-  }
-
   .min-w-\[160px\] {
     min-width: 160px;
   }
 
   .min-w-\[200px\] {
     min-width: 200px;
-  }
-
-  .min-w-\[320px\] {
-    min-width: 320px;
   }
 
   .min-w-\[var\(--radix-select-trigger-width\)\] {
@@ -1503,7 +1478,7 @@
     flex-shrink: 0;
   }
 
-  .flex-grow, .grow {
+  .grow {
     flex-grow: 1;
   }
 
@@ -2501,6 +2476,16 @@
     }
   }
 
+  .bg-white\/95 {
+    background-color: #fffffff2;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-white\/95 {
+      background-color: color-mix(in oklab, var(--color-white) 95%, transparent);
+    }
+  }
+
   .bg-yellow-100 {
     background-color: var(--color-yellow-100);
   }
@@ -2927,10 +2912,6 @@
     white-space: nowrap;
   }
 
-  .whitespace-pre-line {
-    white-space: pre-line;
-  }
-
   .whitespace-pre-wrap {
     white-space: pre-wrap;
   }
@@ -3199,10 +3180,6 @@
   .antialiased {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  .accent-primary {
-    accent-color: var(--primary);
   }
 
   .opacity-0 {

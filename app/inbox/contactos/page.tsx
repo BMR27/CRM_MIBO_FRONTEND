@@ -21,6 +21,40 @@ import { toast } from "@/hooks/use-toast"
 import type { Contact } from "@/hooks/use-contacts"
 
 export default function ContactosPage() {
+    // Normaliza el número de teléfono al formato internacional sin espacios
+    const cleanPhone = (phone: string) => {
+      if (!phone) return "";
+      let cleaned = phone.replace(/\s+/g, "");
+      if (!cleaned.startsWith("+")) cleaned = "+" + cleaned.replace(/^\+/, "");
+      return cleaned;
+    };
+
+    // Crear contacto
+    const handleCreateContact = async () => {
+      try {
+        setCreating(true)
+        const res = await api.post("/api/api/contacts", {
+          name: newName,
+          channel: newChannel,
+          phone_number: newChannel === "whatsapp" ? cleanPhone(newPhone) : undefined,
+          external_user_id: newChannel === "facebook" ? newExternalUserId : undefined,
+        })
+        if (res.status !== 201 && res.status !== 200) {
+          toast({ title: "Error", description: res.data?.error || "No se pudo crear el contacto", variant: "destructive" })
+          return
+        }
+        toast({ title: "Contacto creado", description: "Ya puedes enviarle mensaje." })
+        setNewOpen(false)
+        setNewName("")
+        setNewPhone("")
+        setNewExternalUserId("")
+        setRefreshKey((p) => p + 1)
+      } catch (e) {
+        toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo crear el contacto", variant: "destructive" })
+      } finally {
+        setCreating(false)
+      }
+    }
   const router = useRouter()
   const [selectedContactId, setSelectedContactId] = useState<string>()
   const [refreshKey, setRefreshKey] = useState(0)
@@ -89,39 +123,6 @@ export default function ContactosPage() {
       console.error("[CHAT] Error en handleChatContact:", e)
     }
   }
-
-  const handleUpdate = () => setRefreshKey((p) => p + 1)
-
-  const handleCreateContact = async () => {
-    try {
-      setCreating(true)
-      const res = await api.post("/api/api/contacts", {
-        name: newName,
-        channel: newChannel,
-        phone_number: newChannel === "whatsapp" ? newPhone : undefined,
-        external_user_id: newChannel === "facebook" ? newExternalUserId : undefined,
-      })
-
-      if (res.status !== 201 && res.status !== 200) {
-        toast({ title: "Error", description: res.data?.error || "No se pudo crear el contacto", variant: "destructive" })
-        return
-      }
-
-      toast({ title: "Contacto creado", description: "Ya puedes enviarle mensaje." })
-      setNewOpen(false)
-      setNewName("")
-      setNewPhone("")
-      setNewExternalUserId("")
-
-      // Trigger lists to refresh (ContactsList hook refetches on mount; we force remount)
-      setRefreshKey((p) => p + 1)
-    } catch (e) {
-      toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo crear el contacto", variant: "destructive" })
-    } finally {
-      setCreating(false)
-    }
-  }
-
   return (
     <>
       <InboxHeader />
@@ -134,6 +135,7 @@ export default function ContactosPage() {
             onChat={handleChatContact}
             onDeleted={(deletedId) => {
               if (String(deletedId) === String(selectedContactId)) setSelectedContactId(undefined)
+              setRefreshKey((p) => p + 1) // Fuerza el remount y refresca la lista
             }}
             headerRight={
               <Dialog open={newOpen} onOpenChange={setNewOpen}>
@@ -147,7 +149,6 @@ export default function ContactosPage() {
                       Crea un contacto para iniciar una conversación y enviarle mensajes.
                     </DialogDescription>
                   </DialogHeader>
-
                   <div className="grid gap-4">
                     <div className="grid gap-2">
                       <Label>Canal</Label>
@@ -160,12 +161,10 @@ export default function ContactosPage() {
                         <option value="facebook">Facebook</option>
                       </select>
                     </div>
-
                     <div className="grid gap-2">
                       <Label>Nombre</Label>
                       <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Ej. Ana Martínez" />
                     </div>
-
                     {newChannel === "whatsapp" ? (
                       <div className="grid gap-2">
                         <Label>Teléfono</Label>
@@ -187,7 +186,6 @@ export default function ContactosPage() {
                       </div>
                     )}
                   </div>
-
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setNewOpen(false)} disabled={creating}>
                       Cancelar
