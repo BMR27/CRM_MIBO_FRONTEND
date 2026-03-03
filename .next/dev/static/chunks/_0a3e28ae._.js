@@ -10,7 +10,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-client] (ecmascript)");
 ;
 const api = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
-    baseURL: ("TURBOPACK compile-time value", "http://localhost:3001") || "https://crmmibobackend-production.up.railway.app"
+    baseURL: ("TURBOPACK compile-time value", "http://localhost:30012") || "https://crmmibobackend-production.up.railway.app"
 });
 api.interceptors.request.use((config)=>{
     if ("TURBOPACK compile-time truthy", 1) {
@@ -1960,7 +1960,7 @@ function ContactosPage() {
     const handleSelectContact = (contact)=>{
         setSelectedContactId(String(contact.id));
     };
-    const BACKEND_URL = ("TURBOPACK compile-time value", "http://localhost:3001") || "https://crmmibobackend-production.up.railway.app";
+    const BACKEND_URL = ("TURBOPACK compile-time value", "http://localhost:30012") || "https://crmmibobackend-production.up.railway.app";
     // DEBUG: Mostrar el valor real de la variable en consola
     if (("TURBOPACK compile-time value", "object") !== "undefined") {
     // Solo en cliente

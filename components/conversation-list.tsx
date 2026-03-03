@@ -21,7 +21,7 @@ export function ConversationList({
   onlyAssigned,
 }: ConversationListProps) {
 
-  const { conversations, loading, error, markAsRead } = useConversations(onlyAssigned)
+  const { conversations, loading, error, markAsRead, refetch } = useConversations(onlyAssigned)
 
 
   const getDisplayName = (name: string, channel?: string) =>
@@ -119,9 +119,10 @@ export function ConversationList({
             {conversations.map((conv) => (
               <div
                 key={conv.id}
-                onClick={() => {
+                onClick={async () => {
                   onSelectConversation(conv.id)
-                  markAsRead(conv.id)
+                  await markAsRead(conv.id)
+                  if (typeof refetch === 'function') refetch();
                 }}
                 className={cn(
                   "relative w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10",
