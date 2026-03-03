@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { api } from "@/lib/api"
 
 export type UserRole = "admin" | "supervisor" | "agent"
 
@@ -20,7 +21,7 @@ export function useUserRole() {
     const fetchUserInfo = async () => {
       try {
         const backendUrl = "https://crmmibobackend-production.up.railway.app"
-          const token = typeof window !== "undefined" ? localStorage.getItem("jwt") : null
+          const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
         
         if (!token) {
           setError("No authentication token found")

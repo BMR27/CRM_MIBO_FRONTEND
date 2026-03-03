@@ -423,39 +423,6 @@ export function ConversationDetails({
           </div>
         </div>
 
-        <div className="flex border-b border-border">
-          <div className="w-1 bg-blue-300 shrink-0" />
-          <div className="flex-1 p-2">
-            <div className="flex items-center gap-1.5">
-              <FolderOpen className="h-3 w-3 text-blue-500" />
-              <span className="text-xs text-foreground">Timeline</span>
-            </div>
-            <div className="flex items-center justify-between ml-4.5">
-              <span className="text-xs text-muted-foreground">Último:</span>
-              <span className="text-xs text-foreground">{
-                (() => {
-                  let fecha = '';
-                  let raw = lastMessage && typeof lastMessage.created_at === 'string' ? lastMessage.created_at : lastActivity;
-                  if (raw && typeof raw === 'string') {
-                    // Si es formato ISO, formatear
-                    if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(raw)) {
-                      const d = new Date(raw);
-                      const dia = d.getDate().toString().padStart(2, '0');
-                      const mes = (d.getMonth() + 1).toString().padStart(2, '0');
-                      const anio = d.getFullYear();
-                      const hora = d.getHours().toString().padStart(2, '0');
-                      const min = d.getMinutes().toString().padStart(2, '0');
-                      fecha = `${dia}/${mes}/${anio} ${hora}:${min}`;
-                    } else {
-                      fecha = raw;
-                    }
-                  }
-                  return fecha;
-                })()
-              }</span>
-            </div>
-          </div>
-        </div>
 
         <div className="flex border-b border-border">
           <div className="w-1 bg-blue-400 shrink-0" />

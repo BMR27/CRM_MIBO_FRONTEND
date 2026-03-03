@@ -184,7 +184,7 @@ function useUserRole() {
                 "useUserRole.useEffect.fetchUserInfo": async ()=>{
                     try {
                         const backendUrl = "https://crmmibobackend-production.up.railway.app";
-                        const token = ("TURBOPACK compile-time truthy", 1) ? localStorage.getItem("jwt") : "TURBOPACK unreachable";
+                        const token = ("TURBOPACK compile-time truthy", 1) ? localStorage.getItem("access_token") : "TURBOPACK unreachable";
                         if (!token) {
                             setError("No authentication token found");
                             setLoading(false);

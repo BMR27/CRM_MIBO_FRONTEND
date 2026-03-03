@@ -172,6 +172,9 @@ export default function InboxPage() {
                         conversations.find(c => String(c.id) === String(selectedConversationId))?.external_user_id ||
                         conversations.find(c => String(c.id) === String(selectedConversationId))?.customer_phone
                       )
+                    : undefined,
+                  last_message: selectedConversationId
+                    ? conversations.find(c => String(c.id) === String(selectedConversationId))?.messages?.slice(-1)[0]
                     : undefined
                 }}
                 onUpdate={handleUpdate}

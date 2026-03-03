@@ -21,7 +21,7 @@ export function OrdersPanel({ conversationDetails, onUpdate }: OrdersPanelProps)
       status={conversationDetails?.status}
       priority={conversationDetails?.priority}
       agentName={agentName}
-      lastActivity={conversationDetails?.last_message_at}
+      lastMessage={conversationDetails?.last_message}
       contactName={conversationDetails?.contact_name}
       contactPhone={conversationDetails?.phone_number}
       externalUserId={conversationDetails?.externalUserId || conversationDetails?.external_user_id}
