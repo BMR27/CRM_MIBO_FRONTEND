@@ -37,6 +37,12 @@ export default function RootLayout({
 }>) {
   // Importa el Toaster para mostrar los mensajes toast globales
   const Toaster = require('../components/ui/toaster').Toaster;
+  // Disparo manual de toast para depuración visual
+  if (typeof window !== 'undefined') {
+    const { toast } = require('../hooks/use-toast');
+    window.showTestToast = () => toast({ title: 'Test Toast', description: '¿Se muestra el toast?' });
+    // Puedes ejecutar window.showTestToast() en la consola del navegador
+  }
   return (
     <html lang="es">
       <body className={`font-sans antialiased`}>

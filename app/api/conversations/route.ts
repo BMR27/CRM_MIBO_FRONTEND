@@ -353,6 +353,14 @@ export async function GET(request: Request) {
       }
     }
 
+    // Si la consulta SQL retorna objetos con unread_count, asegúrate de incluirlo en la respuesta
+    // Si hay un mapeo adicional, aquí lo puedes asegurar
+    if (Array.isArray(conversations)) {
+      conversations = conversations.map(conv => ({
+        ...conv,
+        unread_count: conv.unread_count ?? 0,
+      }))
+    }
     return NextResponse.json({ conversations })
   } catch (error) {
     console.error("[v0] Get conversations error:", error)

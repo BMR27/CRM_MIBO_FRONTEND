@@ -21,7 +21,7 @@ export function ConversationList({
   onlyAssigned,
 }: ConversationListProps) {
 
-  const { conversations, loading, error } = useConversations(onlyAssigned)
+  const { conversations, loading, error, markAsRead } = useConversations(onlyAssigned)
 
 
   const getDisplayName = (name: string, channel?: string) =>
@@ -112,14 +112,17 @@ export function ConversationList({
   return (
     // 🔥 ESTE WRAPPER ES LA CLAVE: crea el “recuadro” del sidebar y separa del chat
     <div className="h-full p-3 pr-4">
-      <div className="h-full rounded-xl border bg-card shadow-sm overflow-hidden">
+      <div className="h-full rounded-xl border bg-card shadow-sm overflow-hidden transition-opacity duration-500" style={{ opacity: loading ? 0.5 : 1 }}>
         <ScrollArea className="h-full">
           {/* padding interno del panel */}
           <div className="space-y-3 p-3">
             {conversations.map((conv) => (
               <div
                 key={conv.id}
-                onClick={() => onSelectConversation(conv.id)}
+                onClick={() => {
+                  onSelectConversation(conv.id)
+                  markAsRead(conv.id)
+                }}
                 className={cn(
                   "relative w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10",
                   selectedId === conv.id
@@ -135,6 +138,7 @@ export function ConversationList({
                       </AvatarFallback>
                     </Avatar>
 
+                    {/* Icono del canal */}
                     <div
                       className={cn(
                         "absolute -bottom-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs shadow-md ring-2 ring-background",
@@ -143,6 +147,13 @@ export function ConversationList({
                     >
                       {getChannelIcon(conv.channel)}
                     </div>
+
+                    {/* Badge de mensajes no leídos */}
+                    {conv.unread_count > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] px-1.5 py-0.5 font-bold border border-white shadow-lg z-10">
+                        {conv.unread_count}
+                      </span>
+                    )}
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -159,16 +170,12 @@ export function ConversationList({
                     </div>
 
                     <p className="line-clamp-1 text-muted-foreground text-xs leading-relaxed mb-2">
-                      {conv.last_message || "Sin mensajes"}
+                      {typeof conv.last_message === "string"
+                        ? conv.last_message
+                        : conv.last_message?.content || "Sin mensajes"}
                     </p>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      {conv.unread_count > 0 && (
-                        <Badge variant="default" className="h-5 rounded-full px-2 text-xs font-bold shadow-sm">
-                          {conv.unread_count}
-                        </Badge>
-                      )}
-
                       <Badge
                         variant="outline"
                         className={cn(

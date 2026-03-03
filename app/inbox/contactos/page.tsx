@@ -29,14 +29,28 @@ export default function ContactosPage() {
       return cleaned;
     };
 
+    // Validación de formato internacional E.164
+    const isValidPhone = (phone: string) => {
+      return /^\+[1-9]\d{9,14}$/.test(phone);
+    };
+
     // Crear contacto
     const handleCreateContact = async () => {
+      const phoneToSend = cleanPhone(newPhone);
+      if (newChannel === "whatsapp" && !isValidPhone(phoneToSend)) {
+        toast({
+          title: "Teléfono inválido",
+          description: "El número debe estar en formato internacional, ej: +5218443429366",
+          variant: "destructive"
+        });
+        return;
+      }
       try {
         setCreating(true)
         const res = await api.post("/api/api/contacts", {
           name: newName,
           channel: newChannel,
-          phone_number: newChannel === "whatsapp" ? cleanPhone(newPhone) : undefined,
+          phone_number: newChannel === "whatsapp" ? phoneToSend : undefined,
           external_user_id: newChannel === "facebook" ? newExternalUserId : undefined,
         })
         if (res.status !== 201 && res.status !== 200) {
@@ -74,8 +88,6 @@ export default function ContactosPage() {
   // DEBUG: Mostrar el valor real de la variable en consola
   if (typeof window !== "undefined") {
     // Solo en cliente
-    console.log("[DEBUG] NEXT_PUBLIC_BACKEND_URL:", process.env.NEXT_PUBLIC_BACKEND_URL)
-    console.log("[DEBUG] BACKEND_URL usado:", BACKEND_URL)
   }
 
   // Al chatear: crea conversación y envía plantilla de bienvenida aprobada
@@ -88,9 +100,7 @@ export default function ContactosPage() {
     }
     try {
       // 1. Crear la conversación
-      console.log("[CHAT] Creando conversación para contacto:", contact)
       const { data } = await api.post("/api/conversations", { contact_id: String(contact.id) });
-      console.log("[CHAT] Respuesta de creación de conversación:", data)
       const conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
       if (!conversationId) throw new Error("No se pudo crear/obtener la conversación");
       toast({ title: "Conversación creada", description: `ID: ${conversationId}` })
@@ -104,7 +114,6 @@ export default function ContactosPage() {
       const approvedTemplateSid = "HX99ead19f74793c6b5f0e1777523f1815"; // bienvenido_logi
       const from = "whatsapp:+15558046791";
       const variables = [contact.name || ""];
-      console.log("[CHAT] Enviando plantilla aprobada:", { to: phone, from, contentSid: approvedTemplateSid, variables, conversation_id: conversationId })
       const tplRes = await api.post("/api/twilio/send-wa-template", {
         to: phone,
         from,
@@ -112,15 +121,12 @@ export default function ContactosPage() {
         variables,
         conversation_id: conversationId
       });
-      console.log("[CHAT] Respuesta de plantilla:", tplRes.data)
       toast({ title: "Plantilla enviada", description: "Se envió la plantilla de bienvenida." })
 
       // 3. Redirigir a la conversación
-      console.log("[CHAT] Redirigiendo a /inbox?conversationId=", conversationId)
       router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`);
     } catch (e) {
       toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo abrir la conversación ni enviar la plantilla", variant: "destructive" })
-      console.error("[CHAT] Error en handleChatContact:", e)
     }
   }
   return (

@@ -1828,14 +1828,27 @@ function ContactosPage() {
         if (!cleaned.startsWith("+")) cleaned = "+" + cleaned.replace(/^\+/, "");
         return cleaned;
     };
+    // Validación de formato internacional E.164
+    const isValidPhone = (phone)=>{
+        return /^\+[1-9]\d{9,14}$/.test(phone);
+    };
     // Crear contacto
     const handleCreateContact = async ()=>{
+        const phoneToSend = cleanPhone(newPhone);
+        if (newChannel === "whatsapp" && !isValidPhone(phoneToSend)) {
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toast"])({
+                title: "Teléfono inválido",
+                description: "El número debe estar en formato internacional, ej: +5218443429366",
+                variant: "destructive"
+            });
+            return;
+        }
         try {
             setCreating(true);
             const res = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].post("/api/api/contacts", {
                 name: newName,
                 channel: newChannel,
-                phone_number: newChannel === "whatsapp" ? cleanPhone(newPhone) : undefined,
+                phone_number: newChannel === "whatsapp" ? phoneToSend : undefined,
                 external_user_id: newChannel === "facebook" ? newExternalUserId : undefined
             });
             if (res.status !== 201 && res.status !== 200) {
@@ -1879,8 +1892,9 @@ function ContactosPage() {
     };
     const BACKEND_URL = ("TURBOPACK compile-time value", "http://localhost:3001") || "https://crmmibobackend-production.up.railway.app";
     // DEBUG: Mostrar el valor real de la variable en consola
-    if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
-    ;
+    if (("TURBOPACK compile-time value", "undefined") !== "undefined") {
+    // Solo en cliente
+    }
     // Al chatear: crea conversación y envía plantilla de bienvenida aprobada
     const handleChatContact = async (contact)=>{
         setSelectedContactId(String(contact.id));
@@ -1900,7 +1914,7 @@ function ContactosPage() {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$inbox$2d$header$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["InboxHeader"], {}, void 0, false, {
                 fileName: "[project]/app/inbox/contactos/page.tsx",
-                lineNumber: 128,
+                lineNumber: 134,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1926,12 +1940,12 @@ function ContactosPage() {
                                         children: "Nuevo"
                                     }, void 0, false, {
                                         fileName: "[project]/app/inbox/contactos/page.tsx",
-                                        lineNumber: 143,
+                                        lineNumber: 149,
                                         columnNumber: 19
                                     }, void 0)
                                 }, void 0, false, {
                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                    lineNumber: 142,
+                                    lineNumber: 148,
                                     columnNumber: 17
                                 }, void 0),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DialogContent"], {
@@ -1942,20 +1956,20 @@ function ContactosPage() {
                                                     children: "Nuevo contacto"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                    lineNumber: 147,
+                                                    lineNumber: 153,
                                                     columnNumber: 21
                                                 }, void 0),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DialogDescription"], {
                                                     children: "Crea un contacto para iniciar una conversación y enviarle mensajes."
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                    lineNumber: 148,
+                                                    lineNumber: 154,
                                                     columnNumber: 21
                                                 }, void 0)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                            lineNumber: 146,
+                                            lineNumber: 152,
                                             columnNumber: 19
                                         }, void 0),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1968,7 +1982,7 @@ function ContactosPage() {
                                                             children: "Canal"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                            lineNumber: 154,
+                                                            lineNumber: 160,
                                                             columnNumber: 23
                                                         }, void 0),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -1981,7 +1995,7 @@ function ContactosPage() {
                                                                     children: "WhatsApp"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                                    lineNumber: 160,
+                                                                    lineNumber: 166,
                                                                     columnNumber: 25
                                                                 }, void 0),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -1989,19 +2003,19 @@ function ContactosPage() {
                                                                     children: "Facebook"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                                    lineNumber: 161,
+                                                                    lineNumber: 167,
                                                                     columnNumber: 25
                                                                 }, void 0)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                            lineNumber: 155,
+                                                            lineNumber: 161,
                                                             columnNumber: 23
                                                         }, void 0)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                    lineNumber: 153,
+                                                    lineNumber: 159,
                                                     columnNumber: 21
                                                 }, void 0),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2011,7 +2025,7 @@ function ContactosPage() {
                                                             children: "Nombre"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                            lineNumber: 165,
+                                                            lineNumber: 171,
                                                             columnNumber: 23
                                                         }, void 0),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -2020,13 +2034,13 @@ function ContactosPage() {
                                                             placeholder: "Ej. Ana Martínez"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                            lineNumber: 166,
+                                                            lineNumber: 172,
                                                             columnNumber: 23
                                                         }, void 0)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                    lineNumber: 164,
+                                                    lineNumber: 170,
                                                     columnNumber: 21
                                                 }, void 0),
                                                 newChannel === "whatsapp" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2036,7 +2050,7 @@ function ContactosPage() {
                                                             children: "Teléfono"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                            lineNumber: 170,
+                                                            lineNumber: 176,
                                                             columnNumber: 25
                                                         }, void 0),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -2045,7 +2059,7 @@ function ContactosPage() {
                                                             placeholder: "Ej. +52 1 5611 205 872"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                            lineNumber: 171,
+                                                            lineNumber: 177,
                                                             columnNumber: 25
                                                         }, void 0),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2053,13 +2067,13 @@ function ContactosPage() {
                                                             children: "Puedes pegarlo con o sin espacios; se normaliza automáticamente."
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                            lineNumber: 176,
+                                                            lineNumber: 182,
                                                             columnNumber: 25
                                                         }, void 0)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                    lineNumber: 169,
+                                                    lineNumber: 175,
                                                     columnNumber: 23
                                                 }, void 0) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     className: "grid gap-2",
@@ -2068,7 +2082,7 @@ function ContactosPage() {
                                                             children: "PSID (external_user_id)"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                            lineNumber: 180,
+                                                            lineNumber: 186,
                                                             columnNumber: 25
                                                         }, void 0),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -2077,19 +2091,19 @@ function ContactosPage() {
                                                             placeholder: "Ej. 1234567890"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                            lineNumber: 181,
+                                                            lineNumber: 187,
                                                             columnNumber: 25
                                                         }, void 0)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                    lineNumber: 179,
+                                                    lineNumber: 185,
                                                     columnNumber: 23
                                                 }, void 0)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                            lineNumber: 152,
+                                            lineNumber: 158,
                                             columnNumber: 19
                                         }, void 0),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DialogFooter"], {
@@ -2101,7 +2115,7 @@ function ContactosPage() {
                                                     children: "Cancelar"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                    lineNumber: 190,
+                                                    lineNumber: 196,
                                                     columnNumber: 21
                                                 }, void 0),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -2110,40 +2124,40 @@ function ContactosPage() {
                                                     children: creating ? "Creando..." : "Crear"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                                    lineNumber: 193,
+                                                    lineNumber: 199,
                                                     columnNumber: 21
                                                 }, void 0)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                                            lineNumber: 189,
+                                            lineNumber: 195,
                                             columnNumber: 19
                                         }, void 0)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                                    lineNumber: 145,
+                                    lineNumber: 151,
                                     columnNumber: 17
                                 }, void 0)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/inbox/contactos/page.tsx",
-                            lineNumber: 141,
+                            lineNumber: 147,
                             columnNumber: 15
                         }, void 0)
                     }, refreshKey, false, {
                         fileName: "[project]/app/inbox/contactos/page.tsx",
-                        lineNumber: 131,
+                        lineNumber: 137,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/app/inbox/contactos/page.tsx",
-                    lineNumber: 130,
+                    lineNumber: 136,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/inbox/contactos/page.tsx",
-                lineNumber: 129,
+                lineNumber: 135,
                 columnNumber: 7
             }, this)
         ]

@@ -650,9 +650,11 @@ __turbopack_context__.s([
     ()=>useConversations
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/api.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/hooks/use-toast.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var _s = __turbopack_context__.k.signature();
 "use client";
+;
 ;
 ;
 const POLL_INTERVAL = 5000 // 5s refresh in background
@@ -663,6 +665,8 @@ function useConversations(onlyAssigned = false) {
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
     const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [userId, setUserId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const prevConversationsRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])([]);
+    // ...existing code...
     // Obtener el usuario actual desde localStorage
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "useConversations.useEffect": ()=>{
@@ -672,9 +676,7 @@ function useConversations(onlyAssigned = false) {
                     const user = JSON.parse(userStr);
                     setUserId(user.id);
                 }
-            } catch (err) {
-                console.error("[useConversations] Error al leer usuario:", err);
-            }
+            } catch (err) {}
         }
     }["useConversations.useEffect"], []);
     const fetchConversations = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
@@ -711,6 +713,32 @@ function useConversations(onlyAssigned = false) {
                 const filtered = onlyAssigned && userId ? mappedConversations.filter({
                     "useConversations.useCallback[fetchConversations]": (conv)=>conv.assigned_agent_id === userId
                 }["useConversations.useCallback[fetchConversations]"]) : mappedConversations;
+                // Ordenar por último mensaje recibido (o actualizado)
+                filtered.sort({
+                    "useConversations.useCallback[fetchConversations]": (a, b)=>{
+                        const aDate = a.last_message?.created_at || a.updated_at || a.created_at;
+                        const bDate = b.last_message?.created_at || b.updated_at || b.created_at;
+                        return new Date(bDate).getTime() - new Date(aDate).getTime();
+                    }
+                }["useConversations.useCallback[fetchConversations]"]);
+                // Notificación si hay nuevos mensajes
+                if (prevConversationsRef.current.length > 0) {
+                    filtered.forEach({
+                        "useConversations.useCallback[fetchConversations]": (conv, idx)=>{
+                            const prevConv = prevConversationsRef.current.find({
+                                "useConversations.useCallback[fetchConversations].prevConv": (c)=>c.id === conv.id
+                            }["useConversations.useCallback[fetchConversations].prevConv"]);
+                            if (prevConv && conv.last_message && prevConv.last_message && conv.last_message.id !== prevConv.last_message.id && (conv.last_message.sender_type === "customer" || conv.last_message.sender_type === "contact")) {
+                                (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"])({
+                                    title: `Nuevo mensaje de ${conv.customer_name}`,
+                                    description: conv.last_message.content,
+                                    variant: "default"
+                                });
+                            }
+                        }
+                    }["useConversations.useCallback[fetchConversations]"]);
+                }
+                prevConversationsRef.current = filtered;
                 setConversations(filtered);
                 setError(null);
             } catch (err) {
@@ -725,9 +753,24 @@ function useConversations(onlyAssigned = false) {
         onlyAssigned,
         userId
     ]);
+    const markAsRead = async (conversationId)=>{
+        try {
+            await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["api"].post(`/api/messages/mark-read/${conversationId}`);
+        } catch (err) {
+        // Silenciar error
+        }
+    };
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "useConversations.useEffect": ()=>{
             fetchConversations();
+            const interval = setInterval({
+                "useConversations.useEffect.interval": ()=>{
+                    fetchConversations();
+                }
+            }["useConversations.useEffect.interval"], POLL_INTERVAL);
+            return ({
+                "useConversations.useEffect": ()=>clearInterval(interval)
+            })["useConversations.useEffect"];
         // eslint-disable-next-line react-hooks/exhaustive-deps
         }
     }["useConversations.useEffect"], [
@@ -738,10 +781,11 @@ function useConversations(onlyAssigned = false) {
         conversations,
         loading,
         error,
-        refetch: fetchConversations
+        refetch: fetchConversations,
+        markAsRead
     };
 }
-_s(useConversations, "Kh+mxysWFCaLCz/Jk3cm+YF+PSM=");
+_s(useConversations, "gqMcbil5bDVXlW8jlW5mKcmwaQI=");
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }
@@ -773,7 +817,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
     _s();
-    const { conversations, loading, error } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useConversations"])(onlyAssigned);
+    const { conversations, loading, error, markAsRead } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useConversations"])(onlyAssigned);
     const getDisplayName = (name, channel)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["formatContactDisplayName"])(name, channel);
     const getPriorityColor = (priority)=>{
         switch(priority){
@@ -898,13 +942,19 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "h-full p-3 pr-4",
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "h-full rounded-xl border bg-card shadow-sm overflow-hidden",
+            className: "h-full rounded-xl border bg-card shadow-sm overflow-hidden transition-opacity duration-500",
+            style: {
+                opacity: loading ? 0.5 : 1
+            },
             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["ScrollArea"], {
                 className: "h-full",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "space-y-3 p-3",
                     children: conversations.map((conv)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            onClick: ()=>onSelectConversation(conv.id),
+                            onClick: ()=>{
+                                onSelectConversation(conv.id);
+                                markAsRead(conv.id);
+                            },
                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("relative w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10", selectedId === conv.id ? "z-10 border-primary/60 bg-primary/10 ring-2 ring-inset ring-primary/25 shadow-md" : "border-border/70 hover:border-border hover:shadow-md"),
                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex items-start gap-3",
@@ -919,12 +969,12 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                     children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getContactAvatarText"])(getDisplayName(conv.customer_name, conv.channel), conv.channel)
                                                 }, void 0, false, {
                                                     fileName: "[project]/components/conversation-list.tsx",
-                                                    lineNumber: 133,
+                                                    lineNumber: 136,
                                                     columnNumber: 23
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 132,
+                                                lineNumber: 135,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -932,13 +982,21 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                 children: getChannelIcon(conv.channel)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 138,
+                                                lineNumber: 142,
                                                 columnNumber: 21
+                                            }, this),
+                                            conv.unread_count > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] px-1.5 py-0.5 font-bold border border-white shadow-lg z-10",
+                                                children: conv.unread_count
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/conversation-list.tsx",
+                                                lineNumber: 153,
+                                                columnNumber: 23
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-list.tsx",
-                                        lineNumber: 131,
+                                        lineNumber: 134,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -952,7 +1010,7 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                         children: getDisplayName(conv.customer_name, conv.channel)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-list.tsx",
-                                                        lineNumber: 150,
+                                                        lineNumber: 161,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -963,60 +1021,49 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                         })
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-list.tsx",
-                                                        lineNumber: 153,
+                                                        lineNumber: 164,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 149,
+                                                lineNumber: 160,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                 className: "line-clamp-1 text-muted-foreground text-xs leading-relaxed mb-2",
-                                                children: conv.last_message || "Sin mensajes"
+                                                children: typeof conv.last_message === "string" ? conv.last_message : conv.last_message?.content || "Sin mensajes"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 161,
+                                                lineNumber: 172,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                 className: "flex items-center gap-1.5 flex-wrap",
-                                                children: [
-                                                    conv.unread_count > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Badge"], {
-                                                        variant: "default",
-                                                        className: "h-5 rounded-full px-2 text-xs font-bold shadow-sm",
-                                                        children: conv.unread_count
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-list.tsx",
-                                                        lineNumber: 167,
-                                                        columnNumber: 25
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Badge"], {
-                                                        variant: "outline",
-                                                        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("h-5 rounded-full px-2 text-xs font-semibold border-2", getPriorityColor(conv.priority)),
-                                                        children: getPriorityLabel(conv.priority)
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-list.tsx",
-                                                        lineNumber: 172,
-                                                        columnNumber: 23
-                                                    }, this)
-                                                ]
-                                            }, void 0, true, {
+                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Badge"], {
+                                                    variant: "outline",
+                                                    className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("h-5 rounded-full px-2 text-xs font-semibold border-2", getPriorityColor(conv.priority)),
+                                                    children: getPriorityLabel(conv.priority)
+                                                }, void 0, false, {
+                                                    fileName: "[project]/components/conversation-list.tsx",
+                                                    lineNumber: 179,
+                                                    columnNumber: 23
+                                                }, this)
+                                            }, void 0, false, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 165,
+                                                lineNumber: 178,
                                                 columnNumber: 21
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-list.tsx",
-                                        lineNumber: 148,
+                                        lineNumber: 159,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/conversation-list.tsx",
-                                lineNumber: 130,
+                                lineNumber: 133,
                                 columnNumber: 17
                             }, this)
                         }, conv.id, false, {
@@ -1045,7 +1092,7 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
         columnNumber: 5
     }, this));
 }
-_s(ConversationList, "sXRJK68jEWLjL0EgLVUT2rmx4Ew=", false, function() {
+_s(ConversationList, "i3yMAJnqSnTmAZcxVDJkDh/Q2yU=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useConversations"]
     ];

@@ -1,14 +1,14 @@
-
 "use client"
 import { api } from "@/lib/api"
-import { useState, useEffect, useCallback } from "react"
+import { toast } from "@/hooks/use-toast"
+import { useState, useEffect, useCallback, useRef } from "react"
 
 const POLL_INTERVAL = 5000 // 5s refresh in background
 
 export interface Message {
   id: string
   content: string
-  sender_type: "customer" | "agent"
+  sender_type: "customer" | "agent" | "contact"
   created_at: string
   conversation_id: string
 }
@@ -34,7 +34,9 @@ export function useConversations(onlyAssigned = false) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
+    const [userId, setUserId] = useState<string | null>(null)
+    const prevConversationsRef = useRef<Conversation[]>([])
+  // ...existing code...
 
   // Obtener el usuario actual desde localStorage
   useEffect(() => {
@@ -45,7 +47,6 @@ export function useConversations(onlyAssigned = false) {
         setUserId(user.id)
       }
     } catch (err) {
-      console.error("[useConversations] Error al leer usuario:", err)
     }
   }, [])
 
@@ -80,6 +81,26 @@ export function useConversations(onlyAssigned = false) {
       const filtered = onlyAssigned && userId
         ? mappedConversations.filter((conv) => conv.assigned_agent_id === userId)
         : mappedConversations;
+        // Ordenar por último mensaje recibido (o actualizado)
+        filtered.sort((a, b) => {
+          const aDate = a.last_message?.created_at || a.updated_at || a.created_at
+          const bDate = b.last_message?.created_at || b.updated_at || b.created_at
+          return new Date(bDate).getTime() - new Date(aDate).getTime()
+        })
+        // Notificación si hay nuevos mensajes
+        if (prevConversationsRef.current.length > 0) {
+          filtered.forEach((conv, idx) => {
+            const prevConv = prevConversationsRef.current.find(c => c.id === conv.id)
+            if (prevConv && conv.last_message && prevConv.last_message && conv.last_message.id !== prevConv.last_message.id && (conv.last_message.sender_type === "customer" || conv.last_message.sender_type === "contact")) {
+              toast({
+                title: `Nuevo mensaje de ${conv.customer_name}`,
+                description: conv.last_message.content,
+                variant: "default"
+              })
+            }
+          })
+        }
+        prevConversationsRef.current = filtered
       setConversations(filtered);
       setError(null);
     } catch (err) {
@@ -91,10 +112,22 @@ export function useConversations(onlyAssigned = false) {
     }
   }, [onlyAssigned, userId]);
 
+  const markAsRead = async (conversationId: string) => {
+    try {
+      await api.post(`/api/messages/mark-read/${conversationId}`);
+    } catch (err) {
+      // Silenciar error
+    }
+  };
+
   useEffect(() => {
     fetchConversations()
+    const interval = setInterval(() => {
+      fetchConversations()
+    }, POLL_INTERVAL)
+    return () => clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onlyAssigned, userId])
 
-  return { conversations, loading, error, refetch: fetchConversations }
+  return { conversations, loading, error, refetch: fetchConversations, markAsRead }
 }
