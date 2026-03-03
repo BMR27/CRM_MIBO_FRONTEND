@@ -40,6 +40,7 @@ interface Comment {
 }
 
 interface DetailsPanelProps {
+    lastMessage?: { created_at: string }
   contactName?: string
   contactPhone?: string
   status?: string
@@ -65,6 +66,8 @@ export function ConversationDetails({
   conversationId,
   onUpdate,
   externalUserId,
+  lastMessage,
+  ...props
 }: DetailsPanelProps) {
   // LOG: Validar externalUserId
   useEffect(() => {
@@ -79,6 +82,7 @@ export function ConversationDetails({
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
   const [currentStatus, setCurrentStatus] = useState(status)
   const [currentPriority, setCurrentPriority] = useState(priority)
+  const [currentAgent, setCurrentAgent] = useState(agentName)
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [scheduledSession, setScheduledSession] = useState<{
     title: string
@@ -93,6 +97,7 @@ export function ConversationDetails({
   const [editingText, setEditingText] = useState("")
   const [loading, setLoading] = useState(false)
   const [commentsLoading, setCommentsLoading] = useState(false)
+  const { agents, loading: agentsLoading } = require("../hooks/use-agents").useAgents();
 
   const calendarBookingLink = "https://calendly.com/logimarket/sesion-cliente"
 
@@ -291,28 +296,25 @@ export function ConversationDetails({
   }
 
   return (
-    <div className="flex flex-col h-full bg-card">
-      {/* Header */}
-      <div className="flex items-center gap-2 p-2 border-b border-border">
-        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-red-100">
-          <Info className="h-2.5 w-2.5 text-red-500" />
+      <div className="flex flex-col h-full bg-card rounded-xl border border-border">
+        {/* Header */}
+        <div className="flex items-center gap-2 p-2 border-b border-border">
+          <div className="flex items-center justify-center w-4 h-4 rounded-full bg-blue-100">
+            <Info className="h-2.5 w-2.5 text-blue-500" />
+          </div>
+          <span className="font-semibold text-xs text-foreground">Detalles</span>
         </div>
-        <span className="font-semibold text-xs text-foreground">Detalles</span>
-      </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {/* Contact Phone */}
+        <div className="flex-1 overflow-y-auto space-y-4">
         <div className="flex border-b border-border">
-          <div className="w-1 bg-orange-400 shrink-0" />
+          <div className="w-1 bg-blue-500 shrink-0" />
           <div className="flex-1 p-2">
             <div className="flex items-center gap-1.5">
-              <FileText className="h-3 w-3 text-muted-foreground" />
+              <FileText className="h-3 w-3 text-blue-500" />
               <span className="text-xs text-foreground truncate">{contactPhone}</span>
             </div>
             <a
-              href={`https://wa.me/${cleanPhoneNumber(contactPhone)}`}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`https://wa.me/${contactPhone.replace("whatsapp:", "").replace("+", "")}`}
               className="text-xs text-primary hover:underline ml-4.5 block truncate"
             >
               {contactPhone}
@@ -320,16 +322,15 @@ export function ConversationDetails({
           </div>
         </div>
 
-        {/* Status */}
         <div className="flex border-b border-border">
-          <div className="w-1 bg-purple-400 shrink-0" />
+          <div className="w-1 bg-blue-400 shrink-0" />
           <div className="flex-1 p-2">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-purple-400" />
+                <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
                 <span className="text-xs text-foreground">Estado</span>
               </div>
-              <span className="text-xs text-muted-foreground capitalize">{currentStatus}</span>
+              <span className="text-xs text-muted-foreground">{currentStatus}</span>
             </div>
             <Select value={currentStatus} onValueChange={handleStatusChange}>
               <SelectTrigger className="h-7 text-xs bg-background">
@@ -342,10 +343,22 @@ export function ConversationDetails({
                     Activa
                   </div>
                 </SelectItem>
+                <SelectItem value="pending">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+                    Pendiente
+                  </div>
+                </SelectItem>
                 <SelectItem value="resolved">
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                     Resuelta
+                  </div>
+                </SelectItem>
+                <SelectItem value="closed">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />
+                    Cerrada
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -353,12 +366,11 @@ export function ConversationDetails({
           </div>
         </div>
 
-        {/* Priority */}
         <div className="flex border-b border-border">
-          <div className="w-1 bg-orange-400 shrink-0" />
+          <div className="w-1 bg-blue-300 shrink-0" />
           <div className="flex-1 p-2">
             <div className="flex items-center gap-1.5 mb-1">
-              <Zap className="h-3 w-3 text-orange-500" />
+              <Zap className="h-3 w-3 text-blue-500" />
               <span className="text-xs text-foreground">Prioridad</span>
             </div>
             <Select value={currentPriority} onValueChange={handlePriorityChange}>
@@ -380,7 +392,7 @@ export function ConversationDetails({
                 </SelectItem>
                 <SelectItem value="low">
                   <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-orange-400" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
                     Baja
                   </div>
                 </SelectItem>
@@ -389,21 +401,30 @@ export function ConversationDetails({
           </div>
         </div>
 
-        {/* Agent */}
         <div className="flex border-b border-border">
           <div className="w-1 bg-blue-400 shrink-0" />
           <div className="flex-1 p-2">
-            <div className="flex items-center gap-1.5">
-              <User className="h-3 w-3 text-muted-foreground" />
+            <div className="flex items-center gap-1.5 mb-1">
+              <User className="h-3 w-3 text-blue-500" />
               <span className="text-xs text-foreground">Agente</span>
             </div>
-            <span className="text-xs font-medium text-primary ml-4.5">{agentName}</span>
+            <Select value={currentAgent} onValueChange={(value) => { setCurrentAgent(value); onUpdate?.(); }} disabled={agentsLoading}>
+              <SelectTrigger className="h-7 text-xs bg-background min-w-[120px]">
+                <SelectValue placeholder="Seleccionar agente" />
+              </SelectTrigger>
+              <SelectContent>
+                {agents.map((agent: any) => (
+                  <SelectItem key={agent.id} value={agent.name}>
+                    <span className="text-blue-500">{agent.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Timeline */}
         <div className="flex border-b border-border">
-          <div className="w-1 bg-blue-400 shrink-0" />
+          <div className="w-1 bg-blue-300 shrink-0" />
           <div className="flex-1 p-2">
             <div className="flex items-center gap-1.5">
               <FolderOpen className="h-3 w-3 text-blue-500" />
@@ -411,18 +432,37 @@ export function ConversationDetails({
             </div>
             <div className="flex items-center justify-between ml-4.5">
               <span className="text-xs text-muted-foreground">Último:</span>
-              <span className="text-xs text-foreground">{lastActivity}</span>
+              <span className="text-xs text-foreground">{
+                (() => {
+                  let fecha = '';
+                  let raw = lastMessage && typeof lastMessage.created_at === 'string' ? lastMessage.created_at : lastActivity;
+                  if (raw && typeof raw === 'string') {
+                    // Si es formato ISO, formatear
+                    if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(raw)) {
+                      const d = new Date(raw);
+                      const dia = d.getDate().toString().padStart(2, '0');
+                      const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+                      const anio = d.getFullYear();
+                      const hora = d.getHours().toString().padStart(2, '0');
+                      const min = d.getMinutes().toString().padStart(2, '0');
+                      fecha = `${dia}/${mes}/${anio} ${hora}:${min}`;
+                    } else {
+                      fecha = raw;
+                    }
+                  }
+                  return fecha;
+                })()
+              }</span>
             </div>
           </div>
         </div>
 
-        {/* Meetings */}
-        <div className="flex">
-          <div className="w-1 bg-green-400 shrink-0" />
+        <div className="flex border-b border-border">
+          <div className="w-1 bg-blue-400 shrink-0" />
           <div className="flex-1 p-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
-                <Calendar className="h-3 w-3 text-green-500" />
+                <Calendar className="h-3 w-3 text-blue-500" />
                 <span className="text-xs text-foreground">Reuniones</span>
               </div>
               <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-muted">
@@ -434,18 +474,14 @@ export function ConversationDetails({
             {meetings.length > 0 ? (
               <div className="space-y-1.5">
                 {meetings.map((meeting) => (
-                  <div key={meeting.id} className="bg-green-50 border border-green-200 rounded p-1.5">
+                  <div key={meeting.id} className="bg-blue-50 border border-blue-200 rounded p-1.5">
                     <div className="flex items-center gap-1.5">
-                      {meeting.type === "video" ? (
-                        <Video className="h-3 w-3 text-green-600" />
-                      ) : (
-                        <Link className="h-3 w-3 text-green-600" />
-                      )}
-                      <span className="text-xs font-medium text-green-800 truncate">{meeting.title}</span>
+                      <Video className="h-3 w-3 text-blue-600" />
+                      <span className="text-xs font-medium text-blue-800 truncate">{meeting.title}</span>
                     </div>
                     <div className="flex items-center justify-between mt-0.5 ml-4.5">
-                      <span className="text-xs text-green-600">{meeting.date}</span>
-                      <span className="text-xs text-green-600">{meeting.time}</span>
+                      <span className="text-xs text-blue-600">{meeting.date}</span>
+                      <span className="text-xs text-blue-600">{meeting.time}</span>
                     </div>
                   </div>
                 ))}
@@ -456,50 +492,49 @@ export function ConversationDetails({
           </div>
         </div>
 
-        {/* Booking Section */}
         <div className="flex">
-          <div className="w-1 bg-cyan-400 shrink-0" />
+          <div className="w-1 bg-blue-500 shrink-0" />
           <div className="flex-1 p-2">
             <div className="flex items-center gap-1.5 mb-2">
-              <Link className="h-3 w-3 text-cyan-500" />
+              <Link className="h-3 w-3 text-blue-500" />
               <span className="text-xs text-foreground">Agenda</span>
             </div>
 
             {/* Booking Link */}
-            <div className="bg-cyan-50 border border-cyan-200 rounded p-2 mb-2">
-              <p className="text-xs text-cyan-800 mb-1.5">Link para agendar sesión:</p>
+            <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-2">
+              <p className="text-xs text-blue-800 mb-1.5">Link para agendar sesión:</p>
               <div className="flex items-center gap-1">
                 <input
                   type="text"
                   value={calendarBookingLink}
                   readOnly
-                  className="flex-1 text-xs bg-white border border-cyan-200 rounded px-2 py-1 text-cyan-700 truncate"
+                  className="flex-1 text-xs bg-white border border-blue-200 rounded px-2 py-1 text-blue-700 truncate"
                 />
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-cyan-100" onClick={handleCopyLink}>
-                  {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-cyan-600" />}
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-blue-100" onClick={handleCopyLink}>
+                  {copied ? <Check className="h-3 w-3 text-blue-600" /> : <Copy className="h-3 w-3 text-blue-600" />}
                 </Button>
                 <a
                   href={calendarBookingLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-6 w-6 p-0 flex items-center justify-center hover:bg-cyan-100 rounded"
+                  className="h-6 w-6 p-0 flex items-center justify-center hover:bg-blue-100 rounded"
                 >
-                  <ExternalLink className="h-3 w-3 text-cyan-600" />
+                  <ExternalLink className="h-3 w-3 text-blue-600" />
                 </a>
               </div>
             </div>
 
             {/* Scheduled Session */}
             {scheduledSession ? (
-              <div className="bg-green-50 border border-green-200 rounded p-2">
+              <div className="bg-blue-50 border border-blue-200 rounded p-2">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <Video className="h-3 w-3 text-green-600" />
-                  <span className="text-xs font-medium text-green-800">Sesión agendada</span>
+                  <Video className="h-3 w-3 text-blue-600" />
+                  <span className="text-xs font-medium text-blue-800">Sesión agendada</span>
                 </div>
-                <p className="text-xs text-green-700 font-medium">{scheduledSession.title}</p>
+                <p className="text-xs text-blue-700 font-medium">{scheduledSession.title}</p>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-green-600">{scheduledSession.date}</span>
-                  <span className="text-xs text-green-600">{scheduledSession.time}</span>
+                  <span className="text-xs text-blue-600">{scheduledSession.date}</span>
+                  <span className="text-xs text-blue-600">{scheduledSession.time}</span>
                 </div>
                 <a
                   href={scheduledSession.link}
@@ -512,7 +547,7 @@ export function ConversationDetails({
                 </a>
               </div>
             ) : (
-              <div className="text-center py-2 border border-dashed border-muted rounded">
+              <div className="text-center py-2 border border-dashed border-blue-200 rounded">
                 <p className="text-xs text-muted-foreground mb-1">Sin sesión agendada</p>
                 <p className="text-xs text-muted-foreground">Comparte el link con el cliente</p>
               </div>
@@ -522,12 +557,12 @@ export function ConversationDetails({
 
         {/* Comments */}
         <div className="flex">
-          <div className="w-1 bg-indigo-400 shrink-0" />
+          <div className="w-1 bg-[#6C5DD3] shrink-0" />
           <div className="flex-1 p-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
-                <MessageSquare className="h-3 w-3 text-indigo-500" />
-                <span className="text-xs text-foreground">Comentarios</span>
+                <MessageSquare className="h-4 w-4 text-[#6C5DD3]" />
+                <span className="text-sm font-semibold text-[#6C5DD3]">Comentarios</span>
               </div>
             </div>
 

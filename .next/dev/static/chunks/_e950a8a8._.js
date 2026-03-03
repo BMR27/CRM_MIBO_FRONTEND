@@ -680,8 +680,8 @@ function useConversations(onlyAssigned = false) {
         }
     }["useConversations.useEffect"], []);
     const fetchConversations = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
-        "useConversations.useCallback[fetchConversations]": async ()=>{
-            setLoading(true);
+        "useConversations.useCallback[fetchConversations]": async (showLoading = true)=>{
+            if (showLoading) setLoading(true);
             try {
                 // Verificar token
                 const token = ("TURBOPACK compile-time truthy", 1) ? localStorage.getItem("access_token") : "TURBOPACK unreachable";
@@ -746,7 +746,7 @@ function useConversations(onlyAssigned = false) {
                 setError(errorMessage);
                 setConversations([]);
             } finally{
-                setLoading(false);
+                if (showLoading) setLoading(false);
             }
         }
     }["useConversations.useCallback[fetchConversations]"], [
@@ -754,8 +754,15 @@ function useConversations(onlyAssigned = false) {
         userId
     ]);
     const markAsRead = async (conversationId)=>{
+        // Actualización optimista: poner unread_count a 0 localmente
+        setConversations((prev)=>prev.map((conv)=>conv.id === conversationId ? {
+                    ...conv,
+                    unread_count: 0
+                } : conv));
         try {
             await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["api"].post(`/api/messages/mark-read/${conversationId}`);
+            // Refrescar en background sin loading visual
+            fetchConversations(false);
         } catch (err) {
         // Silenciar error
         }
@@ -765,7 +772,7 @@ function useConversations(onlyAssigned = false) {
             fetchConversations();
             const interval = setInterval({
                 "useConversations.useEffect.interval": ()=>{
-                    fetchConversations();
+                    fetchConversations(false);
                 }
             }["useConversations.useEffect.interval"], POLL_INTERVAL);
             return ({
@@ -942,10 +949,7 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "h-full p-3 pr-4",
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "h-full rounded-xl border bg-card shadow-sm overflow-hidden transition-opacity duration-500",
-            style: {
-                opacity: loading ? 0.5 : 1
-            },
+            className: "h-full rounded-xl border bg-card shadow-sm overflow-hidden",
             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["ScrollArea"], {
                 className: "h-full",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3589,9 +3593,19 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
             columnNumber: 7
         }, this);
     };
-    const getInitials = (name)=>{
-        if (!name || typeof name !== "string") return "?";
-        return name.split(" ").map((n)=>n[0]).join("").toUpperCase().slice(0, 2);
+    // Usar la función global para obtener iniciales o canal
+    const getBubbleAvatarText = (msg)=>{
+        // Si el nombre está vacío, usar fallback
+        if (!msg.sender_name || msg.sender_name.trim() === "") {
+            if (msg.sender_type === "agent" || msg.sender_type === "user") return "A";
+            return "C";
+        }
+        // Si es agente/usuario, usar el nombre
+        if (msg.sender_type === "agent" || msg.sender_type === "user") {
+            return (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getContactAvatarText"])(msg.sender_name, "agent");
+        }
+        // Si es contacto, usar nombre/contacto/canal
+        return (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getContactAvatarText"])(msg.sender_name, channel);
     };
     console.log('[ChatArea] Renderizando mensajes:', messages);
     if (!conversationId) {
@@ -3602,12 +3616,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                 children: "Selecciona una conversación para comenzar"
             }, void 0, false, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 512,
+                lineNumber: 517,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/chat-area.tsx",
-            lineNumber: 511,
+            lineNumber: 516,
             columnNumber: 7
         }, this);
     }
@@ -3627,12 +3641,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     children: displayContactName ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getContactAvatarText"])(displayContactName, channel) : "?"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 523,
+                                    lineNumber: 528,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 522,
+                                lineNumber: 527,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3645,7 +3659,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: displayContactName || "Contacto"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 529,
+                                                lineNumber: 534,
                                                 columnNumber: 15
                                             }, this),
                                             channel && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -3657,13 +3671,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 532,
+                                                lineNumber: 537,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 528,
+                                        lineNumber: 533,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3673,26 +3687,26 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 className: "w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-sm shadow-blue-500/50"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 544,
+                                                lineNumber: 549,
                                                 columnNumber: 15
                                             }, this),
                                             "En línea"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 543,
+                                        lineNumber: 548,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 527,
+                                lineNumber: 532,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 521,
+                        lineNumber: 526,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3704,7 +3718,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                 onAssign: (agentId, agentName)=>onUpdate?.()
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 551,
+                                lineNumber: 556,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -3717,12 +3731,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     className: "h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 564,
+                                    lineNumber: 569,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 557,
+                                lineNumber: 562,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -3735,12 +3749,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     className: "h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 573,
+                                    lineNumber: 578,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 566,
+                                lineNumber: 571,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DropdownMenu"], {
@@ -3755,17 +3769,17 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 className: "h-5 w-5"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 578,
+                                                lineNumber: 583,
                                                 columnNumber: 17
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/components/chat-area.tsx",
-                                            lineNumber: 577,
+                                            lineNumber: 582,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 576,
+                                        lineNumber: 581,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DropdownMenuContent"], {
@@ -3776,21 +3790,21 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: "Agendar llamada"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 582,
+                                                lineNumber: 587,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DropdownMenuItem"], {
                                                 children: "Enviar encuesta"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 585,
+                                                lineNumber: 590,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DropdownMenuItem"], {
                                                 children: "Transferir conversación"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 586,
+                                                lineNumber: 591,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DropdownMenuItem"], {
@@ -3800,31 +3814,31 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: "Eliminar conversación"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 587,
+                                                lineNumber: 592,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 581,
+                                        lineNumber: 586,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 575,
+                                lineNumber: 580,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 549,
+                        lineNumber: 554,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 520,
+                lineNumber: 525,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AlertDialog"], {
@@ -3838,20 +3852,20 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     children: "¿Eliminar conversación?"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 602,
+                                    lineNumber: 607,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AlertDialogDescription"], {
                                     children: "Esta acción eliminará la conversación y sus mensajes. No se puede deshacer."
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 603,
+                                    lineNumber: 608,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/chat-area.tsx",
-                            lineNumber: 601,
+                            lineNumber: 606,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AlertDialogFooter"], {
@@ -3861,7 +3875,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     children: "Cancelar"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 608,
+                                    lineNumber: 613,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AlertDialogAction"], {
@@ -3874,24 +3888,24 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     children: deletingConversation ? "Eliminando..." : "Eliminar"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 609,
+                                    lineNumber: 614,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/chat-area.tsx",
-                            lineNumber: 607,
+                            lineNumber: 612,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/chat-area.tsx",
-                    lineNumber: 600,
+                    lineNumber: 605,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 599,
+                lineNumber: 604,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$schedule$2d$call$2d$dialog$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["ScheduleCallDialog"], {
@@ -3902,7 +3916,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                 conversationId: conversationId
             }, void 0, false, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 624,
+                lineNumber: 629,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3915,14 +3929,14 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                         children: "Cargando mensajes..."
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 639,
+                        lineNumber: 644,
                         columnNumber: 13
                     }, this) : messages.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-center text-muted-foreground text-sm",
                         children: "No hay mensajes aún"
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 641,
+                        lineNumber: 646,
                         columnNumber: 13
                     }, this) : messages.map((msg, index)=>{
                         // Comparar hora con el mensaje anterior
@@ -3945,15 +3959,15 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     className: "h-8 w-8 flex-shrink-0",
                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AvatarFallback"], {
                                         className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("font-semibold", !isAgentMsg ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"),
-                                        children: getInitials(msg.sender_name)
+                                        children: getBubbleAvatarText(msg)
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 659,
+                                        lineNumber: 664,
                                         columnNumber: 21
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 658,
+                                    lineNumber: 663,
                                     columnNumber: 19
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3967,7 +3981,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 className: "min-h-20 text-sm rounded-lg"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 676,
+                                                lineNumber: 681,
                                                 columnNumber: 25
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3984,7 +3998,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                         children: "Cancelar"
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/chat-area.tsx",
-                                                        lineNumber: 682,
+                                                        lineNumber: 687,
                                                         columnNumber: 27
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -3995,19 +4009,19 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                         children: "Guardar"
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/chat-area.tsx",
-                                                        lineNumber: 693,
+                                                        lineNumber: 698,
                                                         columnNumber: 27
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 681,
+                                                lineNumber: 686,
                                                 columnNumber: 25
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 675,
+                                        lineNumber: 680,
                                         columnNumber: 23
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                                         children: [
@@ -4016,7 +4030,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: renderMessageBody(msg)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 705,
+                                                lineNumber: 710,
                                                 columnNumber: 25
                                             }, this),
                                             showTimestamp && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4024,7 +4038,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: currentTime
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 716,
+                                                lineNumber: 721,
                                                 columnNumber: 27
                                             }, this),
                                             msg.sender_type === "agent" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4042,12 +4056,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                             className: "h-3 w-3"
                                                         }, void 0, false, {
                                                             fileName: "[project]/components/chat-area.tsx",
-                                                            lineNumber: 731,
+                                                            lineNumber: 736,
                                                             columnNumber: 31
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/chat-area.tsx",
-                                                        lineNumber: 722,
+                                                        lineNumber: 727,
                                                         columnNumber: 29
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -4059,42 +4073,42 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                             className: "h-3 w-3"
                                                         }, void 0, false, {
                                                             fileName: "[project]/components/chat-area.tsx",
-                                                            lineNumber: 739,
+                                                            lineNumber: 744,
                                                             columnNumber: 31
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/chat-area.tsx",
-                                                        lineNumber: 733,
+                                                        lineNumber: 738,
                                                         columnNumber: 29
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 721,
+                                                lineNumber: 726,
                                                 columnNumber: 27
                                             }, this)
                                         ]
                                     }, void 0, true)
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 668,
+                                    lineNumber: 673,
                                     columnNumber: 19
                                 }, this)
                             ]
                         }, msg.id, true, {
                             fileName: "[project]/components/chat-area.tsx",
-                            lineNumber: 653,
+                            lineNumber: 658,
                             columnNumber: 17
                         }, this);
                     })
                 }, void 0, false, {
                     fileName: "[project]/components/chat-area.tsx",
-                    lineNumber: 637,
+                    lineNumber: 642,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 633,
+                lineNumber: 638,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4106,12 +4120,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                             onSelectMacro: handleMacroSelect
                         }, void 0, false, {
                             fileName: "[project]/components/chat-area.tsx",
-                            lineNumber: 756,
+                            lineNumber: 761,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 755,
+                        lineNumber: 760,
                         columnNumber: 9
                     }, this),
                     pendingFile && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4125,7 +4139,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         children: "Adjunto listo para enviar"
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 762,
+                                        lineNumber: 767,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4133,7 +4147,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         children: pendingFile.name
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 763,
+                                        lineNumber: 768,
                                         columnNumber: 15
                                     }, this),
                                     pendingPreviewUrl && String(pendingFile.type || "").toLowerCase().startsWith("image/") && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
@@ -4142,7 +4156,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         className: "mt-2 max-h-48 rounded-md border border-border"
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 765,
+                                        lineNumber: 770,
                                         columnNumber: 17
                                     }, this),
                                     pendingPreviewUrl && String(pendingFile.type || "").toLowerCase().startsWith("video/") && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("video", {
@@ -4151,7 +4165,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         className: "mt-2 max-h-48 rounded-md border border-border"
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 768,
+                                        lineNumber: 773,
                                         columnNumber: 17
                                     }, this),
                                     pendingPreviewUrl && String(pendingFile.type || "").toLowerCase().startsWith("audio/") && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("audio", {
@@ -4160,13 +4174,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         className: "mt-2 w-full"
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 771,
+                                        lineNumber: 776,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 761,
+                                lineNumber: 766,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -4177,13 +4191,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                 children: "Quitar"
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 774,
+                                lineNumber: 779,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 760,
+                        lineNumber: 765,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -4197,7 +4211,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                 onChange: handleFileSelected
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 781,
+                                lineNumber: 786,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -4211,12 +4225,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     className: "h-4 w-4"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 795,
+                                    lineNumber: 800,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 787,
+                                lineNumber: 792,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
@@ -4227,7 +4241,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                 className: "flex-1 transition-all focus:ring-2 focus:ring-primary"
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 797,
+                                lineNumber: 802,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -4238,30 +4252,30 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     className: "h-4 w-4"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 809,
+                                    lineNumber: 814,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 804,
+                                lineNumber: 809,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 780,
+                        lineNumber: 785,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 754,
+                lineNumber: 759,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/chat-area.tsx",
-        lineNumber: 518,
+        lineNumber: 523,
         columnNumber: 5
     }, this);
 }
@@ -4313,7 +4327,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
-function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780484", status = "active", priority = "low", agentName = "Juan Perez", lastActivity = "16 ene", onStatusChange, onPriorityChange, conversationId, onUpdate, externalUserId }) {
+function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780484", status = "active", priority = "low", agentName = "Juan Perez", lastActivity = "16 ene", onStatusChange, onPriorityChange, conversationId, onUpdate, externalUserId, lastMessage, ...props }) {
     _s();
     // LOG: Validar externalUserId
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
@@ -4332,6 +4346,7 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
     const BACKEND_URL = ("TURBOPACK compile-time value", "http://localhost:3001") || "https://crmmibobackend-production.up.railway.app";
     const [currentStatus, setCurrentStatus] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(status);
     const [currentPriority, setCurrentPriority] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(priority);
+    const [currentAgent, setCurrentAgent] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(agentName);
     const [meetings, setMeetings] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     const [scheduledSession, setScheduledSession] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [copied, setCopied] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -4341,6 +4356,7 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
     const [editingText, setEditingText] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [commentsLoading, setCommentsLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const { agents, loading: agentsLoading } = __turbopack_context__.r("[project]/hooks/use-agents.ts [app-client] (ecmascript)").useAgents();
     const calendarBookingLink = "https://calendly.com/logimarket/sesion-cliente";
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"])();
     // Cargar comentarios
@@ -4571,50 +4587,50 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
         return phone.replace("whatsapp:", "").replace("+", "");
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "flex flex-col h-full bg-card",
+        className: "flex flex-col h-full bg-card rounded-xl border border-border",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex items-center gap-2 p-2 border-b border-border",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "flex items-center justify-center w-4 h-4 rounded-full bg-red-100",
+                        className: "flex items-center justify-center w-4 h-4 rounded-full bg-blue-100",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$info$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Info$3e$__["Info"], {
-                            className: "h-2.5 w-2.5 text-red-500"
+                            className: "h-2.5 w-2.5 text-blue-500"
                         }, void 0, false, {
                             fileName: "[project]/components/conversation-details.tsx",
-                            lineNumber: 298,
-                            columnNumber: 11
+                            lineNumber: 303,
+                            columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/components/conversation-details.tsx",
-                        lineNumber: 297,
-                        columnNumber: 9
+                        lineNumber: 302,
+                        columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                         className: "font-semibold text-xs text-foreground",
                         children: "Detalles"
                     }, void 0, false, {
                         fileName: "[project]/components/conversation-details.tsx",
-                        lineNumber: 300,
-                        columnNumber: 9
+                        lineNumber: 305,
+                        columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/conversation-details.tsx",
-                lineNumber: 296,
-                columnNumber: 7
+                lineNumber: 301,
+                columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "flex-1 overflow-y-auto",
+                className: "flex-1 overflow-y-auto space-y-4",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex border-b border-border",
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "w-1 bg-orange-400 shrink-0"
+                                className: "w-1 bg-blue-500 shrink-0"
                             }, void 0, false, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 306,
+                                lineNumber: 310,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4624,10 +4640,10 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                         className: "flex items-center gap-1.5",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$text$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__FileText$3e$__["FileText"], {
-                                                className: "h-3 w-3 text-muted-foreground"
+                                                className: "h-3 w-3 text-blue-500"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 309,
+                                                lineNumber: 313,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -4635,46 +4651,44 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 children: contactPhone
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 310,
+                                                lineNumber: 314,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 308,
+                                        lineNumber: 312,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
-                                        href: `https://wa.me/${cleanPhoneNumber(contactPhone)}`,
-                                        target: "_blank",
-                                        rel: "noopener noreferrer",
+                                        href: `https://wa.me/${contactPhone.replace("whatsapp:", "").replace("+", "")}`,
                                         className: "text-xs text-primary hover:underline ml-4.5 block truncate",
                                         children: contactPhone
                                     }, void 0, false, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 312,
+                                        lineNumber: 316,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 307,
+                                lineNumber: 311,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/conversation-details.tsx",
-                        lineNumber: 305,
+                        lineNumber: 309,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex border-b border-border",
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "w-1 bg-purple-400 shrink-0"
+                                className: "w-1 bg-blue-400 shrink-0"
                             }, void 0, false, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 325,
+                                lineNumber: 326,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4687,10 +4701,10 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 className: "flex items-center gap-1.5",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                        className: "h-1.5 w-1.5 rounded-full bg-purple-400"
+                                                        className: "h-1.5 w-1.5 rounded-full bg-blue-400"
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 329,
+                                                        lineNumber: 330,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -4698,27 +4712,27 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                         children: "Estado"
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 330,
+                                                        lineNumber: 331,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 328,
+                                                lineNumber: 329,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                className: "text-xs text-muted-foreground capitalize",
+                                                className: "text-xs text-muted-foreground",
                                                 children: currentStatus
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 332,
+                                                lineNumber: 333,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 327,
+                                        lineNumber: 328,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Select"], {
@@ -4729,12 +4743,12 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 className: "h-7 text-xs bg-background",
                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectValue"], {}, void 0, false, {
                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                    lineNumber: 336,
+                                                    lineNumber: 337,
                                                     columnNumber: 17
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 335,
+                                                lineNumber: 336,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -4748,19 +4762,43 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                                     className: "h-1.5 w-1.5 rounded-full bg-blue-500"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                                    lineNumber: 341,
+                                                                    lineNumber: 342,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 "Activa"
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 340,
+                                                            lineNumber: 341,
                                                             columnNumber: 19
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 339,
+                                                        lineNumber: 340,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
+                                                        value: "pending",
+                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                            className: "flex items-center gap-1.5",
+                                                            children: [
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                    className: "h-1.5 w-1.5 rounded-full bg-yellow-500"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/components/conversation-details.tsx",
+                                                                    lineNumber: 348,
+                                                                    columnNumber: 21
+                                                                }, this),
+                                                                "Pendiente"
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/components/conversation-details.tsx",
+                                                            lineNumber: 347,
+                                                            columnNumber: 19
+                                                        }, this)
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 346,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -4772,53 +4810,77 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                                     className: "h-1.5 w-1.5 rounded-full bg-green-500"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                                    lineNumber: 347,
+                                                                    lineNumber: 354,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 "Resuelta"
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 346,
+                                                            lineNumber: 353,
                                                             columnNumber: 19
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 345,
+                                                        lineNumber: 352,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
+                                                        value: "closed",
+                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                            className: "flex items-center gap-1.5",
+                                                            children: [
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                    className: "h-1.5 w-1.5 rounded-full bg-gray-500"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/components/conversation-details.tsx",
+                                                                    lineNumber: 360,
+                                                                    columnNumber: 21
+                                                                }, this),
+                                                                "Cerrada"
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/components/conversation-details.tsx",
+                                                            lineNumber: 359,
+                                                            columnNumber: 19
+                                                        }, this)
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 358,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 338,
+                                                lineNumber: 339,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 334,
+                                        lineNumber: 335,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 326,
+                                lineNumber: 327,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/conversation-details.tsx",
-                        lineNumber: 324,
+                        lineNumber: 325,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex border-b border-border",
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "w-1 bg-orange-400 shrink-0"
+                                className: "w-1 bg-blue-300 shrink-0"
                             }, void 0, false, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 358,
+                                lineNumber: 370,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4828,10 +4890,10 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                         className: "flex items-center gap-1.5 mb-1",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$zap$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Zap$3e$__["Zap"], {
-                                                className: "h-3 w-3 text-orange-500"
+                                                className: "h-3 w-3 text-blue-500"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 361,
+                                                lineNumber: 373,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -4839,13 +4901,13 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 children: "Prioridad"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 362,
+                                                lineNumber: 374,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 360,
+                                        lineNumber: 372,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Select"], {
@@ -4856,12 +4918,12 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 className: "h-7 text-xs bg-background",
                                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectValue"], {}, void 0, false, {
                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                    lineNumber: 366,
+                                                    lineNumber: 378,
                                                     columnNumber: 17
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 365,
+                                                lineNumber: 377,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -4875,19 +4937,19 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                                     className: "h-1.5 w-1.5 rounded-full bg-red-500"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                                    lineNumber: 371,
+                                                                    lineNumber: 383,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 "Alta"
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 370,
+                                                            lineNumber: 382,
                                                             columnNumber: 19
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 369,
+                                                        lineNumber: 381,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -4899,19 +4961,19 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                                     className: "h-1.5 w-1.5 rounded-full bg-yellow-500"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                                    lineNumber: 377,
+                                                                    lineNumber: 389,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 "Media"
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 376,
+                                                            lineNumber: 388,
                                                             columnNumber: 19
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 375,
+                                                        lineNumber: 387,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
@@ -4920,46 +4982,46 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                             className: "flex items-center gap-1.5",
                                                             children: [
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                                    className: "h-1.5 w-1.5 rounded-full bg-orange-400"
+                                                                    className: "h-1.5 w-1.5 rounded-full bg-blue-400"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                                    lineNumber: 383,
+                                                                    lineNumber: 395,
                                                                     columnNumber: 21
                                                                 }, this),
                                                                 "Baja"
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 382,
+                                                            lineNumber: 394,
                                                             columnNumber: 19
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 381,
+                                                        lineNumber: 393,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 368,
+                                                lineNumber: 380,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 364,
+                                        lineNumber: 376,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 359,
+                                lineNumber: 371,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/conversation-details.tsx",
-                        lineNumber: 357,
+                        lineNumber: 369,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4969,20 +5031,20 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                 className: "w-1 bg-blue-400 shrink-0"
                             }, void 0, false, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 394,
+                                lineNumber: 405,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex-1 p-2",
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "flex items-center gap-1.5",
+                                        className: "flex items-center gap-1.5 mb-1",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$user$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__User$3e$__["User"], {
-                                                className: "h-3 w-3 text-muted-foreground"
+                                                className: "h-3 w-3 text-blue-500"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 397,
+                                                lineNumber: 408,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -4990,43 +5052,84 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 children: "Agente"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 398,
+                                                lineNumber: 409,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 396,
+                                        lineNumber: 407,
                                         columnNumber: 13
                                     }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                        className: "text-xs font-medium text-primary ml-4.5",
-                                        children: agentName
-                                    }, void 0, false, {
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Select"], {
+                                        value: currentAgent,
+                                        onValueChange: (value)=>{
+                                            setCurrentAgent(value);
+                                            onUpdate?.();
+                                        },
+                                        disabled: agentsLoading,
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectTrigger"], {
+                                                className: "h-7 text-xs bg-background min-w-[120px]",
+                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectValue"], {
+                                                    placeholder: "Seleccionar agente"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/components/conversation-details.tsx",
+                                                    lineNumber: 413,
+                                                    columnNumber: 17
+                                                }, this)
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 412,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectContent"], {
+                                                children: agents.map((agent)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectItem"], {
+                                                        value: agent.name,
+                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                            className: "text-blue-500",
+                                                            children: agent.name
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/components/conversation-details.tsx",
+                                                            lineNumber: 418,
+                                                            columnNumber: 21
+                                                        }, this)
+                                                    }, agent.id, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 417,
+                                                        columnNumber: 19
+                                                    }, this))
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 415,
+                                                columnNumber: 15
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 400,
+                                        lineNumber: 411,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 395,
+                                lineNumber: 406,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/conversation-details.tsx",
-                        lineNumber: 393,
+                        lineNumber: 404,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex border-b border-border",
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "w-1 bg-blue-400 shrink-0"
+                                className: "w-1 bg-blue-300 shrink-0"
                             }, void 0, false, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 406,
+                                lineNumber: 427,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5039,7 +5142,7 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 className: "h-3 w-3 text-blue-500"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 409,
+                                                lineNumber: 430,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -5047,13 +5150,13 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 children: "Timeline"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 410,
+                                                lineNumber: 431,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 408,
+                                        lineNumber: 429,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5064,43 +5167,61 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 children: "Último:"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 413,
+                                                lineNumber: 434,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                 className: "text-xs text-foreground",
-                                                children: lastActivity
+                                                children: (()=>{
+                                                    let fecha = '';
+                                                    let raw = lastMessage && typeof lastMessage.created_at === 'string' ? lastMessage.created_at : lastActivity;
+                                                    if (raw && typeof raw === 'string') {
+                                                        // Si es formato ISO, formatear
+                                                        if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(raw)) {
+                                                            const d = new Date(raw);
+                                                            const dia = d.getDate().toString().padStart(2, '0');
+                                                            const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+                                                            const anio = d.getFullYear();
+                                                            const hora = d.getHours().toString().padStart(2, '0');
+                                                            const min = d.getMinutes().toString().padStart(2, '0');
+                                                            fecha = `${dia}/${mes}/${anio} ${hora}:${min}`;
+                                                        } else {
+                                                            fecha = raw;
+                                                        }
+                                                    }
+                                                    return fecha;
+                                                })()
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 414,
+                                                lineNumber: 435,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 412,
+                                        lineNumber: 433,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 407,
+                                lineNumber: 428,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/conversation-details.tsx",
-                        lineNumber: 405,
+                        lineNumber: 426,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "flex",
+                        className: "flex border-b border-border",
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "w-1 bg-green-400 shrink-0"
+                                className: "w-1 bg-blue-400 shrink-0"
                             }, void 0, false, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 421,
+                                lineNumber: 461,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5113,10 +5234,10 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                 className: "flex items-center gap-1.5",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Calendar$3e$__["Calendar"], {
-                                                        className: "h-3 w-3 text-green-500"
+                                                        className: "h-3 w-3 text-blue-500"
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 425,
+                                                        lineNumber: 465,
                                                         columnNumber: 17
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -5124,13 +5245,13 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                         children: "Reuniones"
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 426,
+                                                        lineNumber: 466,
                                                         columnNumber: 17
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 424,
+                                                lineNumber: 464,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -5141,139 +5262,12 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                     className: "h-3 w-3 text-muted-foreground"
                                                 }, void 0, false, {
                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                    lineNumber: 429,
+                                                    lineNumber: 469,
                                                     columnNumber: 17
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 428,
-                                                columnNumber: 15
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 423,
-                                        columnNumber: 13
-                                    }, this),
-                                    meetings.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "space-y-1.5",
-                                        children: meetings.map((meeting)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "bg-green-50 border border-green-200 rounded p-1.5",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                        className: "flex items-center gap-1.5",
-                                                        children: [
-                                                            meeting.type === "video" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$video$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Video$3e$__["Video"], {
-                                                                className: "h-3 w-3 text-green-600"
-                                                            }, void 0, false, {
-                                                                fileName: "[project]/components/conversation-details.tsx",
-                                                                lineNumber: 440,
-                                                                columnNumber: 25
-                                                            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Link$3e$__["Link"], {
-                                                                className: "h-3 w-3 text-green-600"
-                                                            }, void 0, false, {
-                                                                fileName: "[project]/components/conversation-details.tsx",
-                                                                lineNumber: 442,
-                                                                columnNumber: 25
-                                                            }, this),
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                className: "text-xs font-medium text-green-800 truncate",
-                                                                children: meeting.title
-                                                            }, void 0, false, {
-                                                                fileName: "[project]/components/conversation-details.tsx",
-                                                                lineNumber: 444,
-                                                                columnNumber: 23
-                                                            }, this)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 438,
-                                                        columnNumber: 21
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                        className: "flex items-center justify-between mt-0.5 ml-4.5",
-                                                        children: [
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                className: "text-xs text-green-600",
-                                                                children: meeting.date
-                                                            }, void 0, false, {
-                                                                fileName: "[project]/components/conversation-details.tsx",
-                                                                lineNumber: 447,
-                                                                columnNumber: 23
-                                                            }, this),
-                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                                className: "text-xs text-green-600",
-                                                                children: meeting.time
-                                                            }, void 0, false, {
-                                                                fileName: "[project]/components/conversation-details.tsx",
-                                                                lineNumber: 448,
-                                                                columnNumber: 23
-                                                            }, this)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 446,
-                                                        columnNumber: 21
-                                                    }, this)
-                                                ]
-                                            }, meeting.id, true, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 437,
-                                                columnNumber: 19
-                                            }, this))
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 435,
-                                        columnNumber: 15
-                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "text-xs text-muted-foreground text-center py-2",
-                                        children: "Sin reuniones agendadas"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 454,
-                                        columnNumber: 15
-                                    }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 422,
-                                columnNumber: 11
-                            }, this)
-                        ]
-                    }, void 0, true, {
-                        fileName: "[project]/components/conversation-details.tsx",
-                        lineNumber: 420,
-                        columnNumber: 9
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "flex",
-                        children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "w-1 bg-cyan-400 shrink-0"
-                            }, void 0, false, {
-                                fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 461,
-                                columnNumber: 11
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex-1 p-2",
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "flex items-center gap-1.5 mb-2",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Link$3e$__["Link"], {
-                                                className: "h-3 w-3 text-cyan-500"
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 464,
-                                                columnNumber: 15
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                className: "text-xs text-foreground",
-                                                children: "Agenda"
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 465,
+                                                lineNumber: 468,
                                                 columnNumber: 15
                                             }, this)
                                         ]
@@ -5282,190 +5276,76 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                         lineNumber: 463,
                                         columnNumber: 13
                                     }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "bg-cyan-50 border border-cyan-200 rounded p-2 mb-2",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                className: "text-xs text-cyan-800 mb-1.5",
-                                                children: "Link para agendar sesión:"
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 470,
-                                                columnNumber: 15
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "flex items-center gap-1",
+                                    meetings.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "space-y-1.5",
+                                        children: meetings.map((meeting)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "bg-blue-50 border border-blue-200 rounded p-1.5",
                                                 children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                        type: "text",
-                                                        value: calendarBookingLink,
-                                                        readOnly: true,
-                                                        className: "flex-1 text-xs bg-white border border-cyan-200 rounded px-2 py-1 text-cyan-700 truncate"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 472,
-                                                        columnNumber: 17
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
-                                                        variant: "ghost",
-                                                        size: "sm",
-                                                        className: "h-6 w-6 p-0 hover:bg-cyan-100",
-                                                        onClick: handleCopyLink,
-                                                        children: copied ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Check$3e$__["Check"], {
-                                                            className: "h-3 w-3 text-green-500"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 479,
-                                                            columnNumber: 29
-                                                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$copy$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Copy$3e$__["Copy"], {
-                                                            className: "h-3 w-3 text-cyan-600"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 479,
-                                                            columnNumber: 76
-                                                        }, this)
-                                                    }, void 0, false, {
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "flex items-center gap-1.5",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$video$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Video$3e$__["Video"], {
+                                                                className: "h-3 w-3 text-blue-600"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/components/conversation-details.tsx",
+                                                                lineNumber: 479,
+                                                                columnNumber: 23
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                className: "text-xs font-medium text-blue-800 truncate",
+                                                                children: meeting.title
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/components/conversation-details.tsx",
+                                                                lineNumber: 480,
+                                                                columnNumber: 23
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
                                                         fileName: "[project]/components/conversation-details.tsx",
                                                         lineNumber: 478,
-                                                        columnNumber: 17
+                                                        columnNumber: 21
                                                     }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
-                                                        href: calendarBookingLink,
-                                                        target: "_blank",
-                                                        rel: "noopener noreferrer",
-                                                        className: "h-6 w-6 p-0 flex items-center justify-center hover:bg-cyan-100 rounded",
-                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$external$2d$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ExternalLink$3e$__["ExternalLink"], {
-                                                            className: "h-3 w-3 text-cyan-600"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 487,
-                                                            columnNumber: 19
-                                                        }, this)
-                                                    }, void 0, false, {
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "flex items-center justify-between mt-0.5 ml-4.5",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                className: "text-xs text-blue-600",
+                                                                children: meeting.date
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/components/conversation-details.tsx",
+                                                                lineNumber: 483,
+                                                                columnNumber: 23
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                className: "text-xs text-blue-600",
+                                                                children: meeting.time
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/components/conversation-details.tsx",
+                                                                lineNumber: 484,
+                                                                columnNumber: 23
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
                                                         fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 481,
-                                                        columnNumber: 17
+                                                        lineNumber: 482,
+                                                        columnNumber: 21
                                                     }, this)
                                                 ]
-                                            }, void 0, true, {
+                                            }, meeting.id, true, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 471,
-                                                columnNumber: 15
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
+                                                lineNumber: 477,
+                                                columnNumber: 19
+                                            }, this))
+                                    }, void 0, false, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 469,
-                                        columnNumber: 13
-                                    }, this),
-                                    scheduledSession ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "bg-green-50 border border-green-200 rounded p-2",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "flex items-center gap-1.5 mb-1",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$video$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Video$3e$__["Video"], {
-                                                        className: "h-3 w-3 text-green-600"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 496,
-                                                        columnNumber: 19
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        className: "text-xs font-medium text-green-800",
-                                                        children: "Sesión agendada"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 497,
-                                                        columnNumber: 19
-                                                    }, this)
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 495,
-                                                columnNumber: 17
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                className: "text-xs text-green-700 font-medium",
-                                                children: scheduledSession.title
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 499,
-                                                columnNumber: 17
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "flex items-center justify-between mt-1",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        className: "text-xs text-green-600",
-                                                        children: scheduledSession.date
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 501,
-                                                        columnNumber: 19
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        className: "text-xs text-green-600",
-                                                        children: scheduledSession.time
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 502,
-                                                        columnNumber: 19
-                                                    }, this)
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 500,
-                                                columnNumber: 17
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
-                                                href: scheduledSession.link,
-                                                target: "_blank",
-                                                rel: "noopener noreferrer",
-                                                className: "text-xs text-primary hover:underline flex items-center gap-1 mt-1",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$video$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Video$3e$__["Video"], {
-                                                        className: "h-2.5 w-2.5"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-details.tsx",
-                                                        lineNumber: 510,
-                                                        columnNumber: 19
-                                                    }, this),
-                                                    "Unirse a la sesión"
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 504,
-                                                columnNumber: 17
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 494,
+                                        lineNumber: 475,
                                         columnNumber: 15
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "text-center py-2 border border-dashed border-muted rounded",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                className: "text-xs text-muted-foreground mb-1",
-                                                children: "Sin sesión agendada"
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 516,
-                                                columnNumber: 17
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                className: "text-xs text-muted-foreground",
-                                                children: "Comparte el link con el cliente"
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 517,
-                                                columnNumber: 17
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
+                                        className: "text-xs text-muted-foreground text-center py-2",
+                                        children: "Sin reuniones agendadas"
+                                    }, void 0, false, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 515,
+                                        lineNumber: 490,
                                         columnNumber: 15
                                     }, this)
                                 ]
@@ -5484,10 +5364,245 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                         className: "flex",
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "w-1 bg-indigo-400 shrink-0"
+                                className: "w-1 bg-blue-500 shrink-0"
                             }, void 0, false, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 525,
+                                lineNumber: 496,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "flex-1 p-2",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "flex items-center gap-1.5 mb-2",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Link$3e$__["Link"], {
+                                                className: "h-3 w-3 text-blue-500"
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 499,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                className: "text-xs text-foreground",
+                                                children: "Agenda"
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 500,
+                                                columnNumber: 15
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/components/conversation-details.tsx",
+                                        lineNumber: 498,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "bg-blue-50 border border-blue-200 rounded p-2 mb-2",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-xs text-blue-800 mb-1.5",
+                                                children: "Link para agendar sesión:"
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 505,
+                                                columnNumber: 15
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "flex items-center gap-1",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                        type: "text",
+                                                        value: calendarBookingLink,
+                                                        readOnly: true,
+                                                        className: "flex-1 text-xs bg-white border border-blue-200 rounded px-2 py-1 text-blue-700 truncate"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 507,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
+                                                        variant: "ghost",
+                                                        size: "sm",
+                                                        className: "h-6 w-6 p-0 hover:bg-blue-100",
+                                                        onClick: handleCopyLink,
+                                                        children: copied ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Check$3e$__["Check"], {
+                                                            className: "h-3 w-3 text-blue-600"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/components/conversation-details.tsx",
+                                                            lineNumber: 514,
+                                                            columnNumber: 29
+                                                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$copy$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Copy$3e$__["Copy"], {
+                                                            className: "h-3 w-3 text-blue-600"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/components/conversation-details.tsx",
+                                                            lineNumber: 514,
+                                                            columnNumber: 75
+                                                        }, this)
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 513,
+                                                        columnNumber: 17
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
+                                                        href: calendarBookingLink,
+                                                        target: "_blank",
+                                                        rel: "noopener noreferrer",
+                                                        className: "h-6 w-6 p-0 flex items-center justify-center hover:bg-blue-100 rounded",
+                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$external$2d$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ExternalLink$3e$__["ExternalLink"], {
+                                                            className: "h-3 w-3 text-blue-600"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/components/conversation-details.tsx",
+                                                            lineNumber: 522,
+                                                            columnNumber: 19
+                                                        }, this)
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 516,
+                                                        columnNumber: 17
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 506,
+                                                columnNumber: 15
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/components/conversation-details.tsx",
+                                        lineNumber: 504,
+                                        columnNumber: 13
+                                    }, this),
+                                    scheduledSession ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "bg-blue-50 border border-blue-200 rounded p-2",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "flex items-center gap-1.5 mb-1",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$video$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Video$3e$__["Video"], {
+                                                        className: "h-3 w-3 text-blue-600"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 531,
+                                                        columnNumber: 19
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                        className: "text-xs font-medium text-blue-800",
+                                                        children: "Sesión agendada"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 532,
+                                                        columnNumber: 19
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 530,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-xs text-blue-700 font-medium",
+                                                children: scheduledSession.title
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 534,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "flex items-center justify-between mt-1",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                        className: "text-xs text-blue-600",
+                                                        children: scheduledSession.date
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 536,
+                                                        columnNumber: 19
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                        className: "text-xs text-blue-600",
+                                                        children: scheduledSession.time
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 537,
+                                                        columnNumber: 19
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 535,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
+                                                href: scheduledSession.link,
+                                                target: "_blank",
+                                                rel: "noopener noreferrer",
+                                                className: "text-xs text-primary hover:underline flex items-center gap-1 mt-1",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$video$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Video$3e$__["Video"], {
+                                                        className: "h-2.5 w-2.5"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-details.tsx",
+                                                        lineNumber: 545,
+                                                        columnNumber: 19
+                                                    }, this),
+                                                    "Unirse a la sesión"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 539,
+                                                columnNumber: 17
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/components/conversation-details.tsx",
+                                        lineNumber: 529,
+                                        columnNumber: 15
+                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "text-center py-2 border border-dashed border-blue-200 rounded",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-xs text-muted-foreground mb-1",
+                                                children: "Sin sesión agendada"
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 551,
+                                                columnNumber: 17
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-xs text-muted-foreground",
+                                                children: "Comparte el link con el cliente"
+                                            }, void 0, false, {
+                                                fileName: "[project]/components/conversation-details.tsx",
+                                                lineNumber: 552,
+                                                columnNumber: 17
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/components/conversation-details.tsx",
+                                        lineNumber: 550,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/components/conversation-details.tsx",
+                                lineNumber: 497,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/components/conversation-details.tsx",
+                        lineNumber: 495,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "w-1 bg-[#6C5DD3] shrink-0"
+                            }, void 0, false, {
+                                fileName: "[project]/components/conversation-details.tsx",
+                                lineNumber: 560,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5499,29 +5614,29 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                             className: "flex items-center gap-1.5",
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$message$2d$square$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__MessageSquare$3e$__["MessageSquare"], {
-                                                    className: "h-3 w-3 text-indigo-500"
+                                                    className: "h-4 w-4 text-[#6C5DD3]"
                                                 }, void 0, false, {
                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                    lineNumber: 529,
+                                                    lineNumber: 564,
                                                     columnNumber: 17
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                    className: "text-xs text-foreground",
+                                                    className: "text-sm font-semibold text-[#6C5DD3]",
                                                     children: "Comentarios"
                                                 }, void 0, false, {
                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                    lineNumber: 530,
+                                                    lineNumber: 565,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/components/conversation-details.tsx",
-                                            lineNumber: 528,
+                                            lineNumber: 563,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 527,
+                                        lineNumber: 562,
                                         columnNumber: 13
                                     }, this),
                                     comments && comments.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5537,7 +5652,7 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                             disabled: loading
                                                         }, void 0, false, {
                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 541,
+                                                            lineNumber: 576,
                                                             columnNumber: 25
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5555,7 +5670,7 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                                     children: "Cancelar"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                                    lineNumber: 548,
+                                                                    lineNumber: 583,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -5566,13 +5681,13 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                                     children: "Guardar"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                                    lineNumber: 560,
+                                                                    lineNumber: 595,
                                                                     columnNumber: 27
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 547,
+                                                            lineNumber: 582,
                                                             columnNumber: 25
                                                         }, this)
                                                     ]
@@ -5583,7 +5698,7 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                             children: comment.text
                                                         }, void 0, false, {
                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 572,
+                                                            lineNumber: 607,
                                                             columnNumber: 25
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5594,7 +5709,7 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                                     children: new Date(comment.created_at).toLocaleDateString()
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                                    lineNumber: 574,
+                                                                    lineNumber: 609,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5613,12 +5728,12 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                                                 className: "h-2.5 w-2.5"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                                                lineNumber: 588,
+                                                                                lineNumber: 623,
                                                                                 columnNumber: 31
                                                                             }, this)
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                                            lineNumber: 578,
+                                                                            lineNumber: 613,
                                                                             columnNumber: 29
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -5631,43 +5746,43 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                                                                 className: "h-2.5 w-2.5"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                                                lineNumber: 597,
+                                                                                lineNumber: 632,
                                                                                 columnNumber: 31
                                                                             }, this)
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                                            lineNumber: 590,
+                                                                            lineNumber: 625,
                                                                             columnNumber: 29
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/components/conversation-details.tsx",
-                                                                    lineNumber: 577,
+                                                                    lineNumber: 612,
                                                                     columnNumber: 27
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/components/conversation-details.tsx",
-                                                            lineNumber: 573,
+                                                            lineNumber: 608,
                                                             columnNumber: 25
                                                         }, this)
                                                     ]
                                                 }, void 0, true)
                                             }, comment.id, false, {
                                                 fileName: "[project]/components/conversation-details.tsx",
-                                                lineNumber: 538,
+                                                lineNumber: 573,
                                                 columnNumber: 19
                                             }, this))
                                     }, void 0, false, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 536,
+                                        lineNumber: 571,
                                         columnNumber: 15
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                         className: "text-xs text-muted-foreground py-1 mb-2",
                                         children: "No hay comentarios"
                                     }, void 0, false, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 607,
+                                        lineNumber: 642,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$textarea$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Textarea"], {
@@ -5678,7 +5793,7 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                         disabled: loading || commentsLoading || editingCommentId !== null
                                     }, void 0, false, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 610,
+                                        lineNumber: 645,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -5689,35 +5804,35 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
                                         children: loading || commentsLoading ? "Guardando..." : "Guardar comentario"
                                     }, void 0, false, {
                                         fileName: "[project]/components/conversation-details.tsx",
-                                        lineNumber: 618,
+                                        lineNumber: 653,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/conversation-details.tsx",
-                                lineNumber: 526,
+                                lineNumber: 561,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/conversation-details.tsx",
-                        lineNumber: 524,
+                        lineNumber: 559,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/conversation-details.tsx",
-                lineNumber: 303,
-                columnNumber: 7
+                lineNumber: 308,
+                columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/conversation-details.tsx",
-        lineNumber: 294,
-        columnNumber: 5
+        lineNumber: 299,
+        columnNumber: 7
     }, this);
 }
-_s(ConversationDetails, "66JjB6B6c7C6jOGzVEd0rfG9VQU=", false, function() {
+_s(ConversationDetails, "dzMU/jorf/8t3bbXYHSuc/gTH8k=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"]
     ];

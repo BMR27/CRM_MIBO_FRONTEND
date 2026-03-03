@@ -495,14 +495,19 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     )
   }
 
-  const getInitials = (name: string) => {
-    if (!name || typeof name !== "string") return "?";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  // Usar la función global para obtener iniciales o canal
+  const getBubbleAvatarText = (msg: Message) => {
+    // Si el nombre está vacío, usar fallback
+    if (!msg.sender_name || msg.sender_name.trim() === "") {
+      if (msg.sender_type === "agent" || msg.sender_type === "user") return "A";
+      return "C";
+    }
+    // Si es agente/usuario, usar el nombre
+    if (msg.sender_type === "agent" || msg.sender_type === "user") {
+      return getContactAvatarText(msg.sender_name, "agent");
+    }
+    // Si es contacto, usar nombre/contacto/canal
+    return getContactAvatarText(msg.sender_name, channel);
   }
 
   console.log('[ChatArea] Renderizando mensajes:', messages);
@@ -662,7 +667,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
                         !isAgentMsg ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                       )}
                     >
-                      {getInitials(msg.sender_name)}
+                      {getBubbleAvatarText(msg)}
                     </AvatarFallback>
                   </Avatar>
                   <div

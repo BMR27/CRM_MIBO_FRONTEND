@@ -112,7 +112,7 @@ export function ConversationList({
   return (
     // 🔥 ESTE WRAPPER ES LA CLAVE: crea el “recuadro” del sidebar y separa del chat
     <div className="h-full p-3 pr-4">
-      <div className="h-full rounded-xl border bg-card shadow-sm overflow-hidden transition-opacity duration-500" style={{ opacity: loading ? 0.5 : 1 }}>
+      <div className="h-full rounded-xl border bg-card shadow-sm overflow-hidden">
         <ScrollArea className="h-full">
           {/* padding interno del panel */}
           <div className="space-y-3 p-3">

@@ -50,8 +50,8 @@ export function useConversations(onlyAssigned = false) {
     }
   }, [])
 
-  const fetchConversations = useCallback(async () => {
-    setLoading(true)
+  const fetchConversations = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     try {
       // Verificar token
       const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
@@ -108,13 +108,19 @@ export function useConversations(onlyAssigned = false) {
       setError(errorMessage);
       setConversations([]);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [onlyAssigned, userId]);
 
   const markAsRead = async (conversationId: string) => {
+    // Actualización optimista: poner unread_count a 0 localmente
+    setConversations(prev => prev.map(conv =>
+      conv.id === conversationId ? { ...conv, unread_count: 0 } : conv
+    ));
     try {
       await api.post(`/api/messages/mark-read/${conversationId}`);
+      // Refrescar en background sin loading visual
+      fetchConversations(false);
     } catch (err) {
       // Silenciar error
     }
@@ -123,7 +129,7 @@ export function useConversations(onlyAssigned = false) {
   useEffect(() => {
     fetchConversations()
     const interval = setInterval(() => {
-      fetchConversations()
+      fetchConversations(false)
     }, POLL_INTERVAL)
     return () => clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
