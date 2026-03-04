@@ -7,18 +7,21 @@ import { ChatArea } from "@/components/chat-area"
 import { OrdersPanel } from "@/components/orders-panel"
 import { useSearchParams } from "next/navigation"
 import { useConversations } from "@/hooks/use-conversations"
+import { useAgents } from "@/hooks/use-agents"
 
 interface ConversationData {
-  id: string
-  status: string
-  priority: string
-  agent_name?: string
-  created_at: string
-  last_message_at: string
-  contact_name: string
-  phone_number: string
-  contact_id: number
-  assigned_agent_id?: number
+  id: string;
+  status: string;
+  priority: string;
+  agent_name?: string;
+  created_at: string;
+  last_message_at: string;
+  contact_name: string;
+  phone_number: string;
+  contact_id?: number;
+  assigned_agent_id?: number;
+  externalUserId?: string;
+  last_message?: any;
 }
 
 export default function InboxPage() {
@@ -27,21 +30,21 @@ export default function InboxPage() {
   const [selectedContactId, setSelectedContactId] = useState<number>()
   const [currentAgentId, setCurrentAgentId] = useState<number>()
   const [conversationDetails, setConversationDetails] = useState<ConversationData>()
-    const searchParams = typeof window !== "undefined" ? useSearchParams() : { get: () => undefined }
-    const [refreshKey, setRefreshKey] = useState(0)
-    const { conversations } = useConversations()
+  const searchParams = typeof window !== "undefined" ? useSearchParams() : { get: () => undefined }
+  const [refreshKey, setRefreshKey] = useState(0)
+  const { conversations, refetch: refetchConversations } = useConversations()
+  const { refetch: refetchAgents } = useAgents()
 
-    useEffect(() => {
-      const queryConvId = searchParams.get("conversationId")
-      if (queryConvId && conversations.some(c => String(c.id) === queryConvId)) {
-        handleSelectConversation(queryConvId)
-        return
-      }
-    }, [searchParams, conversations])
+  useEffect(() => {
+    const queryConvId = searchParams.get("conversationId")
+    if (queryConvId && conversations.some(c => String(c.id) === queryConvId)) {
+      handleSelectConversation(queryConvId)
+      return
+    }
+  }, [searchParams, conversations])
   const [isMobile, setIsMobile] = useState(false)
   const [showOrdersPanel, setShowOrdersPanel] = useState(true)
 
-  // Check screen size for responsive design
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024)
@@ -51,10 +54,6 @@ export default function InboxPage() {
     window.addEventListener("resize", checkMobile)
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
-
-  // Usar hook para obtener conversaciones y seleccionar la primera automáticamente
-  // Solo una instancia del hook
-  // Si ya existe una declaración previa, elimina la duplicada
 
   useEffect(() => {
     if (!selectedConversationId && conversations.length > 0) {
@@ -74,6 +73,8 @@ export default function InboxPage() {
         phone_number: first.customer_phone,
         contact_id: undefined,
         assigned_agent_id: first.assigned_agent_id ? Number(first.assigned_agent_id) : undefined,
+        externalUserId: undefined,
+        last_message: undefined,
       })
     }
   }, [selectedConversationId, conversations])
@@ -96,12 +97,16 @@ export default function InboxPage() {
         phone_number: conv.customer_phone,
         contact_id: undefined,
         assigned_agent_id: conv.assigned_agent_id ? Number(conv.assigned_agent_id) : undefined,
+        externalUserId: undefined,
+        last_message: undefined,
       })
     }
   }
 
   const handleUpdate = () => {
-    setRefreshKey((prev) => prev + 1)
+    refetchAgents();
+    refetchConversations();
+    setRefreshKey((prev) => prev + 1);
   }
 
   const handleConversationDeleted = () => {
@@ -174,7 +179,7 @@ export default function InboxPage() {
                       )
                     : undefined,
                   last_message: selectedConversationId
-                    ? conversations.find(c => String(c.id) === String(selectedConversationId))?.messages?.slice(-1)[0]
+                    ? conversations.find(c => String(c.id) === String(selectedConversationId))?.last_message
                     : undefined
                 }}
                 onUpdate={handleUpdate}

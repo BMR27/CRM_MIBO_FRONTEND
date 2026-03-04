@@ -12,6 +12,7 @@ import { useUserRole } from "@/hooks/use-user-role"
 import { useAgents } from "@/hooks/use-agents"
 import { useAgentStats } from "@/hooks/use-agent-stats"
 import { useRouter } from "next/navigation"
+import { useConversations } from "@/hooks/use-conversations"
 
 export default function AgentesPage() {
   const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null)
@@ -31,7 +32,7 @@ export default function AgentesPage() {
                 <CardDescription>No tienes permisos para acceder a esta sección</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button onClick={() => router.push("/inbox")}>
+                <Button onClick={() => router.push("/inbox")}> 
                   Volver a Conversaciones
                 </Button>
               </CardContent>
@@ -42,10 +43,11 @@ export default function AgentesPage() {
     )
   }
   // Fetch agents from backend
-  const { agents, loading: loadingAgents, error } = useAgents()
-  const { stats, loading: loadingStats } = useAgentStats()
+  const { agents, loading: loadingAgents, error, refetch: refetchAgents } = useAgents()
+  const { stats, loading: loadingStats, refetch: refetchStats } = useAgentStats()
+  const { conversations, loading: loadingConversations, error: errorConversations, refetch: refetchConversations } = useConversations()
 
-  // Merge agents with their stats
+  // Merge agents with their stats y conversaciones asignadas
   type AgentConversation = {
     id: string | number
     contact_name: string
@@ -57,12 +59,14 @@ export default function AgentesPage() {
 
   const agentStats = agents.map((agent) => {
     const stat = stats.find((s) => s.id === agent.id)
+    // Filtrar conversaciones asignadas a este agente
+    const assignedConversations = conversations.filter((conv) => String(conv.assigned_agent_id) === String(agent.id))
     return {
       ...agent,
       totalConversations: stat?.total_conversations || 0,
       closedConversations: stat?.resolved_conversations || 0,
       activeConversations: stat?.active_conversations || 0,
-      conversations: [] as AgentConversation[],
+      conversations: assignedConversations,
     }
   })
 
@@ -70,11 +74,17 @@ export default function AgentesPage() {
     setExpandedAgentId(expandedAgentId === agentId ? null : agentId)
   }
 
+  // Refrescar métricas y agentes tras asignación
+  const handleConversationAssigned = () => {
+    refetchAgents()
+    refetchStats()
+  }
+
   return (
     <>
       <InboxHeader />
       <main className="flex-1 overflow-y-auto p-6 bg-background">
-        <div className="mx-auto max-w-6xl space-y-6">
+        <div className="mx-auto max-w-6xl">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
@@ -223,7 +233,6 @@ export default function AgentesPage() {
                           <MessageSquare className="h-4 w-4" />
                           Conversaciones Asignadas
                         </h4>
-                        
                         {agent.conversations.length === 0 ? (
                           <p className="text-sm text-muted-foreground py-4 text-center">
                             No hay conversaciones asignadas a este agente
@@ -237,14 +246,14 @@ export default function AgentesPage() {
                               >
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
-                                    <p className="font-medium text-sm">{conv.contact_name}</p>
-                                    {conv.status === "open" && (
+                                    <p className="font-medium text-sm">{conv.customer_name}</p>
+                                    {conv.status === "active" && (
                                       <Badge variant="outline" className="text-xs border-green-500 text-green-700 bg-green-50">
                                         <Clock className="h-3 w-3 mr-1" />
                                         Abierta
                                       </Badge>
                                     )}
-                                    {conv.status === "closed" && (
+                                    {conv.status === "resolved" && (
                                       <Badge variant="outline" className="text-xs border-gray-500 text-gray-700 bg-gray-50">
                                         <CheckCircle2 className="h-3 w-3 mr-1" />
                                         Cerrada
@@ -257,17 +266,19 @@ export default function AgentesPage() {
                                     )}
                                   </div>
                                   <p className="text-xs text-muted-foreground mt-1">
-                                    {conv.phone_number}
+                                    {conv.customer_phone}
                                   </p>
                                 </div>
                                 <div className="text-right">
                                   <p className="text-xs text-muted-foreground">
-                                    Última actividad: {new Date(conv.last_message_at).toLocaleDateString('es-ES', { 
-                                      day: '2-digit', 
-                                      month: 'short',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
+                                    Última actividad: {conv.last_message && conv.last_message.created_at
+                                      ? new Date(conv.last_message.created_at).toLocaleDateString('es-ES', {
+                                          day: '2-digit',
+                                          month: 'short',
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })
+                                      : "Sin mensajes"}
                                   </p>
                                 </div>
                               </div>

@@ -47,6 +47,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 }
 
 
+// Validate ../../../app/envios-masivos/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/envios-masivos">> = Specific
+  const handler = {} as typeof import("../../../app/envios-masivos/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../app/inbox/agentes/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/inbox/agentes">> = Specific

@@ -5793,9 +5793,11 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$chat$2d$area$2
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$orders$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/orders-panel.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/hooks/use-conversations.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$agents$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/hooks/use-agents.ts [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
 "use client";
+;
 ;
 ;
 ;
@@ -5812,7 +5814,8 @@ function InboxPage() {
     const [conversationDetails, setConversationDetails] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])();
     const searchParams = ("TURBOPACK compile-time truthy", 1) ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSearchParams"])() : "TURBOPACK unreachable";
     const [refreshKey, setRefreshKey] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
-    const { conversations } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useConversations"])();
+    const { conversations, refetch: refetchConversations } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useConversations"])();
+    const { refetch: refetchAgents } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$agents$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAgents"])();
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "InboxPage.useEffect": ()=>{
             const queryConvId = searchParams.get("conversationId");
@@ -5829,7 +5832,6 @@ function InboxPage() {
     ]);
     const [isMobile, setIsMobile] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [showOrdersPanel, setShowOrdersPanel] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
-    // Check screen size for responsive design
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "InboxPage.useEffect": ()=>{
             const checkMobile = {
@@ -5845,9 +5847,6 @@ function InboxPage() {
             })["InboxPage.useEffect"];
         }
     }["InboxPage.useEffect"], []);
-    // Usar hook para obtener conversaciones y seleccionar la primera automáticamente
-    // Solo una instancia del hook
-    // Si ya existe una declaración previa, elimina la duplicada
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "InboxPage.useEffect": ()=>{
             if (!selectedConversationId && conversations.length > 0) {
@@ -5866,7 +5865,9 @@ function InboxPage() {
                     contact_name: first.customer_name,
                     phone_number: first.customer_phone,
                     contact_id: undefined,
-                    assigned_agent_id: first.assigned_agent_id ? Number(first.assigned_agent_id) : undefined
+                    assigned_agent_id: first.assigned_agent_id ? Number(first.assigned_agent_id) : undefined,
+                    externalUserId: undefined,
+                    last_message: undefined
                 });
             }
         }
@@ -5891,11 +5892,15 @@ function InboxPage() {
                 contact_name: conv.customer_name,
                 phone_number: conv.customer_phone,
                 contact_id: undefined,
-                assigned_agent_id: conv.assigned_agent_id ? Number(conv.assigned_agent_id) : undefined
+                assigned_agent_id: conv.assigned_agent_id ? Number(conv.assigned_agent_id) : undefined,
+                externalUserId: undefined,
+                last_message: undefined
             });
         }
     };
     const handleUpdate = ()=>{
+        refetchAgents();
+        refetchConversations();
         setRefreshKey((prev)=>prev + 1);
     };
     const handleConversationDeleted = ()=>{
@@ -5919,7 +5924,7 @@ function InboxPage() {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$inbox$2d$header$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["InboxHeader"], {}, void 0, false, {
                 fileName: "[project]/app/inbox/page.tsx",
-                lineNumber: 128,
+                lineNumber: 133,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5932,12 +5937,12 @@ function InboxPage() {
                             onSelectConversation: handleSelectConversation
                         }, refreshKey, false, {
                             fileName: "[project]/app/inbox/page.tsx",
-                            lineNumber: 132,
+                            lineNumber: 137,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/inbox/page.tsx",
-                        lineNumber: 131,
+                        lineNumber: 136,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5945,7 +5950,7 @@ function InboxPage() {
                         "aria-hidden": "true"
                     }, void 0, false, {
                         fileName: "[project]/app/inbox/page.tsx",
-                        lineNumber: 140,
+                        lineNumber: 145,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5960,12 +5965,12 @@ function InboxPage() {
                             onConversationDeleted: handleConversationDeleted
                         }, void 0, false, {
                             fileName: "[project]/app/inbox/page.tsx",
-                            lineNumber: 144,
+                            lineNumber: 149,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/inbox/page.tsx",
-                        lineNumber: 143,
+                        lineNumber: 148,
                         columnNumber: 9
                     }, this),
                     showOrdersPanel && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -5975,7 +5980,7 @@ function InboxPage() {
                                 "aria-hidden": "true"
                             }, void 0, false, {
                                 fileName: "[project]/app/inbox/page.tsx",
-                                lineNumber: 165,
+                                lineNumber: 170,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5984,18 +5989,18 @@ function InboxPage() {
                                     conversationDetails: {
                                         ...conversationDetails,
                                         externalUserId: selectedConversationId ? conversations.find((c)=>String(c.id) === String(selectedConversationId))?.external_user_id || conversations.find((c)=>String(c.id) === String(selectedConversationId))?.customer_phone : undefined,
-                                        last_message: selectedConversationId ? conversations.find((c)=>String(c.id) === String(selectedConversationId))?.messages?.slice(-1)[0] : undefined
+                                        last_message: selectedConversationId ? conversations.find((c)=>String(c.id) === String(selectedConversationId))?.last_message : undefined
                                     },
                                     onUpdate: handleUpdate,
                                     onAgentChange: handleAgentChange
                                 }, void 0, false, {
                                     fileName: "[project]/app/inbox/page.tsx",
-                                    lineNumber: 167,
+                                    lineNumber: 172,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/inbox/page.tsx",
-                                lineNumber: 166,
+                                lineNumber: 171,
                                 columnNumber: 11
                             }, this)
                         ]
@@ -6003,16 +6008,17 @@ function InboxPage() {
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/inbox/page.tsx",
-                lineNumber: 129,
+                lineNumber: 134,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true);
 }
-_s(InboxPage, "cxmupY/LXSFI481D/u8jz+A4U+Y=", false, function() {
+_s(InboxPage, "GJMPr7Pwnv2tMkpvOnycuepvpug=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSearchParams"],
-        __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useConversations"]
+        __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useConversations"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$agents$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAgents"]
     ];
 });
 _c = InboxPage;
