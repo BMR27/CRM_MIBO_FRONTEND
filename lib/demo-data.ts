@@ -37,7 +37,7 @@ export const DEMO_CONVERSATIONS = [
     last_message_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     contact: DEMO_CONTACTS[0],
-    assigned_agent: { name: "María García", avatar_url: DEMO_USERS[1].avatar_url },
+    assigned_agent: { name: "María García", avatar_url: "" },
   },
   {
     id: 2,
@@ -49,7 +49,7 @@ export const DEMO_CONVERSATIONS = [
     last_message_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
     contact: DEMO_CONTACTS[1],
-    assigned_agent: { name: "Juan López", avatar_url: DEMO_USERS[2].avatar_url },
+    assigned_agent: { name: "Juan López", avatar_url: "" },
   },
   {
     id: 3,
@@ -61,7 +61,7 @@ export const DEMO_CONVERSATIONS = [
     last_message_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
     contact: DEMO_CONTACTS[2],
-    assigned_agent: { name: "María García", avatar_url: DEMO_USERS[1].avatar_url },
+    assigned_agent: { name: "María García", avatar_url: "" },
   },
 ]
 
@@ -175,7 +175,7 @@ export const DEMO_MACROS = [
 ]
 
 export const DEMO_DATA = {
-  users: DEMO_USERS,
+  users: [],
   contacts: DEMO_CONTACTS,
   conversations: DEMO_CONVERSATIONS,
   messages: DEMO_MESSAGES,

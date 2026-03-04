@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSession } from "@/lib/session"
 import { sql, isDemoMode } from "@/lib/db"
-import { DEMO_USERS } from "@/lib/demo-data"
 
 export async function GET() {
   try {

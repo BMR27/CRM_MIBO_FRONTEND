@@ -1,7 +1,6 @@
 import bcrypt from "bcryptjs"
 import { sql } from "./db"
 import { isDemoMode } from "./db"
-import { DEMO_USERS } from "./demo-data"
 
 export interface User {
   id: number
@@ -22,11 +21,6 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   if (isDemoMode) {
-    const demoUser = DEMO_USERS.find((u) => u.email === email)
-    if (demoUser) {
-      const { password: _, ...userWithoutPassword } = demoUser
-      return userWithoutPassword
-    }
     return null
   }
 
@@ -41,22 +35,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 
 export async function authenticateUser(email: string, password: string): Promise<User | null> {
   if (isDemoMode) {
-    console.log("[v0] Demo mode: authenticating", email)
-    const demoUser = DEMO_USERS.find((u) => u.email === email)
-    if (!demoUser) {
-      console.log("[v0] Demo user not found")
-      return null
-    }
-
-    const isValid = demoUser.password === password
-    console.log("[v0] Password check:", isValid)
-
-    if (!isValid) {
-      return null
-    }
-
-    const { password: _, ...userWithoutPassword } = demoUser
-    return userWithoutPassword
+    return null
   }
 
   const users = (await sql`
