@@ -10,17 +10,6 @@ export async function GET() {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    if (isDemoMode) {
-      const agents = DEMO_USERS.map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        status: u.status,
-        avatar_url: u.avatar_url,
-        role: u.role,
-      }))
-      return NextResponse.json(agents)
-    }
 
     const agents = await sql`
       SELECT 

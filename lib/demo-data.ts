@@ -1,35 +1,6 @@
 // Demo users - password is "demo123" for all
 const DEMO_PASSWORD = "demo123"
 
-export const DEMO_USERS = [
-  {
-    id: 1,
-    email: "admin@demo.com",
-    password: DEMO_PASSWORD,
-    name: "Carlos Admin",
-    role: "admin",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos",
-    status: "online",
-  },
-  {
-    id: 2,
-    email: "agent1@demo.com",
-    password: DEMO_PASSWORD,
-    name: "María García",
-    role: "agent",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria",
-    status: "online",
-  },
-  {
-    id: 3,
-    email: "agent2@demo.com",
-    password: DEMO_PASSWORD,
-    name: "Juan López",
-    role: "agent",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Juan",
-    status: "away",
-  },
-]
 
 export const DEMO_CONTACTS = [
   {
