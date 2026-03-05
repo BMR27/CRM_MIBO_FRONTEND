@@ -45,10 +45,12 @@ function EnviosMasivosPage() {
     setSending(true)
     setSendResult("")
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || ""}/api/messages/bulk`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           campaignName,

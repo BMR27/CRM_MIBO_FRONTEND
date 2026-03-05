@@ -574,11 +574,12 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 ;
 const POLL_INTERVAL = 5000 // 5s refresh in background
 ;
-function useConversations(onlyAssigned = false) {
+function useConversations(onlyAssigned = false, forceAgentFilter = false) {
     const [conversations, setConversations] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [userId, setUserId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [userRole, setUserRole] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const prevConversationsRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])([]);
     // ...existing code...
     // Obtener el usuario actual desde localStorage
@@ -605,7 +606,7 @@ function useConversations(onlyAssigned = false) {
             const data = undefined;
             const conversationsArray = undefined;
             const mappedConversations = undefined;
-            const filtered = undefined;
+            let filtered;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Error al obtener conversaciones";
             setError(errorMessage);
@@ -677,6 +678,12 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversation
 ;
 function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
     const { conversations, loading, error, markAsRead, refetch } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useConversations"])(onlyAssigned);
+    // Obtener el usuario logueado
+    const userStr = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : null;
+    const user = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : null;
+    const userId = user?.id;
+    // Filtrar conversaciones por assigned_agent_id
+    const filteredConversations = userId ? conversations.filter((conv)=>conv.assigned_agent_id && String(conv.assigned_agent_id) === String(userId)) : conversations;
     const getDisplayName = (name, channel)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatContactDisplayName"])(name, channel);
     const getPriorityColor = (priority)=>{
         switch(priority){
@@ -735,17 +742,17 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                     children: "Cargando conversaciones..."
                 }, void 0, false, {
                     fileName: "[project]/components/conversation-list.tsx",
-                    lineNumber: 85,
+                    lineNumber: 93,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/conversation-list.tsx",
-                lineNumber: 84,
+                lineNumber: 92,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/conversation-list.tsx",
-            lineNumber: 83,
+            lineNumber: 91,
             columnNumber: 7
         }, this);
     }
@@ -759,21 +766,21 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                     children: error
                 }, void 0, false, {
                     fileName: "[project]/components/conversation-list.tsx",
-                    lineNumber: 95,
+                    lineNumber: 103,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/conversation-list.tsx",
-                lineNumber: 94,
+                lineNumber: 102,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/conversation-list.tsx",
-            lineNumber: 93,
+            lineNumber: 101,
             columnNumber: 7
         }, this);
     }
-    if (!loading && conversations.length === 0) {
+    if (!loading && filteredConversations.length === 0) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "h-full p-3",
             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -783,17 +790,17 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                     children: "No hay conversaciones"
                 }, void 0, false, {
                     fileName: "[project]/components/conversation-list.tsx",
-                    lineNumber: 106,
+                    lineNumber: 114,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/conversation-list.tsx",
-                lineNumber: 105,
+                lineNumber: 113,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/conversation-list.tsx",
-            lineNumber: 104,
+            lineNumber: 112,
             columnNumber: 7
         }, this);
     }
@@ -806,7 +813,7 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                 className: "h-full",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "space-y-3 p-3",
-                    children: conversations.map((conv)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    children: filteredConversations.map((conv)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             onClick: async ()=>{
                                 onSelectConversation(conv.id);
                                 await markAsRead(conv.id);
@@ -826,12 +833,12 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                     children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getContactAvatarText"])(getDisplayName(conv.customer_name, conv.channel), conv.channel)
                                                 }, void 0, false, {
                                                     fileName: "[project]/components/conversation-list.tsx",
-                                                    lineNumber: 137,
+                                                    lineNumber: 145,
                                                     columnNumber: 23
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 136,
+                                                lineNumber: 144,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -839,7 +846,7 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                 children: getChannelIcon(conv.channel)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 143,
+                                                lineNumber: 151,
                                                 columnNumber: 21
                                             }, this),
                                             conv.unread_count > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -847,13 +854,13 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                 children: conv.unread_count
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 154,
+                                                lineNumber: 162,
                                                 columnNumber: 23
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-list.tsx",
-                                        lineNumber: 135,
+                                        lineNumber: 143,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -867,7 +874,7 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                         children: getDisplayName(conv.customer_name, conv.channel)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-list.tsx",
-                                                        lineNumber: 162,
+                                                        lineNumber: 170,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -878,13 +885,13 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                         })
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/conversation-list.tsx",
-                                                        lineNumber: 165,
+                                                        lineNumber: 173,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 161,
+                                                lineNumber: 169,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -892,7 +899,7 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                 children: typeof conv.last_message === "string" ? conv.last_message : conv.last_message?.content || "Sin mensajes"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 173,
+                                                lineNumber: 181,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -903,49 +910,49 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                                                     children: getPriorityLabel(conv.priority)
                                                 }, void 0, false, {
                                                     fileName: "[project]/components/conversation-list.tsx",
-                                                    lineNumber: 180,
+                                                    lineNumber: 188,
                                                     columnNumber: 23
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 179,
+                                                lineNumber: 187,
                                                 columnNumber: 21
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/conversation-list.tsx",
-                                        lineNumber: 160,
+                                        lineNumber: 168,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/conversation-list.tsx",
-                                lineNumber: 134,
+                                lineNumber: 142,
                                 columnNumber: 17
                             }, this)
                         }, conv.id, false, {
                             fileName: "[project]/components/conversation-list.tsx",
-                            lineNumber: 120,
+                            lineNumber: 128,
                             columnNumber: 15
                         }, this))
                 }, void 0, false, {
                     fileName: "[project]/components/conversation-list.tsx",
-                    lineNumber: 118,
+                    lineNumber: 126,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/conversation-list.tsx",
-                lineNumber: 116,
+                lineNumber: 124,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/conversation-list.tsx",
-            lineNumber: 115,
+            lineNumber: 123,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/components/conversation-list.tsx",
-        lineNumber: 114,
+        lineNumber: 122,
         columnNumber: 5
     }, this));
 }
@@ -5451,6 +5458,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$orders$2d$pane
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/hooks/use-conversations.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$agents$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/hooks/use-agents.ts [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$user$2d$role$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/hooks/use-user-role.ts [app-ssr] (ecmascript)");
 "use client";
 ;
 ;
@@ -5461,7 +5469,9 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$agents$2e$ts
 ;
 ;
 ;
+;
 function InboxPage() {
+    const { isAgent, loading: loadingRole } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$user$2d$role$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useUserRole"])();
     const [selectedConversationId, setSelectedConversationId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])();
     const [selectedContactName, setSelectedContactName] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])();
     const [selectedContactId, setSelectedContactId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])();
@@ -5471,7 +5481,7 @@ function InboxPage() {
         get: ()=>undefined
     };
     const [refreshKey, setRefreshKey] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(0);
-    const { conversations, refetch: refetchConversations } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useConversations"])();
+    const { conversations, refetch: refetchConversations } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useConversations"])(true, true);
     const { refetch: refetchAgents } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$agents$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useAgents"])();
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const queryConvId = searchParams.get("conversationId");
@@ -5500,7 +5510,7 @@ function InboxPage() {
             setSelectedConversationId(String(first.id));
             setSelectedContactName(first.customer_name);
             setSelectedContactId(undefined);
-            setCurrentAgentId(first.assigned_agent_id ? Number(first.assigned_agent_id) : undefined);
+            setCurrentAgentId(first.assigned_agent_id ? String(first.assigned_agent_id) : undefined);
             setConversationDetails({
                 id: String(first.id),
                 status: first.status,
@@ -5511,7 +5521,7 @@ function InboxPage() {
                 contact_name: first.customer_name,
                 phone_number: first.customer_phone,
                 contact_id: undefined,
-                assigned_agent_id: first.assigned_agent_id ? Number(first.assigned_agent_id) : undefined,
+                assigned_agent_id: first.assigned_agent_id ? String(first.assigned_agent_id) : undefined,
                 externalUserId: undefined,
                 last_message: undefined
             });
@@ -5526,7 +5536,7 @@ function InboxPage() {
         if (conv) {
             setSelectedContactName(conv.customer_name);
             setSelectedContactId(undefined);
-            setCurrentAgentId(conv.assigned_agent_id ? Number(conv.assigned_agent_id) : undefined);
+            setCurrentAgentId(conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined);
             setConversationDetails({
                 id: String(conv.id),
                 status: conv.status,
@@ -5537,7 +5547,7 @@ function InboxPage() {
                 contact_name: conv.customer_name,
                 phone_number: conv.customer_phone,
                 contact_id: undefined,
-                assigned_agent_id: conv.assigned_agent_id ? Number(conv.assigned_agent_id) : undefined,
+                assigned_agent_id: conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined,
                 externalUserId: undefined,
                 last_message: undefined
             });
@@ -5556,20 +5566,30 @@ function InboxPage() {
         setConversationDetails(undefined);
     };
     const handleAgentChange = (agentId, agentName)=>{
-        setCurrentAgentId(Number(agentId));
+        setCurrentAgentId(String(agentId));
         if (conversationDetails) {
             setConversationDetails({
                 ...conversationDetails,
                 agent_name: agentName,
-                assigned_agent_id: Number(agentId)
+                assigned_agent_id: String(agentId)
             });
         }
     };
+    if (loadingRole) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "flex items-center justify-center h-full w-full",
+            children: "Cargando conversaciones..."
+        }, void 0, false, {
+            fileName: "[project]/app/inbox/page.tsx",
+            lineNumber: 135,
+            columnNumber: 12
+        }, this);
+    }
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$inbox$2d$header$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["InboxHeader"], {}, void 0, false, {
                 fileName: "[project]/app/inbox/page.tsx",
-                lineNumber: 133,
+                lineNumber: 139,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5579,15 +5599,16 @@ function InboxPage() {
                         className: "hidden md:flex h-full w-96 flex-col border-r border-border bg-card flex-shrink-0",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$conversation$2d$list$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ConversationList"], {
                             selectedId: selectedConversationId,
-                            onSelectConversation: handleSelectConversation
+                            onSelectConversation: handleSelectConversation,
+                            onlyAssigned: isAgent
                         }, refreshKey, false, {
                             fileName: "[project]/app/inbox/page.tsx",
-                            lineNumber: 137,
+                            lineNumber: 143,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/inbox/page.tsx",
-                        lineNumber: 136,
+                        lineNumber: 142,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5595,7 +5616,7 @@ function InboxPage() {
                         "aria-hidden": "true"
                     }, void 0, false, {
                         fileName: "[project]/app/inbox/page.tsx",
-                        lineNumber: 145,
+                        lineNumber: 151,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5610,12 +5631,12 @@ function InboxPage() {
                             onConversationDeleted: handleConversationDeleted
                         }, void 0, false, {
                             fileName: "[project]/app/inbox/page.tsx",
-                            lineNumber: 149,
+                            lineNumber: 154,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/inbox/page.tsx",
-                        lineNumber: 148,
+                        lineNumber: 153,
                         columnNumber: 9
                     }, this),
                     showOrdersPanel && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -5625,7 +5646,7 @@ function InboxPage() {
                                 "aria-hidden": "true"
                             }, void 0, false, {
                                 fileName: "[project]/app/inbox/page.tsx",
-                                lineNumber: 170,
+                                lineNumber: 174,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5640,12 +5661,12 @@ function InboxPage() {
                                     onAgentChange: handleAgentChange
                                 }, void 0, false, {
                                     fileName: "[project]/app/inbox/page.tsx",
-                                    lineNumber: 172,
+                                    lineNumber: 176,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/inbox/page.tsx",
-                                lineNumber: 171,
+                                lineNumber: 175,
                                 columnNumber: 11
                             }, this)
                         ]
@@ -5653,7 +5674,7 @@ function InboxPage() {
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/inbox/page.tsx",
-                lineNumber: 134,
+                lineNumber: 140,
                 columnNumber: 7
             }, this)
         ]

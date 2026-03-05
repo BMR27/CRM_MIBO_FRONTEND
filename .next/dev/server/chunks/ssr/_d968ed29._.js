@@ -191,7 +191,7 @@ function LoginForm() {
                 role: data.user?.role ?? "agent",
                 status: data.user?.status ?? "available"
             };
-            // Guardar token y crear cookie de sesión en el servidor
+            // Guardar usuario en localStorage
             if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
             ;
         } catch (err) {

@@ -22,6 +22,14 @@ export function ConversationList({
 }: ConversationListProps) {
 
   const { conversations, loading, error, markAsRead, refetch } = useConversations(onlyAssigned)
+  // Obtener el usuario logueado
+  const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  const user = userStr ? JSON.parse(userStr) : null;
+  const userId = user?.id;
+  // Filtrar conversaciones por assigned_agent_id
+  const filteredConversations = userId
+    ? conversations.filter((conv) => conv.assigned_agent_id && String(conv.assigned_agent_id) === String(userId))
+    : conversations;
 
 
   const getDisplayName = (name: string, channel?: string) =>
@@ -99,7 +107,7 @@ export function ConversationList({
   }
 
 
-  if (!loading && conversations.length === 0) {
+  if (!loading && filteredConversations.length === 0) {
     return (
       <div className="h-full p-3">
         <div className="h-full rounded-xl border bg-card shadow-sm flex items-center justify-center p-4">
@@ -116,7 +124,7 @@ export function ConversationList({
         <ScrollArea className="h-full">
           {/* padding interno del panel */}
           <div className="space-y-3 p-3">
-            {conversations.map((conv) => (
+            {filteredConversations.map((conv) => (
               <div
                 key={conv.id}
                 onClick={async () => {

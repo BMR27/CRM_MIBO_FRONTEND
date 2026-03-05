@@ -22,7 +22,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const { isAdminOrSupervisor } = useUserRole()
+  const { isAdminOrSupervisor, isAgent } = useUserRole()
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
@@ -108,8 +108,8 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           {!collapsed && <span className="ml-3">Contactos</span>}
         </Button>
 
-        {/* Envíos masivos - solo visible para admin y supervisor */}
-        {isAdminOrSupervisor && (
+        {/* Envíos masivos - visible para admin, supervisor y agente */}
+        {(isAdminOrSupervisor || isAgent) && (
           <>
             <Button
               variant="ghost"

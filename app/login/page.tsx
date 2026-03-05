@@ -66,14 +66,14 @@ function LoginForm() {
         status: data.user?.status ?? "available",
       }
 
-      // Guardar token y crear cookie de sesión en el servidor
+      // Guardar usuario en localStorage
       if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(userPayload));
         await fetch("/api/auth/session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user: userPayload }),
         })
-
         window.location.href = "/inbox"
       }
     } catch (err) {

@@ -8,6 +8,7 @@ import { OrdersPanel } from "@/components/orders-panel"
 import { useSearchParams } from "next/navigation"
 import { useConversations } from "@/hooks/use-conversations"
 import { useAgents } from "@/hooks/use-agents"
+import { useUserRole } from "@/hooks/use-user-role"
 
 interface ConversationData {
   id: string;
@@ -18,21 +19,22 @@ interface ConversationData {
   last_message_at: string;
   contact_name: string;
   phone_number: string;
-  contact_id?: number;
-  assigned_agent_id?: number;
+  contact_id?: string;
+  assigned_agent_id?: string;
   externalUserId?: string;
   last_message?: any;
 }
 
 export default function InboxPage() {
+  const { isAgent, loading: loadingRole } = useUserRole();
   const [selectedConversationId, setSelectedConversationId] = useState<string>()
   const [selectedContactName, setSelectedContactName] = useState<string>()
-  const [selectedContactId, setSelectedContactId] = useState<number>()
-  const [currentAgentId, setCurrentAgentId] = useState<number>()
+  const [selectedContactId, setSelectedContactId] = useState<string>()
+  const [currentAgentId, setCurrentAgentId] = useState<string>()
   const [conversationDetails, setConversationDetails] = useState<ConversationData>()
   const searchParams = typeof window !== "undefined" ? useSearchParams() : { get: () => undefined }
   const [refreshKey, setRefreshKey] = useState(0)
-  const { conversations, refetch: refetchConversations } = useConversations()
+  const { conversations, refetch: refetchConversations } = useConversations(true, true)
   const { refetch: refetchAgents } = useAgents()
 
   useEffect(() => {
@@ -61,7 +63,8 @@ export default function InboxPage() {
       setSelectedConversationId(String(first.id))
       setSelectedContactName(first.customer_name)
       setSelectedContactId(undefined)
-      setCurrentAgentId(first.assigned_agent_id ? Number(first.assigned_agent_id) : undefined)
+      
+      setCurrentAgentId(first.assigned_agent_id ? String(first.assigned_agent_id) : undefined)
       setConversationDetails({
         id: String(first.id),
         status: first.status,
@@ -72,7 +75,7 @@ export default function InboxPage() {
         contact_name: first.customer_name,
         phone_number: first.customer_phone,
         contact_id: undefined,
-        assigned_agent_id: first.assigned_agent_id ? Number(first.assigned_agent_id) : undefined,
+        assigned_agent_id: first.assigned_agent_id ? String(first.assigned_agent_id) : undefined,
         externalUserId: undefined,
         last_message: undefined,
       })
@@ -85,7 +88,7 @@ export default function InboxPage() {
     if (conv) {
       setSelectedContactName(conv.customer_name)
       setSelectedContactId(undefined)
-      setCurrentAgentId(conv.assigned_agent_id ? Number(conv.assigned_agent_id) : undefined)
+      setCurrentAgentId(conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined)
       setConversationDetails({
         id: String(conv.id),
         status: conv.status,
@@ -96,7 +99,7 @@ export default function InboxPage() {
         contact_name: conv.customer_name,
         phone_number: conv.customer_phone,
         contact_id: undefined,
-        assigned_agent_id: conv.assigned_agent_id ? Number(conv.assigned_agent_id) : undefined,
+        assigned_agent_id: conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined,
         externalUserId: undefined,
         last_message: undefined,
       })
@@ -118,16 +121,19 @@ export default function InboxPage() {
   }
 
   const handleAgentChange = (agentId: string, agentName: string) => {
-    setCurrentAgentId(Number(agentId))
+    setCurrentAgentId(String(agentId))
     if (conversationDetails) {
       setConversationDetails({
         ...conversationDetails,
         agent_name: agentName,
-        assigned_agent_id: Number(agentId),
+        assigned_agent_id: String(agentId),
       })
     }
   }
 
+  if (loadingRole) {
+    return <div className="flex items-center justify-center h-full w-full">Cargando conversaciones...</div>;
+  }
   return (
     <>
       <InboxHeader />
@@ -138,12 +144,11 @@ export default function InboxPage() {
             key={refreshKey}
             selectedId={selectedConversationId}
             onSelectConversation={handleSelectConversation}
+            onlyAssigned={isAgent}
           />
         </div>
-
         {/* Visual spacer between panels */}
         <div className="hidden md:block w-4 flex-shrink-0 bg-muted/40" aria-hidden="true" />
-
         {/* Chat area - flex grow */}
         <div className="flex flex-1 flex-col min-w-0">
           <ChatArea
@@ -163,7 +168,6 @@ export default function InboxPage() {
             onConversationDeleted={handleConversationDeleted}
           />
         </div>
-
         {/* Orders/Details panel - responsive */}
         {showOrdersPanel && (
           <>
@@ -190,5 +194,5 @@ export default function InboxPage() {
         )}
       </div>
     </>
-  )
+  );
 }

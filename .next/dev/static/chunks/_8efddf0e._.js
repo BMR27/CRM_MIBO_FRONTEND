@@ -214,8 +214,9 @@ function LoginForm() {
                 role: data.user?.role ?? "agent",
                 status: data.user?.status ?? "available"
             };
-            // Guardar token y crear cookie de sesión en el servidor
+            // Guardar usuario en localStorage
             if ("TURBOPACK compile-time truthy", 1) {
+                localStorage.setItem("user", JSON.stringify(userPayload));
                 await fetch("/api/auth/session", {
                     method: "POST",
                     headers: {

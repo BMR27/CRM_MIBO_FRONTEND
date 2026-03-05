@@ -22,8 +22,12 @@ const BulkMessageUpload: React.FC = () => {
     const formData = new FormData();
     formData.append('file', file);
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || ''}/api/messages/bulk`, {
         method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: formData,
       });
       const data = await res.json();

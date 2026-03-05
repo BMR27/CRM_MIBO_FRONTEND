@@ -30,12 +30,13 @@ export interface Conversation {
 }
 
 
-export function useConversations(onlyAssigned = false) {
+export function useConversations(onlyAssigned = false, forceAgentFilter = false) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-    const [userId, setUserId] = useState<string | null>(null)
-    const prevConversationsRef = useRef<Conversation[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const prevConversationsRef = useRef<Conversation[]>([])
   // ...existing code...
 
   // Obtener el usuario actual desde localStorage
@@ -45,9 +46,11 @@ export function useConversations(onlyAssigned = false) {
       if (userStr) {
         const user = JSON.parse(userStr)
         setUserId(user.id)
+        setUserRole(user.role)
+        // Log para depuración
+        console.log('[FRONT] user.id:', user.id, '| user.role:', user.role)
       }
-    } catch (err) {
-    }
+    } catch (err) {}
   }, [])
 
   const fetchConversations = useCallback(async (showLoading = true) => {
@@ -63,6 +66,7 @@ export function useConversations(onlyAssigned = false) {
       }
       const { data } = await api.get("/api/conversations");
       const conversationsArray = Array.isArray(data) ? data : (data.conversations || []);
+      console.log('[DEBUG] conversationsArray:', conversationsArray);
       const mappedConversations: Conversation[] = conversationsArray.map((conv: any) => ({
         id: String(conv.id),
         customer_name: conv.contact?.name || conv.customer_name || conv.contact_name || conv.name || conv.phone_number || "Sin nombre",
@@ -70,7 +74,8 @@ export function useConversations(onlyAssigned = false) {
         customer_email: conv.customer_email || conv.email || undefined,
         status: (conv.status as "active" | "resolved") || "active",
         priority: (conv.priority as "low" | "medium" | "high") || "low",
-        assigned_agent_id: conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined,
+        // Usar solo assigned_agent_id, nunca assigned_to
+        assigned_agent_id: conv.assigned_agent_id ? String(conv.assigned_agent_id) : (conv.assigned_agent?.id ? String(conv.assigned_agent.id) : undefined),
         channel: conv.channel || "whatsapp",
         external_user_id: conv.external_user_id || conv.customer_phone,
         last_message: conv.last_message || undefined,
@@ -78,9 +83,16 @@ export function useConversations(onlyAssigned = false) {
         created_at: conv.created_at || new Date().toISOString(),
         updated_at: conv.last_message_at || new Date().toISOString(),
       }));
-      const filtered = onlyAssigned && userId
-        ? mappedConversations.filter((conv) => conv.assigned_agent_id === userId)
-        : mappedConversations;
+      let filtered = mappedConversations;
+      // Filtrado estricto: si el usuario es agente, solo mostrar conversaciones con assigned_agent_id igual al id del usuario
+      if (userId && userRole === "agent") {
+        filtered = mappedConversations.filter((conv) => {
+          // Solo mostrar si assigned_agent_id existe y es exactamente igual al userId
+          return conv.assigned_agent_id && String(conv.assigned_agent_id) === String(userId);
+        });
+      }
+      console.log('[DEBUG] userId:', userId, '| userRole:', userRole);
+      console.log('[DEBUG] filtered conversations:', filtered);
         // Ordenar por último mensaje recibido (o actualizado)
         filtered.sort((a, b) => {
           const aDate = a.last_message?.created_at || a.updated_at || a.created_at

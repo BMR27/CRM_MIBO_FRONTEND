@@ -184,40 +184,9 @@ __turbopack_context__.s([
     "DEMO_MESSAGES",
     ()=>DEMO_MESSAGES,
     "DEMO_ORDERS",
-    ()=>DEMO_ORDERS,
-    "DEMO_USERS",
-    ()=>DEMO_USERS
+    ()=>DEMO_ORDERS
 ]);
 const DEMO_PASSWORD = "demo123";
-const DEMO_USERS = [
-    {
-        id: 1,
-        email: "admin@demo.com",
-        password: DEMO_PASSWORD,
-        name: "Carlos Admin",
-        role: "admin",
-        avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos",
-        status: "online"
-    },
-    {
-        id: 2,
-        email: "agent1@demo.com",
-        password: DEMO_PASSWORD,
-        name: "María García",
-        role: "agent",
-        avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria",
-        status: "online"
-    },
-    {
-        id: 3,
-        email: "agent2@demo.com",
-        password: DEMO_PASSWORD,
-        name: "Juan López",
-        role: "agent",
-        avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Juan",
-        status: "away"
-    }
-];
 const DEMO_CONTACTS = [
     {
         id: 1,
@@ -254,7 +223,7 @@ const DEMO_CONVERSATIONS = [
         contact: DEMO_CONTACTS[0],
         assigned_agent: {
             name: "María García",
-            avatar_url: DEMO_USERS[1].avatar_url
+            avatar_url: ""
         }
     },
     {
@@ -269,7 +238,7 @@ const DEMO_CONVERSATIONS = [
         contact: DEMO_CONTACTS[1],
         assigned_agent: {
             name: "Juan López",
-            avatar_url: DEMO_USERS[2].avatar_url
+            avatar_url: ""
         }
     },
     {
@@ -284,7 +253,7 @@ const DEMO_CONVERSATIONS = [
         contact: DEMO_CONTACTS[2],
         assigned_agent: {
             name: "María García",
-            avatar_url: DEMO_USERS[1].avatar_url
+            avatar_url: ""
         }
     }
 ];
@@ -407,7 +376,7 @@ const DEMO_MACROS = [
     }
 ];
 const DEMO_DATA = {
-    users: DEMO_USERS,
+    users: [],
     contacts: DEMO_CONTACTS,
     conversations: DEMO_CONVERSATIONS,
     messages: DEMO_MESSAGES,
@@ -770,6 +739,14 @@ async function GET(request) {
           LIMIT 50
         `;
             }
+        }
+        // Si la consulta SQL retorna objetos con unread_count, asegúrate de incluirlo en la respuesta
+        // Si hay un mapeo adicional, aquí lo puedes asegurar
+        if (Array.isArray(conversations)) {
+            conversations = conversations.map((conv)=>({
+                    ...conv,
+                    unread_count: conv.unread_count ?? 0
+                }));
         }
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             conversations
