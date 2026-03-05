@@ -1334,12 +1334,13 @@ var _s = __turbopack_context__.k.signature();
 ;
 const POLL_INTERVAL = 5000 // 5s refresh in background
 ;
-function useConversations(onlyAssigned = false) {
+function useConversations(onlyAssigned = false, forceAgentFilter = false) {
     _s();
     const [conversations, setConversations] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
     const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [userId, setUserId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [userRole, setUserRole] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const prevConversationsRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])([]);
     // ...existing code...
     // Obtener el usuario actual desde localStorage
@@ -1350,6 +1351,9 @@ function useConversations(onlyAssigned = false) {
                 if (userStr) {
                     const user = JSON.parse(userStr);
                     setUserId(user.id);
+                    setUserRole(user.role);
+                    // Log para depuración
+                    console.log('[FRONT] user.id:', user.id, '| user.role:', user.role);
                 }
             } catch (err) {}
         }
@@ -1368,6 +1372,7 @@ function useConversations(onlyAssigned = false) {
                 }
                 const { data } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["api"].get("/api/conversations");
                 const conversationsArray = Array.isArray(data) ? data : data.conversations || [];
+                console.log('[DEBUG] conversationsArray:', conversationsArray);
                 const mappedConversations = conversationsArray.map({
                     "useConversations.useCallback[fetchConversations].mappedConversations": (conv)=>({
                             id: String(conv.id),
@@ -1376,7 +1381,8 @@ function useConversations(onlyAssigned = false) {
                             customer_email: conv.customer_email || conv.email || undefined,
                             status: conv.status || "active",
                             priority: conv.priority || "low",
-                            assigned_agent_id: conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined,
+                            // Usar solo assigned_agent_id, nunca assigned_to
+                            assigned_agent_id: conv.assigned_agent_id ? String(conv.assigned_agent_id) : conv.assigned_agent?.id ? String(conv.assigned_agent.id) : undefined,
                             channel: conv.channel || "whatsapp",
                             external_user_id: conv.external_user_id || conv.customer_phone,
                             last_message: conv.last_message || undefined,
@@ -1385,9 +1391,18 @@ function useConversations(onlyAssigned = false) {
                             updated_at: conv.last_message_at || new Date().toISOString()
                         })
                 }["useConversations.useCallback[fetchConversations].mappedConversations"]);
-                const filtered = onlyAssigned && userId ? mappedConversations.filter({
-                    "useConversations.useCallback[fetchConversations]": (conv)=>conv.assigned_agent_id === userId
-                }["useConversations.useCallback[fetchConversations]"]) : mappedConversations;
+                let filtered = mappedConversations;
+                // Filtrado estricto: si el usuario es agente, solo mostrar conversaciones con assigned_agent_id igual al id del usuario
+                if (userId && userRole === "agent") {
+                    filtered = mappedConversations.filter({
+                        "useConversations.useCallback[fetchConversations]": (conv)=>{
+                            // Solo mostrar si assigned_agent_id existe y es exactamente igual al userId
+                            return conv.assigned_agent_id && String(conv.assigned_agent_id) === String(userId);
+                        }
+                    }["useConversations.useCallback[fetchConversations]"]);
+                }
+                console.log('[DEBUG] userId:', userId, '| userRole:', userRole);
+                console.log('[DEBUG] filtered conversations:', filtered);
                 // Ordenar por último mensaje recibido (o actualizado)
                 filtered.sort({
                     "useConversations.useCallback[fetchConversations]": (a, b)=>{
@@ -1467,7 +1482,7 @@ function useConversations(onlyAssigned = false) {
         markAsRead
     };
 }
-_s(useConversations, "gqMcbil5bDVXlW8jlW5mKcmwaQI=");
+_s(useConversations, "4OZVGr1Ev6c1FM809Fp9Wc/vIr4=");
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }

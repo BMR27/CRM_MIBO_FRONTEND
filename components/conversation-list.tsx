@@ -26,10 +26,11 @@ export function ConversationList({
   const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
   const user = userStr ? JSON.parse(userStr) : null;
   const userId = user?.id;
-  // Filtrar conversaciones por assigned_agent_id
-  const filteredConversations = userId
-    ? conversations.filter((conv) => conv.assigned_agent_id && String(conv.assigned_agent_id) === String(userId))
-    : conversations;
+  // Filtrar conversaciones por assigned_agent_id solo si el usuario es agente
+  let filteredConversations = conversations;
+  if (user && (user.role === "agent" || user.role === "Agente")) {
+    filteredConversations = conversations.filter((conv) => conv.assigned_agent_id && String(conv.assigned_agent_id) === String(userId));
+  }
 
 
   const getDisplayName = (name: string, channel?: string) =>

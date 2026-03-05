@@ -1,7 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
+import { useUserRole } from "../hooks/use-user-role"
 import { useToast } from "../hooks/use-toast"
-import { api } from "../lib/api"
+import { api, frontendApi } from "../lib/api"
 import {
   Info,
   FileText,
@@ -69,6 +70,7 @@ export function ConversationDetails({
   lastMessage,
   ...props
 }: DetailsPanelProps) {
+  const { isAgent } = useUserRole();
   // LOG: Validar externalUserId
   useEffect(() => {
     // Suponiendo que externalUserId viene de props, de contexto, o de algún fetch/conversación
@@ -82,7 +84,7 @@ export function ConversationDetails({
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
   const [currentStatus, setCurrentStatus] = useState(status)
   const [currentPriority, setCurrentPriority] = useState(priority)
-  const [currentAgent, setCurrentAgent] = useState(agentName)
+  const [currentAgent, setCurrentAgent] = useState<string | undefined>(undefined)
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [scheduledSession, setScheduledSession] = useState<{
     title: string
@@ -99,6 +101,18 @@ export function ConversationDetails({
   const [commentsLoading, setCommentsLoading] = useState(false)
   const { agents, loading: agentsLoading } = require("../hooks/use-agents").useAgents();
 
+  // Sincronizar el agente asignado desde props
+  useEffect(() => {
+    if (props && (props as any).assigned_agent_id) {
+      const found = agents.find((a: any) => a.id === (props as any).assigned_agent_id)
+      setCurrentAgent(found ? found.id : undefined)
+    } else if (agentName) {
+      // fallback por nombre
+      const found = agents.find((a: any) => a.name === agentName)
+      setCurrentAgent(found ? found.id : undefined)
+    }
+  }, [props, agentName, agents])
+
   const calendarBookingLink = "https://calendly.com/logimarket/sesion-cliente"
 
   const { toast } = useToast();
@@ -109,7 +123,7 @@ export function ConversationDetails({
     const loadComments = async () => {
       setCommentsLoading(true)
       try {
-        const { data } = await api.get(`/api/conversations/${conversationId}`)
+        const { data } = await frontendApi.get(`/api/conversations/${conversationId}`)
         if (data.comments) {
           try {
             const parsed = JSON.parse(data.comments)
@@ -205,7 +219,7 @@ export function ConversationDetails({
 
     if (conversationId) {
       try {
-        const response = await api.put(`/api/conversations/${conversationId}/status`, { status: value })
+        const response = await frontendApi.put(`/api/conversations/${conversationId}/status`, { status: value })
         if (response.status === 200) {
           onUpdate?.()
         } else {
@@ -224,7 +238,7 @@ export function ConversationDetails({
 
     if (conversationId) {
       try {
-        const response = await api.put(`/api/conversations/${conversationId}/priority`, { priority: value })
+        const response = await frontendApi.put(`/api/conversations/${conversationId}/priority`, { priority: value })
         if (response.status === 200) {
           onUpdate?.()
         } else {
@@ -242,7 +256,7 @@ export function ConversationDetails({
 
     setLoading(true)
     try {
-      const response = await api.post(`/api/conversations/${conversationId}/comments`, { comment: newComment })
+      const response = await frontendApi.post(`/api/conversations/${conversationId}/comments`, { comment: newComment })
       if (response.status === 200) {
         setComments(response.data.comments)
         setNewComment("")
@@ -260,7 +274,7 @@ export function ConversationDetails({
 
     setLoading(true)
     try {
-      const response = await api.delete(`/api/conversations/${conversationId}/comments`, { data: { commentId } })
+      const response = await frontendApi.delete(`/api/conversations/${conversationId}/comments`, { data: { commentId } })
       if (response.status === 200) {
         setComments(response.data.comments)
         onUpdate?.()
@@ -277,7 +291,7 @@ export function ConversationDetails({
 
     setLoading(true)
     try {
-      const response = await api.put(`/api/conversations/${conversationId}/comments`, { commentId, text: editingText })
+      const response = await frontendApi.put(`/api/conversations/${conversationId}/comments`, { commentId, text: editingText })
       if (response.status === 200) {
         setComments(response.data.comments)
         setEditingCommentId(null)
@@ -325,12 +339,11 @@ export function ConversationDetails({
         <div className="flex border-b border-border">
           <div className="w-1 bg-blue-400 shrink-0" />
           <div className="flex-1 p-2">
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center mb-1">
               <div className="flex items-center gap-1.5">
                 <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
                 <span className="text-xs text-foreground">Estado</span>
               </div>
-              <span className="text-xs text-muted-foreground">{currentStatus}</span>
             </div>
             <Select value={currentStatus} onValueChange={handleStatusChange}>
               <SelectTrigger className="h-7 text-xs bg-background">
@@ -408,13 +421,31 @@ export function ConversationDetails({
               <User className="h-3 w-3 text-blue-500" />
               <span className="text-xs text-foreground">Agente</span>
             </div>
-            <Select value={currentAgent} onValueChange={(value) => { setCurrentAgent(value); onUpdate?.(); }} disabled={agentsLoading}>
+            <Select
+              value={currentAgent}
+              onValueChange={async (value) => {
+                setCurrentAgent(value);
+                if (value && value !== (props as any).assigned_agent_id) {
+                  setLoading(true);
+                  try {
+                    await frontendApi.post(`/api/conversations/${conversationId}/assign`, { agentId: value });
+                    toast({ title: "Conversación transferida", description: "La conversación fue asignada al nuevo agente." });
+                    onUpdate?.();
+                  } catch (err) {
+                    toast({ title: "Error al transferir", description: "No se pudo asignar la conversación." });
+                  } finally {
+                    setLoading(false);
+                  }
+                }
+              }}
+              disabled={agentsLoading || loading}
+            >
               <SelectTrigger className="h-7 text-xs bg-background min-w-[120px]">
                 <SelectValue placeholder="Seleccionar agente" />
               </SelectTrigger>
               <SelectContent>
                 {agents.map((agent: any) => (
-                  <SelectItem key={agent.id} value={agent.name}>
+                  <SelectItem key={agent.id} value={agent.id}>
                     <span className="text-blue-500">{agent.name}</span>
                   </SelectItem>
                 ))}
@@ -424,103 +455,107 @@ export function ConversationDetails({
         </div>
 
 
-        <div className="flex border-b border-border">
-          <div className="w-1 bg-blue-400 shrink-0" />
-          <div className="flex-1 p-2">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-3 w-3 text-blue-500" />
-                <span className="text-xs text-foreground">Reuniones</span>
-              </div>
-              <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-muted">
-                <Plus className="h-3 w-3 text-muted-foreground" />
-              </Button>
-            </div>
-
-            {/* Meetings List */}
-            {meetings.length > 0 ? (
-              <div className="space-y-1.5">
-                {meetings.map((meeting) => (
-                  <div key={meeting.id} className="bg-blue-50 border border-blue-200 rounded p-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <Video className="h-3 w-3 text-blue-600" />
-                      <span className="text-xs font-medium text-blue-800 truncate">{meeting.title}</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-0.5 ml-4.5">
-                      <span className="text-xs text-blue-600">{meeting.date}</span>
-                      <span className="text-xs text-blue-600">{meeting.time}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-xs text-muted-foreground text-center py-2">Sin reuniones agendadas</div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex">
-          <div className="w-1 bg-blue-500 shrink-0" />
-          <div className="flex-1 p-2">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Link className="h-3 w-3 text-blue-500" />
-              <span className="text-xs text-foreground">Agenda</span>
-            </div>
-
-            {/* Booking Link */}
-            <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-2">
-              <p className="text-xs text-blue-800 mb-1.5">Link para agendar sesión:</p>
-              <div className="flex items-center gap-1">
-                <input
-                  type="text"
-                  value={calendarBookingLink}
-                  readOnly
-                  className="flex-1 text-xs bg-white border border-blue-200 rounded px-2 py-1 text-blue-700 truncate"
-                />
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-blue-100" onClick={handleCopyLink}>
-                  {copied ? <Check className="h-3 w-3 text-blue-600" /> : <Copy className="h-3 w-3 text-blue-600" />}
+        {!isAgent && (
+          <div className="flex border-b border-border">
+            <div className="w-1 bg-blue-400 shrink-0" />
+            <div className="flex-1 p-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-3 w-3 text-blue-500" />
+                  <span className="text-xs text-foreground">Reuniones</span>
+                </div>
+                <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-muted">
+                  <Plus className="h-3 w-3 text-muted-foreground" />
                 </Button>
-                <a
-                  href={calendarBookingLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="h-6 w-6 p-0 flex items-center justify-center hover:bg-blue-100 rounded"
-                >
-                  <ExternalLink className="h-3 w-3 text-blue-600" />
-                </a>
               </div>
-            </div>
 
-            {/* Scheduled Session */}
-            {scheduledSession ? (
-              <div className="bg-blue-50 border border-blue-200 rounded p-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Video className="h-3 w-3 text-blue-600" />
-                  <span className="text-xs font-medium text-blue-800">Sesión agendada</span>
+              {/* Meetings List */}
+              {meetings.length > 0 ? (
+                <div className="space-y-1.5">
+                  {meetings.map((meeting) => (
+                    <div key={meeting.id} className="bg-blue-50 border border-blue-200 rounded p-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <Video className="h-3 w-3 text-blue-600" />
+                        <span className="text-xs font-medium text-blue-800 truncate">{meeting.title}</span>
+                      </div>
+                      <div className="flex items-center justify-between mt-0.5 ml-4.5">
+                        <span className="text-xs text-blue-600">{meeting.date}</span>
+                        <span className="text-xs text-blue-600">{meeting.time}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-xs text-blue-700 font-medium">{scheduledSession.title}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-blue-600">{scheduledSession.date}</span>
-                  <span className="text-xs text-blue-600">{scheduledSession.time}</span>
-                </div>
-                <a
-                  href={scheduledSession.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
-                >
-                  <Video className="h-2.5 w-2.5" />
-                  Unirse a la sesión
-                </a>
-              </div>
-            ) : (
-              <div className="text-center py-2 border border-dashed border-blue-200 rounded">
-                <p className="text-xs text-muted-foreground mb-1">Sin sesión agendada</p>
-                <p className="text-xs text-muted-foreground">Comparte el link con el cliente</p>
-              </div>
-            )}
+              ) : (
+                <div className="text-xs text-muted-foreground text-center py-2">Sin reuniones agendadas</div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {!isAgent && (
+          <div className="flex">
+            <div className="w-1 bg-blue-500 shrink-0" />
+            <div className="flex-1 p-2">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Link className="h-3 w-3 text-blue-500" />
+                <span className="text-xs text-foreground">Agenda</span>
+              </div>
+
+              {/* Booking Link */}
+              <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-2">
+                <p className="text-xs text-blue-800 mb-1.5">Link para agendar sesión:</p>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={calendarBookingLink}
+                    readOnly
+                    className="flex-1 text-xs bg-white border border-blue-200 rounded px-2 py-1 text-blue-700 truncate"
+                  />
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-blue-100" onClick={handleCopyLink}>
+                    {copied ? <Check className="h-3 w-3 text-blue-600" /> : <Copy className="h-3 w-3 text-blue-600" />}
+                  </Button>
+                  <a
+                    href={calendarBookingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-6 w-6 p-0 flex items-center justify-center hover:bg-blue-100 rounded"
+                  >
+                    <ExternalLink className="h-3 w-3 text-blue-600" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Scheduled Session */}
+              {scheduledSession ? (
+                <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Video className="h-3 w-3 text-blue-600" />
+                    <span className="text-xs font-medium text-blue-800">Sesión agendada</span>
+                  </div>
+                  <p className="text-xs text-blue-700 font-medium">{scheduledSession.title}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-xs text-blue-600">{scheduledSession.date}</span>
+                    <span className="text-xs text-blue-600">{scheduledSession.time}</span>
+                  </div>
+                  <a
+                    href={scheduledSession.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
+                  >
+                    <Video className="h-2.5 w-2.5" />
+                    Unirse a la sesión
+                  </a>
+                </div>
+              ) : (
+                <div className="text-center py-2 border border-dashed border-blue-200 rounded">
+                  <p className="text-xs text-muted-foreground mb-1">Sin sesión agendada</p>
+                  <p className="text-xs text-muted-foreground">Comparte el link con el cliente</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Comments */}
         <div className="flex">

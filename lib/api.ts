@@ -1,3 +1,8 @@
+// Cliente para rutas API locales (Next.js)
+import axiosLocal from "axios";
+export const frontendApi = axiosLocal.create({
+  baseURL: "/",
+});
 import axios from "axios";
 
 export const api = axios.create({
