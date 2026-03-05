@@ -1,3 +1,4 @@
+"use client";
 import BulkMessageUpload from '@/components/BulkMessageUpload';
 
 export default function EnviosMasivosPage() {
