@@ -128,21 +128,23 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           </>
         )}
         
-        {/* Citas */}
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/inbox/citas")}
-          className={cn(
-            "w-full justify-start transition-colors",
-            collapsed && "justify-center px-2",
-            isCitas
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
-              : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
-          )}
-        >
-          <Calendar className="h-5 w-5" />
-          {!collapsed && <span className="ml-3">Citas</span>}
-        </Button>
+        {/* Citas: solo visible para admin y supervisor */}
+        {!isAgent && (
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/inbox/citas")}
+            className={cn(
+              "w-full justify-start transition-colors",
+              collapsed && "justify-center px-2",
+              isCitas
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+                : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
+            )}
+          >
+            <Calendar className="h-5 w-5" />
+            {!collapsed && <span className="ml-3">Citas</span>}
+          </Button>
+        )}
         
         {/* Agentes tab - solo visible para admin y supervisor */}
         {isAdminOrSupervisor && (
