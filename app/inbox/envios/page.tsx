@@ -41,6 +41,11 @@ function EnviosMasivosPage() {
       name: "bienvenida_logi",
       sid: "HX99ead19f74793c6b5f0e1777523f1815",
       body: "Hola {{1}}, ¡Bienvenido/a Logimarket! Estoy aquí para ayudarte con tus pedidos y soporte."
+    },
+    {
+      name: "lm_mensajeria_disponibilidad_paquete",
+      sid: "HXdf73cf1db9d8dc586d94d576fa2e140c",
+      body: "Estimado/a {{1}},\n\nSoy de mensajería Logimarket. Deseo que se encuentre bien.\nLe escribo porque aún tenemos su paquete de {{2}}.\nSi ya está en condiciones de recibirlo, por favor confírmenos su disponibilidad.\n\n¡Gracias!"
     }
   ];
   const [loadingTemplates] = useState(false)

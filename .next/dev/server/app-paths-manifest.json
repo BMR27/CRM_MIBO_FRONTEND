@@ -1,6 +1,7 @@
 {
   "/api/conversations/[id]/route": "app/api/conversations/[id]/route.js",
   "/api/users/agents/route": "app/api/users/agents/route.js",
+  "/inbox/configuracion/page": "app/inbox/configuracion/page.js",
   "/inbox/contactos/page": "app/inbox/contactos/page.js",
   "/inbox/envios/page": "app/inbox/envios/page.js",
   "/inbox/page": "app/inbox/page.js"

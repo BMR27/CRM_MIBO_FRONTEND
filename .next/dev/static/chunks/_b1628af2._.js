@@ -458,6 +458,11 @@ function EnviosMasivosPage() {
             name: "bienvenida_logi",
             sid: "HX99ead19f74793c6b5f0e1777523f1815",
             body: "Hola {{1}}, ¡Bienvenido/a Logimarket! Estoy aquí para ayudarte con tus pedidos y soporte."
+        },
+        {
+            name: "lm_mensajeria_disponibilidad_paquete",
+            sid: "HXdf73cf1db9d8dc586d94d576fa2e140c",
+            body: "Estimado/a {{1}},\n\nSoy de mensajería Logimarket. Deseo que se encuentre bien.\nLe escribo porque aún tenemos su paquete de {{2}}.\nSi ya está en condiciones de recibirlo, por favor confírmenos su disponibilidad.\n\n¡Gracias!"
         }
     ];
     const [loadingTemplates] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -590,7 +595,7 @@ function EnviosMasivosPage() {
                             children: "Campañas de Envíos Masivos"
                         }, void 0, false, {
                             fileName: "[project]/app/inbox/envios/page.tsx",
-                            lineNumber: 162,
+                            lineNumber: 167,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -598,13 +603,13 @@ function EnviosMasivosPage() {
                             children: "+ Nueva campaña"
                         }, void 0, false, {
                             fileName: "[project]/app/inbox/envios/page.tsx",
-                            lineNumber: 163,
+                            lineNumber: 168,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/inbox/envios/page.tsx",
-                    lineNumber: 161,
+                    lineNumber: 166,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -613,7 +618,7 @@ function EnviosMasivosPage() {
                             children: "Lista de campañas y acciones rápidas aquí..."
                         }, void 0, false, {
                             fileName: "[project]/app/inbox/envios/page.tsx",
-                            lineNumber: 169,
+                            lineNumber: 174,
                             columnNumber: 11
                         }, this),
                         sendResult && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -621,7 +626,7 @@ function EnviosMasivosPage() {
                             children: sendResult
                         }, void 0, false, {
                             fileName: "[project]/app/inbox/envios/page.tsx",
-                            lineNumber: 171,
+                            lineNumber: 176,
                             columnNumber: 13
                         }, this),
                         showNewForm && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -632,7 +637,7 @@ function EnviosMasivosPage() {
                                     children: "Nueva Campaña de Envío Masivo"
                                 }, void 0, false, {
                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                    lineNumber: 176,
+                                    lineNumber: 181,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -643,7 +648,7 @@ function EnviosMasivosPage() {
                                             children: "Nombre de la campaña (opcional)"
                                         }, void 0, false, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 178,
+                                            lineNumber: 183,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
@@ -652,13 +657,13 @@ function EnviosMasivosPage() {
                                             placeholder: "Ej: Promoción Febrero"
                                         }, void 0, false, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 179,
+                                            lineNumber: 184,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                    lineNumber: 177,
+                                    lineNumber: 182,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -669,7 +674,7 @@ function EnviosMasivosPage() {
                                             children: "Seleccionar destinatarios"
                                         }, void 0, false, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 182,
+                                            lineNumber: 187,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
@@ -678,7 +683,7 @@ function EnviosMasivosPage() {
                                             onChange: handleFileChange
                                         }, void 0, false, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 183,
+                                            lineNumber: 188,
                                             columnNumber: 17
                                         }, this),
                                         excelError && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -686,7 +691,7 @@ function EnviosMasivosPage() {
                                             children: excelError
                                         }, void 0, false, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 184,
+                                            lineNumber: 189,
                                             columnNumber: 32
                                         }, this),
                                         contacts.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -697,7 +702,7 @@ function EnviosMasivosPage() {
                                                     children: "Contactos importados:"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                                    lineNumber: 187,
+                                                    lineNumber: 192,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("ul", {
@@ -710,24 +715,24 @@ function EnviosMasivosPage() {
                                                             ]
                                                         }, idx, true, {
                                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                                            lineNumber: 190,
+                                                            lineNumber: 195,
                                                             columnNumber: 25
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                                    lineNumber: 188,
+                                                    lineNumber: 193,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 186,
+                                            lineNumber: 191,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                    lineNumber: 181,
+                                    lineNumber: 186,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -738,7 +743,7 @@ function EnviosMasivosPage() {
                                             children: "Seleccionar plantilla aprobada"
                                         }, void 0, false, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 197,
+                                            lineNumber: 202,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Select"], {
@@ -752,12 +757,12 @@ function EnviosMasivosPage() {
                                                         placeholder: "Elige una plantilla"
                                                     }, void 0, false, {
                                                         fileName: "[project]/app/inbox/envios/page.tsx",
-                                                        lineNumber: 200,
+                                                        lineNumber: 205,
                                                         columnNumber: 21
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                                    lineNumber: 199,
+                                                    lineNumber: 204,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$select$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SelectContent"], {
@@ -766,18 +771,18 @@ function EnviosMasivosPage() {
                                                             children: tpl.name || tpl.sid
                                                         }, tpl.sid, false, {
                                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                                            lineNumber: 204,
+                                                            lineNumber: 209,
                                                             columnNumber: 23
                                                         }, this))
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                                    lineNumber: 202,
+                                                    lineNumber: 207,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 198,
+                                            lineNumber: 203,
                                             columnNumber: 17
                                         }, this),
                                         selectedTemplate && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -788,7 +793,7 @@ function EnviosMasivosPage() {
                                                     children: "Vista previa del mensaje:"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                                    lineNumber: 210,
+                                                    lineNumber: 215,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("pre", {
@@ -796,19 +801,19 @@ function EnviosMasivosPage() {
                                                     children: templatePreview
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                                    lineNumber: 211,
+                                                    lineNumber: 216,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 209,
+                                            lineNumber: 214,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                    lineNumber: 196,
+                                    lineNumber: 201,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -821,7 +826,7 @@ function EnviosMasivosPage() {
                                             children: "Cancelar"
                                         }, void 0, false, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 216,
+                                            lineNumber: 221,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -830,36 +835,36 @@ function EnviosMasivosPage() {
                                             children: sending ? "Enviando..." : "Enviar ahora"
                                         }, void 0, false, {
                                             fileName: "[project]/app/inbox/envios/page.tsx",
-                                            lineNumber: 219,
+                                            lineNumber: 224,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/inbox/envios/page.tsx",
-                                    lineNumber: 215,
+                                    lineNumber: 220,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/inbox/envios/page.tsx",
-                            lineNumber: 175,
+                            lineNumber: 180,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/inbox/envios/page.tsx",
-                    lineNumber: 167,
+                    lineNumber: 172,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/inbox/envios/page.tsx",
-            lineNumber: 160,
+            lineNumber: 165,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/inbox/envios/page.tsx",
-        lineNumber: 159,
+        lineNumber: 164,
         columnNumber: 5
     }, this);
 }
