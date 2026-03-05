@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 
 const PLANTILLA_MENSAJE = `Hola Bryan 👋\n¡Bienvenido/a! Estoy aquí para ayudarte con tus pedidos y soporte.`;
