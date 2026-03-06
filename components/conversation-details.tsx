@@ -123,7 +123,7 @@ export function ConversationDetails({
     const loadComments = async () => {
       setCommentsLoading(true)
       try {
-        const { data } = await frontendApi.get(`/api/conversations/${conversationId}`)
+        const { data } = await api.get(`/api/conversations/${conversationId}`)
         if (data.comments) {
           try {
             const parsed = JSON.parse(data.comments)

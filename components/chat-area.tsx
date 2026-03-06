@@ -156,16 +156,20 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
   }
 
   // Auto-scroll al bottom cuando hay nuevos mensajes
+  // Auto-scroll inteligente: solo si el usuario está cerca del fondo
   useEffect(() => {
     if (messages.length > 0) {
-      // Scroll al bottom cuando hay mensajes
       setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+        const container = scrollRef.current;
+        if (container) {
+          const isNearBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+          if (isNearBottom) {
+            container.scrollTop = container.scrollHeight;
+          }
         }
-      }, 50)
+      }, 50);
     }
-  }, [messages])
+  }, [messages]);
 
   const fetchMessages = async () => {
     if (!conversationId) return

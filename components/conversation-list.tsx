@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -27,9 +28,18 @@ export function ConversationList({
   const user = userStr ? JSON.parse(userStr) : null;
   const userId = user?.id;
   // Filtrar conversaciones por assigned_agent_id solo si el usuario es agente
+  const [searchTerm, setSearchTerm] = useState("");
   let filteredConversations = conversations;
   if (user && (user.role === "agent" || user.role === "Agente")) {
     filteredConversations = conversations.filter((conv) => conv.assigned_agent_id && String(conv.assigned_agent_id) === String(userId));
+  }
+  // Filtrar por barra de búsqueda
+  if (searchTerm.trim()) {
+    const term = searchTerm.trim().toLowerCase();
+    filteredConversations = filteredConversations.filter(conv =>
+      conv.customer_name?.toLowerCase().includes(term) ||
+      conv.customer_phone?.toLowerCase().includes(term)
+    );
   }
 
 
@@ -87,7 +97,8 @@ export function ConversationList({
     }
   }
 
-  if (loading) {
+  // Solo mostrar loader si no hay conversaciones en memoria
+  if (loading && (!conversations || conversations.length === 0)) {
     return (
       <div className="h-full p-3">
         <div className="h-full rounded-xl border bg-card shadow-sm flex items-center justify-center">
@@ -122,6 +133,16 @@ export function ConversationList({
     // 🔥 ESTE WRAPPER ES LA CLAVE: crea el “recuadro” del sidebar y separa del chat
     <div className="h-full p-3 pr-4">
       <div className="h-full rounded-xl border bg-card shadow-sm overflow-hidden">
+        {/* Barra de búsqueda */}
+        <div className="p-3 pb-0">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Buscar por nombre o número..."
+            className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
         <ScrollArea className="h-full">
           {/* padding interno del panel */}
           <div className="space-y-3 p-3">

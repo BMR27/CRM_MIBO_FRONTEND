@@ -37,13 +37,38 @@ export default function InboxPage() {
   const { conversations, refetch: refetchConversations } = useConversations(true, true)
   const { refetch: refetchAgents } = useAgents()
 
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
   useEffect(() => {
     const queryConvId = searchParams.get("conversationId")
     if (queryConvId && conversations.some(c => String(c.id) === queryConvId)) {
       handleSelectConversation(queryConvId)
-      return
+      setHasAutoSelected(true);
+      return;
     }
-  }, [searchParams, conversations])
+    // Solo seleccionar la primera conversación automáticamente una vez
+    if (!selectedConversationId && conversations.length > 0 && !hasAutoSelected) {
+      const first = conversations[0];
+      setSelectedConversationId(String(first.id));
+      setSelectedContactName(first.customer_name);
+      setSelectedContactId(undefined);
+      setCurrentAgentId(first.assigned_agent_id ? String(first.assigned_agent_id) : undefined);
+      setConversationDetails({
+        id: String(first.id),
+        status: first.status,
+        priority: first.priority,
+        agent_name: undefined,
+        created_at: first.created_at,
+        last_message_at: first.updated_at,
+        contact_name: first.customer_name,
+        phone_number: first.customer_phone,
+        contact_id: undefined,
+        assigned_agent_id: first.assigned_agent_id ? String(first.assigned_agent_id) : undefined,
+        externalUserId: undefined,
+        last_message: undefined,
+      });
+      setHasAutoSelected(true);
+    }
+  }, [searchParams, conversations, selectedConversationId, hasAutoSelected]);
   const [isMobile, setIsMobile] = useState(false)
   const [showOrdersPanel, setShowOrdersPanel] = useState(true)
 
@@ -83,12 +108,13 @@ export default function InboxPage() {
   }, [selectedConversationId, conversations])
 
   const handleSelectConversation = (id: string) => {
-    setSelectedConversationId(id)
-    const conv = conversations.find((c) => c.id === id)
+    setSelectedConversationId(id);
+    setHasAutoSelected(true); // Marcar como seleccionada manualmente
+    const conv = conversations.find((c) => c.id === id);
     if (conv) {
-      setSelectedContactName(conv.customer_name)
-      setSelectedContactId(undefined)
-      setCurrentAgentId(conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined)
+      setSelectedContactName(conv.customer_name);
+      setSelectedContactId(undefined);
+      setCurrentAgentId(conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined);
       setConversationDetails({
         id: String(conv.id),
         status: conv.status,
@@ -102,9 +128,9 @@ export default function InboxPage() {
         assigned_agent_id: conv.assigned_agent_id ? String(conv.assigned_agent_id) : undefined,
         externalUserId: undefined,
         last_message: undefined,
-      })
+      });
     }
-  }
+  };
 
   const handleUpdate = () => {
     refetchAgents();

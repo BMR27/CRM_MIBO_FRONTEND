@@ -660,6 +660,7 @@ __turbopack_context__.s([
     ()=>ConversationList
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/ui/scroll-area.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/ui/avatar.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/components/ui/badge.tsx [app-ssr] (ecmascript)");
@@ -676,6 +677,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversation
 ;
 ;
 ;
+;
 function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
     const { conversations, loading, error, markAsRead, refetch } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useConversations"])(onlyAssigned);
     // Obtener el usuario logueado
@@ -683,9 +685,15 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
     const user = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : null;
     const userId = user?.id;
     // Filtrar conversaciones por assigned_agent_id solo si el usuario es agente
+    const [searchTerm, setSearchTerm] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
     let filteredConversations = conversations;
     if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
     ;
+    // Filtrar por barra de búsqueda
+    if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        filteredConversations = filteredConversations.filter((conv)=>conv.customer_name?.toLowerCase().includes(term) || conv.customer_phone?.toLowerCase().includes(term));
+    }
     const getDisplayName = (name, channel)=>(0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatContactDisplayName"])(name, channel);
     const getPriorityColor = (priority)=>{
         switch(priority){
@@ -734,7 +742,8 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                 return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
         }
     };
-    if (loading) {
+    // Solo mostrar loader si no hay conversaciones en memoria
+    if (loading && (!conversations || conversations.length === 0)) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "h-full p-3",
             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -744,17 +753,17 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                     children: "Cargando conversaciones..."
                 }, void 0, false, {
                     fileName: "[project]/components/conversation-list.tsx",
-                    lineNumber: 94,
+                    lineNumber: 105,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/conversation-list.tsx",
-                lineNumber: 93,
+                lineNumber: 104,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/conversation-list.tsx",
-            lineNumber: 92,
+            lineNumber: 103,
             columnNumber: 7
         }, this);
     }
@@ -766,30 +775,6 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                     className: "text-red-500 text-sm text-center",
                     children: error
-                }, void 0, false, {
-                    fileName: "[project]/components/conversation-list.tsx",
-                    lineNumber: 104,
-                    columnNumber: 11
-                }, this)
-            }, void 0, false, {
-                fileName: "[project]/components/conversation-list.tsx",
-                lineNumber: 103,
-                columnNumber: 9
-            }, this)
-        }, void 0, false, {
-            fileName: "[project]/components/conversation-list.tsx",
-            lineNumber: 102,
-            columnNumber: 7
-        }, this);
-    }
-    if (!loading && filteredConversations.length === 0) {
-        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "h-full p-3",
-            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "h-full rounded-xl border bg-card shadow-sm flex items-center justify-center p-4",
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                    className: "text-muted-foreground text-sm text-center",
-                    children: "No hay conversaciones"
                 }, void 0, false, {
                     fileName: "[project]/components/conversation-list.tsx",
                     lineNumber: 115,
@@ -806,140 +791,17 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
             columnNumber: 7
         }, this);
     }
-    return(// 🔥 ESTE WRAPPER ES LA CLAVE: crea el “recuadro” del sidebar y separa del chat
-    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "h-full p-3 pr-4",
-        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "h-full rounded-xl border bg-card shadow-sm overflow-hidden",
-            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollArea"], {
-                className: "h-full",
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "space-y-3 p-3",
-                    children: filteredConversations.map((conv)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            onClick: async ()=>{
-                                onSelectConversation(conv.id);
-                                await markAsRead(conv.id);
-                                if (typeof refetch === 'function') refetch();
-                            },
-                            className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("relative w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10", selectedId === conv.id ? "z-10 border-primary/60 bg-primary/10 ring-2 ring-inset ring-primary/25 shadow-md" : "border-border/70 hover:border-border hover:shadow-md"),
-                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex items-start gap-3",
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "relative flex-shrink-0",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Avatar"], {
-                                                className: "h-10 w-10 ring-2 ring-background shadow-sm",
-                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AvatarFallback"], {
-                                                    className: "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm",
-                                                    children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getContactAvatarText"])(getDisplayName(conv.customer_name, conv.channel), conv.channel)
-                                                }, void 0, false, {
-                                                    fileName: "[project]/components/conversation-list.tsx",
-                                                    lineNumber: 146,
-                                                    columnNumber: 23
-                                                }, this)
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 145,
-                                                columnNumber: 21
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("absolute -bottom-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs shadow-md ring-2 ring-background", getChannelColor(conv.channel)),
-                                                children: getChannelIcon(conv.channel)
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 152,
-                                                columnNumber: 21
-                                            }, this),
-                                            conv.unread_count > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                className: "absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] px-1.5 py-0.5 font-bold border border-white shadow-lg z-10",
-                                                children: conv.unread_count
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 163,
-                                                columnNumber: 23
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/components/conversation-list.tsx",
-                                        lineNumber: 144,
-                                        columnNumber: 19
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "min-w-0 flex-1",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 mb-1",
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
-                                                        className: "min-w-0 truncate font-bold text-sm text-foreground",
-                                                        children: getDisplayName(conv.customer_name, conv.channel)
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-list.tsx",
-                                                        lineNumber: 171,
-                                                        columnNumber: 23
-                                                    }, this),
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        className: "whitespace-nowrap text-right text-muted-foreground text-xs font-medium",
-                                                        children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$formatDistanceToNow$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatDistanceToNow"])(new Date(conv.last_message?.created_at || conv.created_at), {
-                                                            addSuffix: true,
-                                                            locale: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$locale$2f$es$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["es"]
-                                                        })
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/components/conversation-list.tsx",
-                                                        lineNumber: 174,
-                                                        columnNumber: 23
-                                                    }, this)
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 170,
-                                                columnNumber: 21
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                className: "line-clamp-1 text-muted-foreground text-xs leading-relaxed mb-2",
-                                                children: typeof conv.last_message === "string" ? conv.last_message : conv.last_message?.content || "Sin mensajes"
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 182,
-                                                columnNumber: 21
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "flex items-center gap-1.5 flex-wrap",
-                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
-                                                    variant: "outline",
-                                                    className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("h-5 rounded-full px-2 text-xs font-semibold border-2", getPriorityColor(conv.priority)),
-                                                    children: getPriorityLabel(conv.priority)
-                                                }, void 0, false, {
-                                                    fileName: "[project]/components/conversation-list.tsx",
-                                                    lineNumber: 189,
-                                                    columnNumber: 23
-                                                }, this)
-                                            }, void 0, false, {
-                                                fileName: "[project]/components/conversation-list.tsx",
-                                                lineNumber: 188,
-                                                columnNumber: 21
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/components/conversation-list.tsx",
-                                        lineNumber: 169,
-                                        columnNumber: 19
-                                    }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/components/conversation-list.tsx",
-                                lineNumber: 143,
-                                columnNumber: 17
-                            }, this)
-                        }, conv.id, false, {
-                            fileName: "[project]/components/conversation-list.tsx",
-                            lineNumber: 129,
-                            columnNumber: 15
-                        }, this))
+    if (!loading && filteredConversations.length === 0) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "h-full p-3",
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "h-full rounded-xl border bg-card shadow-sm flex items-center justify-center p-4",
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                    className: "text-muted-foreground text-sm text-center",
+                    children: "No hay conversaciones"
                 }, void 0, false, {
                     fileName: "[project]/components/conversation-list.tsx",
-                    lineNumber: 127,
+                    lineNumber: 126,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
@@ -951,10 +813,177 @@ function ConversationList({ selectedId, onSelectConversation, onlyAssigned }) {
             fileName: "[project]/components/conversation-list.tsx",
             lineNumber: 124,
             columnNumber: 7
+        }, this);
+    }
+    return(// 🔥 ESTE WRAPPER ES LA CLAVE: crea el “recuadro” del sidebar y separa del chat
+    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+        className: "h-full p-3 pr-4",
+        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "h-full rounded-xl border bg-card shadow-sm overflow-hidden",
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "p-3 pb-0",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                        type: "text",
+                        value: searchTerm,
+                        onChange: (e)=>setSearchTerm(e.target.value),
+                        placeholder: "Buscar por nombre o número...",
+                        className: "w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    }, void 0, false, {
+                        fileName: "[project]/components/conversation-list.tsx",
+                        lineNumber: 138,
+                        columnNumber: 11
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/components/conversation-list.tsx",
+                    lineNumber: 137,
+                    columnNumber: 9
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$scroll$2d$area$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScrollArea"], {
+                    className: "h-full",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "space-y-3 p-3",
+                        children: filteredConversations.map((conv)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                onClick: async ()=>{
+                                    onSelectConversation(conv.id);
+                                    await markAsRead(conv.id);
+                                    if (typeof refetch === 'function') refetch();
+                                },
+                                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("relative w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10", selectedId === conv.id ? "z-10 border-primary/60 bg-primary/10 ring-2 ring-inset ring-primary/25 shadow-md" : "border-border/70 hover:border-border hover:shadow-md"),
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "flex items-start gap-3",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "relative flex-shrink-0",
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Avatar"], {
+                                                    className: "h-10 w-10 ring-2 ring-background shadow-sm",
+                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$avatar$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AvatarFallback"], {
+                                                        className: "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm",
+                                                        children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getContactAvatarText"])(getDisplayName(conv.customer_name, conv.channel), conv.channel)
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-list.tsx",
+                                                        lineNumber: 167,
+                                                        columnNumber: 23
+                                                    }, this)
+                                                }, void 0, false, {
+                                                    fileName: "[project]/components/conversation-list.tsx",
+                                                    lineNumber: 166,
+                                                    columnNumber: 21
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("absolute -bottom-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs shadow-md ring-2 ring-background", getChannelColor(conv.channel)),
+                                                    children: getChannelIcon(conv.channel)
+                                                }, void 0, false, {
+                                                    fileName: "[project]/components/conversation-list.tsx",
+                                                    lineNumber: 173,
+                                                    columnNumber: 21
+                                                }, this),
+                                                conv.unread_count > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                    className: "absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] px-1.5 py-0.5 font-bold border border-white shadow-lg z-10",
+                                                    children: conv.unread_count
+                                                }, void 0, false, {
+                                                    fileName: "[project]/components/conversation-list.tsx",
+                                                    lineNumber: 184,
+                                                    columnNumber: 23
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
+                                            fileName: "[project]/components/conversation-list.tsx",
+                                            lineNumber: 165,
+                                            columnNumber: 19
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "min-w-0 flex-1",
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 mb-1",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                                            className: "min-w-0 truncate font-bold text-sm text-foreground",
+                                                            children: getDisplayName(conv.customer_name, conv.channel)
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/components/conversation-list.tsx",
+                                                            lineNumber: 192,
+                                                            columnNumber: 23
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                            className: "whitespace-nowrap text-right text-muted-foreground text-xs font-medium",
+                                                            children: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$formatDistanceToNow$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatDistanceToNow"])(new Date(conv.last_message?.created_at || conv.created_at), {
+                                                                addSuffix: true,
+                                                                locale: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$locale$2f$es$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["es"]
+                                                            })
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/components/conversation-list.tsx",
+                                                            lineNumber: 195,
+                                                            columnNumber: 23
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
+                                                    fileName: "[project]/components/conversation-list.tsx",
+                                                    lineNumber: 191,
+                                                    columnNumber: 21
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                    className: "line-clamp-1 text-muted-foreground text-xs leading-relaxed mb-2",
+                                                    children: typeof conv.last_message === "string" ? conv.last_message : conv.last_message?.content || "Sin mensajes"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/components/conversation-list.tsx",
+                                                    lineNumber: 203,
+                                                    columnNumber: 21
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "flex items-center gap-1.5 flex-wrap",
+                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$badge$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Badge"], {
+                                                        variant: "outline",
+                                                        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("h-5 rounded-full px-2 text-xs font-semibold border-2", getPriorityColor(conv.priority)),
+                                                        children: getPriorityLabel(conv.priority)
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/components/conversation-list.tsx",
+                                                        lineNumber: 210,
+                                                        columnNumber: 23
+                                                    }, this)
+                                                }, void 0, false, {
+                                                    fileName: "[project]/components/conversation-list.tsx",
+                                                    lineNumber: 209,
+                                                    columnNumber: 21
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
+                                            fileName: "[project]/components/conversation-list.tsx",
+                                            lineNumber: 190,
+                                            columnNumber: 19
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/components/conversation-list.tsx",
+                                    lineNumber: 164,
+                                    columnNumber: 17
+                                }, this)
+                            }, conv.id, false, {
+                                fileName: "[project]/components/conversation-list.tsx",
+                                lineNumber: 150,
+                                columnNumber: 15
+                            }, this))
+                    }, void 0, false, {
+                        fileName: "[project]/components/conversation-list.tsx",
+                        lineNumber: 148,
+                        columnNumber: 11
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/components/conversation-list.tsx",
+                    lineNumber: 146,
+                    columnNumber: 9
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/components/conversation-list.tsx",
+            lineNumber: 135,
+            columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/components/conversation-list.tsx",
-        lineNumber: 123,
+        lineNumber: 134,
         columnNumber: 5
     }, this));
 }
@@ -2894,12 +2923,16 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
         }
     };
     // Auto-scroll al bottom cuando hay nuevos mensajes
+    // Auto-scroll inteligente: solo si el usuario está cerca del fondo
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (messages.length > 0) {
-            // Scroll al bottom cuando hay mensajes
             setTimeout(()=>{
-                if (scrollRef.current) {
-                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                const container = scrollRef.current;
+                if (container) {
+                    const isNearBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+                    if (isNearBottom) {
+                        container.scrollTop = container.scrollHeight;
+                    }
                 }
             }, 50);
         }
@@ -3172,7 +3205,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                 children: msg.content
             }, void 0, false, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 424,
+                lineNumber: 428,
                 columnNumber: 9
             }, this);
         }
@@ -3187,7 +3220,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                         loading: "lazy"
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 433,
+                        lineNumber: 437,
                         columnNumber: 11
                     }, this),
                     textToShow && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3195,13 +3228,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                         children: textToShow
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 440,
+                        lineNumber: 444,
                         columnNumber: 13
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 432,
+                lineNumber: 436,
                 columnNumber: 9
             }, this);
         }
@@ -3215,7 +3248,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                         className: "max-w-full rounded-md border border-border"
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 451,
+                        lineNumber: 455,
                         columnNumber: 11
                     }, this),
                     textToShow && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3223,13 +3256,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                         children: textToShow
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 457,
+                        lineNumber: 461,
                         columnNumber: 13
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 450,
+                lineNumber: 454,
                 columnNumber: 9
             }, this);
         }
@@ -3243,7 +3276,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                         className: "w-full"
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 468,
+                        lineNumber: 472,
                         columnNumber: 11
                     }, this),
                     textToShow && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3251,13 +3284,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                         children: textToShow
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 470,
+                        lineNumber: 474,
                         columnNumber: 13
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 467,
+                lineNumber: 471,
                 columnNumber: 9
             }, this);
         }
@@ -3273,7 +3306,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                     children: filename || msg.content || "Ver archivo"
                 }, void 0, false, {
                     fileName: "[project]/components/chat-area.tsx",
-                    lineNumber: 481,
+                    lineNumber: 485,
                     columnNumber: 9
                 }, this),
                 caption && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3281,13 +3314,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                     children: caption
                 }, void 0, false, {
                     fileName: "[project]/components/chat-area.tsx",
-                    lineNumber: 490,
+                    lineNumber: 494,
                     columnNumber: 11
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/components/chat-area.tsx",
-            lineNumber: 480,
+            lineNumber: 484,
             columnNumber: 7
         }, this);
     };
@@ -3314,12 +3347,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                 children: "Selecciona una conversación para comenzar"
             }, void 0, false, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 517,
+                lineNumber: 521,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/chat-area.tsx",
-            lineNumber: 516,
+            lineNumber: 520,
             columnNumber: 7
         }, this);
     }
@@ -3339,12 +3372,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     children: displayContactName ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getContactAvatarText"])(displayContactName, channel) : "?"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 528,
+                                    lineNumber: 532,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 527,
+                                lineNumber: 531,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3357,7 +3390,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: displayContactName || "Contacto"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 534,
+                                                lineNumber: 538,
                                                 columnNumber: 15
                                             }, this),
                                             channel && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -3369,13 +3402,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 537,
+                                                lineNumber: 541,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 533,
+                                        lineNumber: 537,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3385,26 +3418,26 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 className: "w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-sm shadow-blue-500/50"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 549,
+                                                lineNumber: 553,
                                                 columnNumber: 15
                                             }, this),
                                             "En línea"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 548,
+                                        lineNumber: 552,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 532,
+                                lineNumber: 536,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 526,
+                        lineNumber: 530,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3416,7 +3449,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                 onAssign: (agentId, agentName)=>onUpdate?.()
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 556,
+                                lineNumber: 560,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -3429,12 +3462,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     className: "h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 569,
+                                    lineNumber: 573,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 562,
+                                lineNumber: 566,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -3447,12 +3480,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     className: "h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 578,
+                                    lineNumber: 582,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 571,
+                                lineNumber: 575,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DropdownMenu"], {
@@ -3467,17 +3500,17 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 className: "h-5 w-5"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 583,
+                                                lineNumber: 587,
                                                 columnNumber: 17
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/components/chat-area.tsx",
-                                            lineNumber: 582,
+                                            lineNumber: 586,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 581,
+                                        lineNumber: 585,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DropdownMenuContent"], {
@@ -3488,21 +3521,21 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: "Agendar llamada"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 587,
+                                                lineNumber: 591,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DropdownMenuItem"], {
                                                 children: "Enviar encuesta"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 590,
+                                                lineNumber: 594,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DropdownMenuItem"], {
                                                 children: "Transferir conversación"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 591,
+                                                lineNumber: 595,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$dropdown$2d$menu$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DropdownMenuItem"], {
@@ -3512,31 +3545,31 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: "Eliminar conversación"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 592,
+                                                lineNumber: 596,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 586,
+                                        lineNumber: 590,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 580,
+                                lineNumber: 584,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 554,
+                        lineNumber: 558,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 525,
+                lineNumber: 529,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDialog"], {
@@ -3550,20 +3583,20 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     children: "¿Eliminar conversación?"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 607,
+                                    lineNumber: 611,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDialogDescription"], {
                                     children: "Esta acción eliminará la conversación y sus mensajes. No se puede deshacer."
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 608,
+                                    lineNumber: 612,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/chat-area.tsx",
-                            lineNumber: 606,
+                            lineNumber: 610,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDialogFooter"], {
@@ -3573,7 +3606,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     children: "Cancelar"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 613,
+                                    lineNumber: 617,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$alert$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AlertDialogAction"], {
@@ -3586,24 +3619,24 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     children: deletingConversation ? "Eliminando..." : "Eliminar"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 614,
+                                    lineNumber: 618,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/chat-area.tsx",
-                            lineNumber: 612,
+                            lineNumber: 616,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/chat-area.tsx",
-                    lineNumber: 605,
+                    lineNumber: 609,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 604,
+                lineNumber: 608,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$schedule$2d$call$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ScheduleCallDialog"], {
@@ -3614,7 +3647,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                 conversationId: conversationId
             }, void 0, false, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 629,
+                lineNumber: 633,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3627,14 +3660,14 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                         children: "Cargando mensajes..."
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 644,
+                        lineNumber: 648,
                         columnNumber: 13
                     }, this) : messages.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-center text-muted-foreground text-sm",
                         children: "No hay mensajes aún"
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 646,
+                        lineNumber: 650,
                         columnNumber: 13
                     }, this) : messages.map((msg, index)=>{
                         // Comparar hora con el mensaje anterior
@@ -3660,12 +3693,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         children: getBubbleAvatarText(msg)
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 664,
+                                        lineNumber: 668,
                                         columnNumber: 21
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 663,
+                                    lineNumber: 667,
                                     columnNumber: 19
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3679,7 +3712,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 className: "min-h-20 text-sm rounded-lg"
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 681,
+                                                lineNumber: 685,
                                                 columnNumber: 25
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3696,7 +3729,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                         children: "Cancelar"
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/chat-area.tsx",
-                                                        lineNumber: 687,
+                                                        lineNumber: 691,
                                                         columnNumber: 27
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -3707,19 +3740,19 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                         children: "Guardar"
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/chat-area.tsx",
-                                                        lineNumber: 698,
+                                                        lineNumber: 702,
                                                         columnNumber: 27
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 686,
+                                                lineNumber: 690,
                                                 columnNumber: 25
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 680,
+                                        lineNumber: 684,
                                         columnNumber: 23
                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
                                         children: [
@@ -3728,7 +3761,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: renderMessageBody(msg)
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 710,
+                                                lineNumber: 714,
                                                 columnNumber: 25
                                             }, this),
                                             showTimestamp && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3736,7 +3769,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                 children: currentTime
                                             }, void 0, false, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 721,
+                                                lineNumber: 725,
                                                 columnNumber: 27
                                             }, this),
                                             msg.sender_type === "agent" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3754,12 +3787,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                             className: "h-3 w-3"
                                                         }, void 0, false, {
                                                             fileName: "[project]/components/chat-area.tsx",
-                                                            lineNumber: 736,
+                                                            lineNumber: 740,
                                                             columnNumber: 31
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/chat-area.tsx",
-                                                        lineNumber: 727,
+                                                        lineNumber: 731,
                                                         columnNumber: 29
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -3771,42 +3804,42 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                                             className: "h-3 w-3"
                                                         }, void 0, false, {
                                                             fileName: "[project]/components/chat-area.tsx",
-                                                            lineNumber: 744,
+                                                            lineNumber: 748,
                                                             columnNumber: 31
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/components/chat-area.tsx",
-                                                        lineNumber: 738,
+                                                        lineNumber: 742,
                                                         columnNumber: 29
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/components/chat-area.tsx",
-                                                lineNumber: 726,
+                                                lineNumber: 730,
                                                 columnNumber: 27
                                             }, this)
                                         ]
                                     }, void 0, true)
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 673,
+                                    lineNumber: 677,
                                     columnNumber: 19
                                 }, this)
                             ]
                         }, msg.id, true, {
                             fileName: "[project]/components/chat-area.tsx",
-                            lineNumber: 658,
+                            lineNumber: 662,
                             columnNumber: 17
                         }, this);
                     })
                 }, void 0, false, {
                     fileName: "[project]/components/chat-area.tsx",
-                    lineNumber: 642,
+                    lineNumber: 646,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 638,
+                lineNumber: 642,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3818,12 +3851,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                             onSelectMacro: handleMacroSelect
                         }, void 0, false, {
                             fileName: "[project]/components/chat-area.tsx",
-                            lineNumber: 761,
+                            lineNumber: 765,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 760,
+                        lineNumber: 764,
                         columnNumber: 9
                     }, this),
                     pendingFile && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3837,7 +3870,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         children: "Adjunto listo para enviar"
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 767,
+                                        lineNumber: 771,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3845,7 +3878,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         children: pendingFile.name
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 768,
+                                        lineNumber: 772,
                                         columnNumber: 15
                                     }, this),
                                     pendingPreviewUrl && String(pendingFile.type || "").toLowerCase().startsWith("image/") && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
@@ -3854,7 +3887,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         className: "mt-2 max-h-48 rounded-md border border-border"
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 770,
+                                        lineNumber: 774,
                                         columnNumber: 17
                                     }, this),
                                     pendingPreviewUrl && String(pendingFile.type || "").toLowerCase().startsWith("video/") && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("video", {
@@ -3863,7 +3896,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         className: "mt-2 max-h-48 rounded-md border border-border"
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 773,
+                                        lineNumber: 777,
                                         columnNumber: 17
                                     }, this),
                                     pendingPreviewUrl && String(pendingFile.type || "").toLowerCase().startsWith("audio/") && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("audio", {
@@ -3872,13 +3905,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                         className: "mt-2 w-full"
                                     }, void 0, false, {
                                         fileName: "[project]/components/chat-area.tsx",
-                                        lineNumber: 776,
+                                        lineNumber: 780,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 766,
+                                lineNumber: 770,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -3889,13 +3922,13 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                 children: "Quitar"
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 779,
+                                lineNumber: 783,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 765,
+                        lineNumber: 769,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -3909,7 +3942,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                 onChange: handleFileSelected
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 786,
+                                lineNumber: 790,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -3923,12 +3956,12 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     className: "h-4 w-4"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 800,
+                                    lineNumber: 804,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 792,
+                                lineNumber: 796,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -3939,7 +3972,7 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                 className: "flex-1 transition-all focus:ring-2 focus:ring-primary"
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 802,
+                                lineNumber: 806,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -3950,30 +3983,30 @@ function ChatArea({ conversationId, contactName, currentAgentId, channel = 'what
                                     className: "h-4 w-4"
                                 }, void 0, false, {
                                     fileName: "[project]/components/chat-area.tsx",
-                                    lineNumber: 814,
+                                    lineNumber: 818,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/components/chat-area.tsx",
-                                lineNumber: 809,
+                                lineNumber: 813,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/chat-area.tsx",
-                        lineNumber: 785,
+                        lineNumber: 789,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/chat-area.tsx",
-                lineNumber: 759,
+                lineNumber: 763,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/chat-area.tsx",
-        lineNumber: 523,
+        lineNumber: 527,
         columnNumber: 5
     }, this);
 }
@@ -4068,7 +4101,7 @@ function ConversationDetails({ contactName, contactPhone = "whatsapp:+5215548780
         const loadComments = async ()=>{
             setCommentsLoading(true);
             try {
-                const { data } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["frontendApi"].get(`/api/conversations/${conversationId}`);
+                const { data } = await __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].get(`/api/conversations/${conversationId}`);
                 if (data.comments) {
                     try {
                         const parsed = JSON.parse(data.comments);
@@ -5512,15 +5545,42 @@ function InboxPage() {
     const [refreshKey, setRefreshKey] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(0);
     const { conversations, refetch: refetchConversations } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$conversations$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useConversations"])(true, true);
     const { refetch: refetchAgents } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$hooks$2f$use$2d$agents$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useAgents"])();
+    const [hasAutoSelected, setHasAutoSelected] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const queryConvId = searchParams.get("conversationId");
         if (queryConvId && conversations.some((c)=>String(c.id) === queryConvId)) {
             handleSelectConversation(queryConvId);
+            setHasAutoSelected(true);
             return;
+        }
+        // Solo seleccionar la primera conversación automáticamente una vez
+        if (!selectedConversationId && conversations.length > 0 && !hasAutoSelected) {
+            const first = conversations[0];
+            setSelectedConversationId(String(first.id));
+            setSelectedContactName(first.customer_name);
+            setSelectedContactId(undefined);
+            setCurrentAgentId(first.assigned_agent_id ? String(first.assigned_agent_id) : undefined);
+            setConversationDetails({
+                id: String(first.id),
+                status: first.status,
+                priority: first.priority,
+                agent_name: undefined,
+                created_at: first.created_at,
+                last_message_at: first.updated_at,
+                contact_name: first.customer_name,
+                phone_number: first.customer_phone,
+                contact_id: undefined,
+                assigned_agent_id: first.assigned_agent_id ? String(first.assigned_agent_id) : undefined,
+                externalUserId: undefined,
+                last_message: undefined
+            });
+            setHasAutoSelected(true);
         }
     }, [
         searchParams,
-        conversations
+        conversations,
+        selectedConversationId,
+        hasAutoSelected
     ]);
     const [isMobile, setIsMobile] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [showOrdersPanel, setShowOrdersPanel] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
@@ -5561,6 +5621,7 @@ function InboxPage() {
     ]);
     const handleSelectConversation = (id)=>{
         setSelectedConversationId(id);
+        setHasAutoSelected(true); // Marcar como seleccionada manualmente
         const conv = conversations.find((c)=>c.id === id);
         if (conv) {
             setSelectedContactName(conv.customer_name);
@@ -5610,7 +5671,7 @@ function InboxPage() {
             children: "Cargando conversaciones..."
         }, void 0, false, {
             fileName: "[project]/app/inbox/page.tsx",
-            lineNumber: 135,
+            lineNumber: 161,
             columnNumber: 12
         }, this);
     }
@@ -5618,7 +5679,7 @@ function InboxPage() {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$inbox$2d$header$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["InboxHeader"], {}, void 0, false, {
                 fileName: "[project]/app/inbox/page.tsx",
-                lineNumber: 139,
+                lineNumber: 165,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5632,12 +5693,12 @@ function InboxPage() {
                             onlyAssigned: isAgent
                         }, refreshKey, false, {
                             fileName: "[project]/app/inbox/page.tsx",
-                            lineNumber: 143,
+                            lineNumber: 169,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/inbox/page.tsx",
-                        lineNumber: 142,
+                        lineNumber: 168,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5645,7 +5706,7 @@ function InboxPage() {
                         "aria-hidden": "true"
                     }, void 0, false, {
                         fileName: "[project]/app/inbox/page.tsx",
-                        lineNumber: 151,
+                        lineNumber: 177,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5660,12 +5721,12 @@ function InboxPage() {
                             onConversationDeleted: handleConversationDeleted
                         }, void 0, false, {
                             fileName: "[project]/app/inbox/page.tsx",
-                            lineNumber: 154,
+                            lineNumber: 180,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/inbox/page.tsx",
-                        lineNumber: 153,
+                        lineNumber: 179,
                         columnNumber: 9
                     }, this),
                     showOrdersPanel && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -5675,7 +5736,7 @@ function InboxPage() {
                                 "aria-hidden": "true"
                             }, void 0, false, {
                                 fileName: "[project]/app/inbox/page.tsx",
-                                lineNumber: 174,
+                                lineNumber: 200,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5690,12 +5751,12 @@ function InboxPage() {
                                     onAgentChange: handleAgentChange
                                 }, void 0, false, {
                                     fileName: "[project]/app/inbox/page.tsx",
-                                    lineNumber: 176,
+                                    lineNumber: 202,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/inbox/page.tsx",
-                                lineNumber: 175,
+                                lineNumber: 201,
                                 columnNumber: 11
                             }, this)
                         ]
@@ -5703,7 +5764,7 @@ function InboxPage() {
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/inbox/page.tsx",
-                lineNumber: 140,
+                lineNumber: 166,
                 columnNumber: 7
             }, this)
         ]
