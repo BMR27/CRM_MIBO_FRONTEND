@@ -93,8 +93,8 @@ export function useConversations(onlyAssigned = false, forceAgentFilter = false)
       }
       console.log('[DEBUG] userId:', userId, '| userRole:', userRole);
       console.log('[DEBUG] filtered conversations:', filtered);
-        // Ordenar por fecha de creación ascendente para mantener la lista fija
-        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        // Ordenar por último mensaje descendente (más recientes arriba)
+        filtered.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
         // Notificación si hay nuevos mensajes
         if (prevConversationsRef.current.length > 0) {
           filtered.forEach((conv, idx) => {
