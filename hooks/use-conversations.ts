@@ -83,7 +83,7 @@ export function useConversations(onlyAssigned = false, forceAgentFilter = false)
         created_at: conv.created_at || new Date().toISOString(),
         updated_at: conv.last_message_at || new Date().toISOString(),
       }));
-      let filtered = mappedConversations;
+      let filtered = mappedConversations;conv.updated_at || conv.created_at || 
       // Filtrado estricto: si el usuario es agente, solo mostrar conversaciones con assigned_agent_id igual al id del usuario
       if (userId && userRole === "agent") {
         filtered = mappedConversations.filter((conv) => {
