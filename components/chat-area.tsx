@@ -16,6 +16,7 @@ import { toast } from "@/hooks/use-toast"
 import { MacrosDialog } from "./macros-dialog"
 import { AssignAgentDialog } from "./assign-agent-dialog"
 import { ScheduleCallDialog } from "./schedule-call-dialog"
+import { EmojiPickerDialog } from "./emoji-picker-dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -363,6 +364,10 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
   const handleMacroSelect = async (content: string, macroId: number) => {
     setNewMessage(content)
+  }
+
+  const handleEmojiSelect = (emoji: string) => {
+    setNewMessage(prev => prev + emoji)
   }
 
   const handleEditMessage = async (messageId: number | string) => {
@@ -803,6 +808,10 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
           >
             <Paperclip className="h-4 w-4" />
           </Button>
+          <EmojiPickerDialog 
+            onEmojiSelect={handleEmojiSelect}
+            disabled={sending || sendingMedia}
+          />
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
