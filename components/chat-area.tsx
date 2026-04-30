@@ -179,9 +179,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       // El token ya lo añade el interceptor de axios
       const { data } = await api.get(`/api/conversations/${conversationId}/messages`)
       // Ordenar por fecha ascendente (más viejos primero, más recientes último)
-      const sortedMessages = Array.isArray(data)
-        ? data.sort((a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        : []
+      const rawMessages = Array.isArray(data) ? data : (Array.isArray(data?.messages) ? data.messages : [])
+      const sortedMessages = rawMessages.sort((a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       setMessages(sortedMessages)
     } catch (error: any) {
       if (error.response) {
@@ -409,10 +408,24 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
   }
 
   const renderMessageBody = (msg: Message) => {
-    const type = msg.message_type || "text"
     const mediaUrl = msg.media_url || null
     const filename = msg?.metadata?.filename || msg?.metadata?.media_filename || ""
-    const caption = msg?.metadata?.caption || ""
+    const caption = msg?.metadata?.caption || msg?.metadata?.media_caption || ""
+    const metaMimeType: string = msg?.metadata?.mime_type || msg?.metadata?.media_mime_type || ""
+
+    // Infer type: use message_type, then metadata.type, then mime type
+    const inferredType = (() => {
+      const raw = msg.message_type || msg?.metadata?.type || ""
+      if (["image", "video", "audio", "document", "sticker"].includes(raw)) return raw
+      if (mediaUrl || metaMimeType) {
+        if (metaMimeType.startsWith("image/")) return "image"
+        if (metaMimeType.startsWith("video/")) return "video"
+        if (metaMimeType.startsWith("audio/")) return "audio"
+        if (metaMimeType) return "document"
+      }
+      return "text"
+    })()
+    const type = inferredType
 
     const isPlaceholderContent = (value: unknown) => {
       const text = String(value || "").trim().toLowerCase()
