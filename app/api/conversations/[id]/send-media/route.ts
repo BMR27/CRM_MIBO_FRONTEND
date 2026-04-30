@@ -223,8 +223,14 @@ export async function POST(
 
     const uploadJson = await uploadResp.json().catch(() => null)
     if (!uploadResp.ok) {
+      console.error("[send-media] Upload failed:", uploadResp.status, uploadJson)
+      const errorMsg = uploadJson?.error?.message || uploadJson?.message || JSON.stringify(uploadJson)
       return NextResponse.json(
-        { error: "Failed to upload media", details: uploadJson },
+        { 
+          error: "Failed to upload media to WhatsApp", 
+          details: errorMsg,
+          hint: "Verifica que WHATSAPP_ACCESS_TOKEN y WHATSAPP_PHONE_NUMBER_ID sean válidos en Railway."
+        },
         { status: uploadResp.status },
       )
     }
@@ -270,14 +276,20 @@ export async function POST(
 
     const sendJson = await sendResp.json().catch(() => null)
     if (!sendResp.ok) {
+      console.error("[send-media] Send failed:", sendResp.status, sendJson)
+      const errorMsg = sendJson?.error?.message || sendJson?.message || JSON.stringify(sendJson)
       return NextResponse.json(
-        { error: "Failed to send media", details: sendJson },
+        { 
+          error: "Failed to send media message", 
+          details: errorMsg,
+          hint: "Verifica que el número de teléfono sea válido en formato E.164 (+CC1234567890)."
+        },
         { status: sendResp.status },
       )
     }
 
-    const externalMessageId =
-      String(sendJson?.messages?.[0]?.id || sendJson?.message_id || "") || null
+    const externalMessageId = String(sendJson?.messages?.[0]?.id || sendJson?.message_id || "") || null
+    console.log("[send-media] Success:", { mediaId, externalMessageId, type, filename })
 
     const storedContent = caption || filename || `[${type}]`
     const metadata = {
