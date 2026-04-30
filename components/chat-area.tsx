@@ -234,12 +234,18 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
           console.log("[ChatArea] No message in media response, fetching messages");
           await fetchMessages();
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("[ChatArea] Send media error:", error);
+
+        const errorMessage = error?.response?.data?.error || 
+                             error?.response?.data?.message ||
+                             error?.message || 
+                             "Ocurrió un error inesperado al enviar el archivo."
+        const errorHint = error?.response?.data?.hint || ""
 
         toast({
           title: "Error al enviar adjunto",
-          description: "Ocurrió un error inesperado al enviar el archivo.",
+          description: errorHint ? `${errorMessage} - ${errorHint}` : errorMessage,
           variant: "destructive",
         });
 
