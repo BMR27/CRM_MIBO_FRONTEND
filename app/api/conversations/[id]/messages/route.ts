@@ -226,10 +226,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
       // Fallback for old Twilio inbound media rows that were stored as plain text
       // (no media_id/media_url), but still have whatsapp_message_id (Twilio Message SID).
-      if (!media_url && whatsappMessageId) {
+        // Try fallback if message_type indicates media OR content looks like a file
+        if (!media_url && whatsappMessageId) {
+          const isMediaType = ["image", "video", "audio", "document", "sticker"].includes(
+            String(m.message_type || "").toLowerCase()
+          )
         const looksLikeFile = /\.(pdf|png|jpe?g|gif|webp|bmp|tiff?|heic|mp4|mov|avi|m4v|mp3|wav|ogg|aac|m4a|zip|rar|docx?|xlsx?|pptx?)$/i
           .test(String(m.content || "").trim())
-        if (looksLikeFile) {
+        
+          if (isMediaType || looksLikeFile) {
           const inferredFilename = String(filename || m.content || "archivo").trim()
           media_url = `/api/twilio/media-by-message/${encodeURIComponent(String(whatsappMessageId))}`
           if (inferredFilename) {
