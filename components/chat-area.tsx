@@ -415,12 +415,21 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
   }
 
   const renderMessageBody = (msg: Message) => {
+    // Always parse metadata in case it arrives as a JSON string
+    const metadata: any = (() => {
+      if (!msg.metadata) return {}
+      if (typeof msg.metadata === "string") {
+        try { return JSON.parse(msg.metadata) } catch { return {} }
+      }
+      return msg.metadata
+    })()
+
     const mediaUrl = (() => {
-      // Prefer explicit media_url; fall back to constructing proxy URL from media_id
+      // Prefer explicit media_url column, then metadata.media_url, then construct from media_id
       const raw = msg.media_url
-          || msg?.metadata?.media_url
+          || metadata?.media_url
           || (() => {
-              const mid = msg?.metadata?.media_id
+              const mid = metadata?.media_id
               if (!mid) return null
               // UUID → agent-uploaded file served by /api/media/
               // Otherwise → WhatsApp Cloud API media served by /api/whatsapp/media/
@@ -432,8 +441,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         || null
       if (!raw || typeof window === "undefined") return raw
 
-      // For media proxy links, include JWT as query param so browser requests
-      // from <img>/<video>/<audio>/<a> can be authenticated.
+      // For media proxy links that need JWT, add token as query param
       if (raw.startsWith("/api/whatsapp/media/") || raw.startsWith("/api/twilio/media-by-message/")) {
         const token = localStorage.getItem("access_token") || localStorage.getItem("token") || ""
         if (!token) return raw
@@ -443,13 +451,13 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
       return raw
     })()
-    const filename = msg?.metadata?.filename || msg?.metadata?.media_filename || ""
-    const caption = msg?.metadata?.caption || msg?.metadata?.media_caption || ""
-    const metaMimeType: string = msg?.metadata?.mime_type || msg?.metadata?.media_mime_type || ""
+    const filename = metadata?.filename || metadata?.media_filename || ""
+    const caption = metadata?.caption || metadata?.media_caption || ""
+    const metaMimeType: string = metadata?.mime_type || metadata?.media_mime_type || ""
 
     // Infer type: use message_type, then metadata.type, then mime type
     const inferredType = (() => {
-      const raw = msg.message_type || msg?.metadata?.type || ""
+      const raw = msg.message_type || metadata?.type || ""
       if (["image", "video", "audio", "document", "sticker"].includes(raw)) return raw
       if (mediaUrl || metaMimeType) {
         if (metaMimeType.startsWith("image/")) return "image"
@@ -486,7 +494,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         )
       }
 
-      const sid = msg.whatsapp_message_id || msg?.metadata?.whatsapp_message_id || null
+      const sid = msg.whatsapp_message_id || metadata?.whatsapp_message_id || null
       let fallbackDownloadUrl: string | null = null
       if (sid) {
         const inferredFilename = String(filename || msg.content || "archivo").trim()
