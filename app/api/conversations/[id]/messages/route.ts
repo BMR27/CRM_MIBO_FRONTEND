@@ -218,7 +218,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         null
       let media_url: string | null = storedMediaUrl
       if (!media_url && mediaId) {
-        media_url = `/api/whatsapp/media/${encodeURIComponent(String(mediaId))}`
+        // UUID → agent-uploaded file; otherwise → WhatsApp Cloud API media
+        const isUploadUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(mediaId))
+        media_url = isUploadUuid
+          ? `/api/media/${encodeURIComponent(String(mediaId))}`
+          : `/api/whatsapp/media/${encodeURIComponent(String(mediaId))}`
         if (filename) {
           media_url += `?filename=${encodeURIComponent(String(filename))}`
         }

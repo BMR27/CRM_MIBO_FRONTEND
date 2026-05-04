@@ -418,7 +418,17 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     const mediaUrl = (() => {
       // Prefer explicit media_url; fall back to constructing proxy URL from media_id
       const raw = msg.media_url
-        || (msg?.metadata?.media_id ? `/api/whatsapp/media/${msg.metadata.media_id}` : null)
+          || msg?.metadata?.media_url
+          || (() => {
+              const mid = msg?.metadata?.media_id
+              if (!mid) return null
+              // UUID → agent-uploaded file served by /api/media/
+              // Otherwise → WhatsApp Cloud API media served by /api/whatsapp/media/
+              const isUploadUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(mid))
+              return isUploadUuid
+                ? `/api/media/${mid}`
+                : `/api/whatsapp/media/${mid}`
+            })()
         || null
       if (!raw || typeof window === "undefined") return raw
 
