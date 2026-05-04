@@ -219,6 +219,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         const form = new FormData();
         form.append("file", fileToSend);
         if (caption) form.append("caption", caption);
+        if (externalUserId) form.append("to", String(externalUserId));
 
         setPendingFile(null);
         setPendingPreviewUrl(null);

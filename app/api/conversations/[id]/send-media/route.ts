@@ -147,6 +147,7 @@ export async function POST(
 
     const caption = String(form.get("caption") || "").trim()
     const requestedType = String(form.get("type") || "").trim()
+    const explicitToRaw = String(form.get("to") || "").trim()
 
     const fileObj = file as File
     const filename = fileObj.name || "archivo"
@@ -158,39 +159,41 @@ export async function POST(
       return inferWhatsappMediaType(mimeType, filename)
     })()
 
-    // Lookup recipient (WhatsApp "to") by conversation id
-    let recipientDigits = ""
-    const includeConvChannel = await hasConversationChannelCols(db)
-    const convRows = includeConvChannel
-      ? await db`
-          SELECT
-            conv.channel,
-            conv.external_user_id,
-            c.phone_number
-          FROM conversations conv
-          LEFT JOIN contacts c ON conv.contact_id = c.id
-          WHERE conv.id::text = ${id}
-          LIMIT 1
-        `
-      : await db`
-          SELECT
-            c.phone_number
-          FROM conversations conv
-          LEFT JOIN contacts c ON conv.contact_id = c.id
-          WHERE conv.id::text = ${id}
-          LIMIT 1
-        `
+    // Resolve recipient (WhatsApp "to"): prefer explicit `to` from frontend, then DB conversation lookup.
+    let recipientDigits = normalizeToDigits(explicitToRaw)
+    if (!recipientDigits) {
+      const includeConvChannel = await hasConversationChannelCols(db)
+      const convRows = includeConvChannel
+        ? await db`
+            SELECT
+              conv.channel,
+              conv.external_user_id,
+              c.phone_number
+            FROM conversations conv
+            LEFT JOIN contacts c ON conv.contact_id = c.id
+            WHERE conv.id::text = ${id}
+            LIMIT 1
+          `
+        : await db`
+            SELECT
+              c.phone_number
+            FROM conversations conv
+            LEFT JOIN contacts c ON conv.contact_id = c.id
+            WHERE conv.id::text = ${id}
+            LIMIT 1
+          `
 
-    if (convRows?.[0]) {
-      const row: any = convRows[0]
-      const channel = includeConvChannel ? String(row.channel || "whatsapp") : "whatsapp"
-      if (channel !== "whatsapp") {
-        return NextResponse.json(
-          { error: `Unsupported channel for media send: ${channel}` },
-          { status: 400 },
-        )
+      if (convRows?.[0]) {
+        const row: any = convRows[0]
+        const channel = includeConvChannel ? String(row.channel || "whatsapp") : "whatsapp"
+        if (channel !== "whatsapp") {
+          return NextResponse.json(
+            { error: `Unsupported channel for media send: ${channel}` },
+            { status: 400 },
+          )
+        }
+        recipientDigits = normalizeToDigits((includeConvChannel ? row.external_user_id : "") || row.phone_number || "")
       }
-      recipientDigits = normalizeToDigits((includeConvChannel ? row.external_user_id : "") || row.phone_number || "")
     }
 
     if (!recipientDigits) {
