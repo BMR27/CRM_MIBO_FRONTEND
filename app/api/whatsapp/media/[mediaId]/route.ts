@@ -36,18 +36,56 @@ export async function GET(
   { params }: { params: Promise<{ mediaId: string }> },
 ) {
   const user = await getSession()
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
-  }
-
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
-  if (!accessToken) {
-    return missingTokenResponse(request)
-  }
-
   const { mediaId } = await params
   const { searchParams } = new URL(request.url)
   const filename = (searchParams.get("filename") || "").trim()
+  const tokenFromQuery = (searchParams.get("token") || "").trim()
+
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
+  if (!accessToken) {
+    // Fallback: proxy through backend endpoint that already has Cloud credentials.
+    const backendUrl = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
+    if (!backendUrl) {
+      return missingTokenResponse(request)
+    }
+
+    if (!user && !tokenFromQuery) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    }
+
+    const backendMediaUrl = new URL(`${backendUrl}/api/whatsapp/media/${encodeURIComponent(mediaId)}`)
+    if (filename) backendMediaUrl.searchParams.set("filename", filename)
+    if (tokenFromQuery) backendMediaUrl.searchParams.set("token", tokenFromQuery)
+
+    const backendResp = await fetch(backendMediaUrl.toString(), {
+      method: "GET",
+      headers: {
+        ...(tokenFromQuery ? { Authorization: `Bearer ${tokenFromQuery}` } : {}),
+      },
+      cache: "no-store",
+    })
+
+    if (!backendResp.ok) {
+      const text = await backendResp.text().catch(() => "")
+      return NextResponse.json(
+        { error: "Failed to fetch media from backend proxy", details: text },
+        { status: backendResp.status },
+      )
+    }
+
+    const headers = new Headers()
+    const contentType = backendResp.headers.get("content-type") || "application/octet-stream"
+    headers.set("Content-Type", contentType)
+    headers.set("Cache-Control", "private, no-store")
+    const contentDisposition = backendResp.headers.get("content-disposition")
+    if (contentDisposition) headers.set("Content-Disposition", contentDisposition)
+
+    return new Response(backendResp.body, { status: 200, headers })
+  }
+
+  if (!user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+  }
 
   // 1) Media info (gives us a temporary download URL)
   const infoResp = await fetch(

@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { api } from "@/lib/api"
+import { api, frontendApi } from "@/lib/api"
 
 interface Message {
   id: number | string
@@ -223,7 +223,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         setPendingPreviewUrl(null);
         setNewMessage("");
 
-        const response = await api.post(`/api/conversations/${conversationId}/send-media`, form, {
+        const response = await frontendApi.post(`/api/conversations/${conversationId}/send-media`, form, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         const data = response.data;
@@ -414,7 +414,24 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
   }
 
   const renderMessageBody = (msg: Message) => {
-    const mediaUrl = msg.media_url || null
+    const mediaUrl = (() => {
+      // Prefer explicit media_url; fall back to constructing proxy URL from media_id
+      const raw = msg.media_url
+        || (msg?.metadata?.media_id ? `/api/whatsapp/media/${msg.metadata.media_id}` : null)
+        || null
+      if (!raw || typeof window === "undefined") return raw
+
+      // For media proxy links, include JWT as query param so browser requests
+      // from <img>/<video>/<audio>/<a> can be authenticated.
+      if (raw.startsWith("/api/whatsapp/media/") || raw.startsWith("/api/twilio/media-by-message/")) {
+        const token = localStorage.getItem("access_token") || localStorage.getItem("token") || ""
+        if (!token) return raw
+        const separator = raw.includes("?") ? "&" : "?"
+        return `${raw}${separator}token=${encodeURIComponent(token)}`
+      }
+
+      return raw
+    })()
     const filename = msg?.metadata?.filename || msg?.metadata?.media_filename || ""
     const caption = msg?.metadata?.caption || msg?.metadata?.media_caption || ""
     const metaMimeType: string = msg?.metadata?.mime_type || msg?.metadata?.media_mime_type || ""
@@ -446,24 +463,49 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     }
 
     const textToShow = caption || (!isPlaceholderContent(msg.content) ? String(msg.content || "").trim() : "")
+    const displayName = filename || msg.content || "Ver archivo"
 
-    if (!mediaUrl || type === "text") {
+    // If no URL but it's a media message, show a disabled placeholder with the filename
+    if (!mediaUrl) {
+      if (type === "text") {
+        return (
+          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+            {msg.content}
+          </p>
+        )
+      }
+      // Media message without URL (token not configured or media_id missing)
       return (
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-          {msg.content}
-        </p>
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
+          <span className="text-lg">
+            {type === "image" ? "🖼️" : type === "video" ? "🎬" : type === "audio" ? "🎵" : "📄"}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium truncate">{displayName}</p>
+            <p className="text-xs text-muted-foreground">Archivo no disponible para previsualizar</p>
+          </div>
+        </div>
       )
     }
 
     if (type === "image" || type === "sticker") {
       return (
         <div className="space-y-2">
-          <img
-            src={mediaUrl}
-            alt={caption || filename || "imagen"}
-            className="max-w-full rounded-md border border-border"
-            loading="lazy"
-          />
+          <div className="flex flex-col gap-2">
+            <img
+              src={mediaUrl}
+              alt={caption || filename || "imagen"}
+              className="max-w-full rounded-md border border-border"
+              loading="lazy"
+            />
+            <a
+              href={mediaUrl}
+              download={filename || "imagen"}
+              className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-fit"
+            >
+              ⬇ Descargar imagen
+            </a>
+          </div>
           {textToShow && (
             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
               {textToShow}
@@ -481,6 +523,13 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             controls
             className="max-w-full rounded-md border border-border"
           />
+          <a
+            href={mediaUrl}
+            download={filename || "video"}
+            className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-fit"
+          >
+            ⬇ Descargar video
+          </a>
           {textToShow && (
             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
               {textToShow}
@@ -494,6 +543,13 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       return (
         <div className="space-y-2">
           <audio src={mediaUrl} controls className="w-full" />
+          <a
+            href={mediaUrl}
+            download={filename || "audio"}
+            className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-fit"
+          >
+            ⬇ Descargar audio
+          </a>
           {textToShow && (
             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
               {textToShow}
@@ -503,17 +559,24 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       )
     }
 
-    // document or unknown media types: show link
+    // document or unknown media types: show download card
     return (
-      <div className="space-y-1">
-        <a
-          href={mediaUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="underline underline-offset-2 text-sm break-words [overflow-wrap:anywhere]"
-        >
-          {filename || msg.content || "Ver archivo"}
-        </a>
+      <div className="space-y-2">
+        <div className="rounded-md border border-border bg-muted/40 p-3">
+          <div className="flex items-start gap-2 mb-3">
+            <span className="text-lg">📄</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium truncate">{displayName}</p>
+            </div>
+          </div>
+          <a
+            href={mediaUrl}
+            download={filename || undefined}
+            className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-full"
+          >
+            ⬇ Descargar archivo
+          </a>
+        </div>
         {caption && (
           <p className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
             {caption}

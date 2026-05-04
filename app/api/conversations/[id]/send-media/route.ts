@@ -121,23 +121,17 @@ export async function POST(
 
     const db = sql
 
-    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
-    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
+    const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID
+    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN
+    const twilioFrom = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886"
+    const backendUrl = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
+    const canSendDirectlyWithFrontendTwilio = Boolean(twilioAccountSid && twilioAuthToken)
 
-    if (!accessToken) {
+    if (!canSendDirectlyWithFrontendTwilio && !backendUrl) {
       return NextResponse.json(
         {
-          error: "WHATSAPP_ACCESS_TOKEN missing",
-          hint: "Configura WHATSAPP_ACCESS_TOKEN en Railway (servicio del frontend). Debe ser un token válido de WhatsApp Cloud API.",
-        },
-        { status: 500 },
-      )
-    }
-    if (!phoneNumberId) {
-      return NextResponse.json(
-        {
-          error: "WHATSAPP_PHONE_NUMBER_ID missing",
-          hint: "Configura WHATSAPP_PHONE_NUMBER_ID en Railway (servicio del frontend). Ojo: NO es el WABA ID; es el Phone Number ID que ves en Meta Developers > WhatsApp > API Setup.",
+          error: "Twilio credentials missing in frontend and BACKEND_URL/NEXT_PUBLIC_BACKEND_URL not configured",
+          hint: "Configura TWILIO_* en frontend o define BACKEND_URL para delegar el envio al backend (que ya tiene TWILIO_*).",
         },
         { status: 500 },
       )
@@ -205,96 +199,173 @@ export async function POST(
       )
     }
 
-    // 1) Upload media
-    const uploadForm = new FormData()
-    uploadForm.append("messaging_product", "whatsapp")
-    uploadForm.append("file", fileObj, filename)
+    // 1) Ensure media_uploads table exists
+    try {
+      await db`
+        CREATE TABLE IF NOT EXISTS media_uploads (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          data TEXT NOT NULL,
+          mime_type VARCHAR(255) NOT NULL DEFAULT 'application/octet-stream',
+          filename VARCHAR(500),
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `
+    } catch (tableErr) {
+      console.error("[send-media] Could not ensure media_uploads table:", tableErr)
+    }
 
-    const uploadResp = await fetch(
-      `https://graph.facebook.com/v19.0/${encodeURIComponent(phoneNumberId)}/media`,
-      {
+    // 2) Store file in DB as base64
+    const fileBuffer = Buffer.from(await fileObj.arrayBuffer())
+    const fileBase64 = fileBuffer.toString("base64")
+
+    let uploadId = ""
+    try {
+      const insertRows = await db`
+        INSERT INTO media_uploads (data, mime_type, filename)
+        VALUES (${fileBase64}, ${mimeType}, ${filename})
+        RETURNING id
+      `
+      uploadId = String(insertRows?.[0]?.id || "")
+    } catch (insertErr) {
+      console.error("[send-media] Failed to store media in DB:", insertErr)
+      return NextResponse.json(
+        { error: "Failed to store media file", details: String(insertErr) },
+        { status: 500 },
+      )
+    }
+
+    if (!uploadId) {
+      return NextResponse.json(
+        { error: "DB insert did not return an upload id" },
+        { status: 500 },
+      )
+    }
+
+    // 3) Build public media URL (Twilio must fetch this over the internet)
+    const appUrl = (process.env.APP_URL || "").replace(/\/$/, "")
+    const requestOrigin = new URL(request.url).origin.replace(/\/$/, "")
+
+    // Avoid false-positive local sends: Twilio cannot fetch localhost URLs.
+    const effectivePublicBase = appUrl || requestOrigin
+    if (!appUrl && /localhost|127\.0\.0\.1/i.test(requestOrigin)) {
+      return NextResponse.json(
+        {
+          error: "APP_URL missing for local media send",
+          hint: "Define APP_URL con una URL publica (https://...) para que Twilio pueda descargar el archivo. En local, Twilio no puede acceder a localhost.",
+        },
+        { status: 500 },
+      )
+    }
+
+    const mediaUrl = `${effectivePublicBase}/api/media/${uploadId}`
+
+    console.log("[send-media] Stored upload:", { uploadId, mediaUrl, type, filename })
+
+    // 4) Send via Twilio WhatsApp (directly from frontend env vars, or delegated to backend)
+    const twilioTo = recipientDigits.startsWith("whatsapp:") ? recipientDigits : `whatsapp:+${recipientDigits}`
+    const twilioFromFmt = twilioFrom.startsWith("whatsapp:") ? twilioFrom : `whatsapp:${twilioFrom}`
+
+    let sendJson: any = null
+
+    if (canSendDirectlyWithFrontendTwilio) {
+      const twilioBody = new URLSearchParams()
+      twilioBody.append("From", twilioFromFmt)
+      twilioBody.append("To", twilioTo)
+      twilioBody.append("MediaUrl", mediaUrl)
+      if (caption) twilioBody.append("Body", caption)
+
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`
+      const credentials = Buffer.from(`${twilioAccountSid}:${twilioAuthToken}`).toString("base64")
+
+      const sendResp = await fetch(twilioUrl, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Basic ${credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: uploadForm,
-      },
-    )
+        body: twilioBody.toString(),
+      })
 
-    const uploadJson = await uploadResp.json().catch(() => null)
-    if (!uploadResp.ok) {
-      console.error("[send-media] Upload failed:", uploadResp.status, uploadJson)
-      const errorMsg = uploadJson?.error?.message || uploadJson?.message || JSON.stringify(uploadJson)
-      return NextResponse.json(
-        { 
-          error: "Failed to upload media to WhatsApp", 
-          details: errorMsg,
-          hint: "Verifica que WHATSAPP_ACCESS_TOKEN y WHATSAPP_PHONE_NUMBER_ID sean válidos en Railway."
+      sendJson = await sendResp.json().catch(() => null)
+      if (!sendResp.ok) {
+        console.error("[send-media] Twilio send failed:", sendResp.status, sendJson)
+        const errorMsg = sendJson?.message || sendJson?.error_message || JSON.stringify(sendJson)
+        return NextResponse.json(
+          {
+            error: "Failed to send media via Twilio",
+            details: errorMsg,
+            hint: "Verifica TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN y TWILIO_WHATSAPP_FROM en Railway.",
+          },
+          { status: sendResp.status },
+        )
+      }
+
+      // Twilio can return 201 but still include immediate delivery errors.
+      if (sendJson?.error_code || sendJson?.error_message) {
+        return NextResponse.json(
+          {
+            error: "Twilio accepted request but reported an error",
+            details: sendJson?.error_message || String(sendJson?.error_code),
+            hint: "Revisa que MediaUrl sea publica y accesible por internet, y que el destinatario pueda recibir WhatsApp.",
+          },
+          { status: 502 },
+        )
+      }
+    } else {
+      const authHeader = request.headers.get("authorization") || ""
+      const backendResp = await fetch(`${backendUrl}/api/twilio/send-wa-media`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authHeader ? { Authorization: authHeader } : {}),
         },
-        { status: uploadResp.status },
-      )
-    }
+        body: JSON.stringify({
+          to: twilioTo,
+          from: twilioFromFmt,
+          mediaUrl,
+          body: caption || undefined,
+        }),
+      })
 
-    const mediaId = String(uploadJson?.id || "")
-    if (!mediaId) {
-      return NextResponse.json(
-        { error: "Cloud API did not return media id", details: uploadJson },
-        { status: 502 },
-      )
-    }
+      sendJson = await backendResp.json().catch(() => null)
+      if (!backendResp.ok) {
+        console.error("[send-media] Backend Twilio send failed:", backendResp.status, sendJson)
+        const errorMsg = sendJson?.message || sendJson?.error || JSON.stringify(sendJson)
+        return NextResponse.json(
+          {
+            error: "Failed to send media via backend Twilio",
+            details: errorMsg,
+            hint: "Verifica que el backend tenga TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN y TWILIO_WHATSAPP_FROM configurados.",
+          },
+          { status: backendResp.status },
+        )
+      }
 
-    // 2) Send message
-    const payload: any = {
-      messaging_product: "whatsapp",
-      to: recipientDigits,
-      type,
-    }
-
-    if (type === "image") payload.image = { id: mediaId, ...(caption ? { caption } : {}) }
-    if (type === "video") payload.video = { id: mediaId, ...(caption ? { caption } : {}) }
-    if (type === "audio") payload.audio = { id: mediaId }
-    if (type === "sticker") payload.sticker = { id: mediaId }
-    if (type === "document") {
-      payload.document = {
-        id: mediaId,
-        ...(caption ? { caption } : {}),
-        ...(filename ? { filename } : {}),
+      const backendTwilio = sendJson?.twilio || sendJson
+      if (backendTwilio?.errorCode || backendTwilio?.errorMessage || backendTwilio?.error_code || backendTwilio?.error_message) {
+        return NextResponse.json(
+          {
+            error: "Backend Twilio reported an error",
+            details:
+              backendTwilio?.errorMessage ||
+              backendTwilio?.error_message ||
+              String(backendTwilio?.errorCode || backendTwilio?.error_code),
+            hint: "Revisa que MediaUrl sea publica y accesible por internet.",
+          },
+          { status: 502 },
+        )
       }
     }
 
-    const sendResp = await fetch(
-      `https://graph.facebook.com/v19.0/${encodeURIComponent(phoneNumberId)}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      },
-    )
-
-    const sendJson = await sendResp.json().catch(() => null)
-    if (!sendResp.ok) {
-      console.error("[send-media] Send failed:", sendResp.status, sendJson)
-      const errorMsg = sendJson?.error?.message || sendJson?.message || JSON.stringify(sendJson)
-      return NextResponse.json(
-        { 
-          error: "Failed to send media message", 
-          details: errorMsg,
-          hint: "Verifica que el número de teléfono sea válido en formato E.164 (+CC1234567890)."
-        },
-        { status: sendResp.status },
-      )
-    }
-
-    const externalMessageId = String(sendJson?.messages?.[0]?.id || sendJson?.message_id || "") || null
-    console.log("[send-media] Success:", { mediaId, externalMessageId, type, filename })
+    const externalMessageId = String(sendJson?.sid || sendJson?.twilio?.sid || "") || null
+    const mediaId = uploadId // use upload id as media reference
+    console.log("[send-media] Twilio success:", { sid: externalMessageId, type, filename })
 
     const storedContent = caption || filename || `[${type}]`
     const metadata = {
       type,
       media_id: mediaId,
+      media_url: `/api/media/${uploadId}`,
       mime_type: mimeType,
       filename,
       caption: caption || undefined,
@@ -397,7 +468,7 @@ export async function POST(
       }
     }
 
-    const media_url = `/api/whatsapp/media/${encodeURIComponent(String(mediaId))}?filename=${encodeURIComponent(filename)}`
+    const media_url = `/api/media/${encodeURIComponent(uploadId)}`
 
     return NextResponse.json({
       success: true,

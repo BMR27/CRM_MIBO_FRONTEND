@@ -51,9 +51,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           m.message_type,
           m.metadata,
           m.media_id,
+          m.media_url,
           m.media_filename,
           m.media_mime_type,
           m.media_caption,
+          m.whatsapp_message_id,
           m.sender_type,
           m.sender_id,
           m.created_at,
@@ -116,9 +118,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               m.message_type,
               m.metadata,
               m.media_id,
+              m.media_url,
               m.media_filename,
               m.media_mime_type,
               m.media_caption,
+              m.whatsapp_message_id,
               m.sender_type,
               m.sender_id,
               m.created_at,
@@ -183,6 +187,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       const rowFilename = (m as any)?.media_filename
       const rowCaption = (m as any)?.media_caption
       const rowMimeType = (m as any)?.media_mime_type
+      const whatsappMessageId = (m as any)?.whatsapp_message_id
 
       const mediaId =
         metadata?.media_id ??
@@ -206,11 +211,30 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         metadata = { ...(metadata || {}), mime_type: rowMimeType }
       }
 
-      let media_url: string | null = null
-      if (mediaId) {
+      // Prefer stored media_url (Twilio-sent files) over constructing from media_id (WhatsApp Cloud API)
+      const storedMediaUrl: string | null =
+        (m as any)?.media_url ||
+        metadata?.media_url ||
+        null
+      let media_url: string | null = storedMediaUrl
+      if (!media_url && mediaId) {
         media_url = `/api/whatsapp/media/${encodeURIComponent(String(mediaId))}`
         if (filename) {
           media_url += `?filename=${encodeURIComponent(String(filename))}`
+        }
+      }
+
+      // Fallback for old Twilio inbound media rows that were stored as plain text
+      // (no media_id/media_url), but still have whatsapp_message_id (Twilio Message SID).
+      if (!media_url && whatsappMessageId) {
+        const looksLikeFile = /\.(pdf|png|jpe?g|gif|webp|bmp|tiff?|heic|mp4|mov|avi|m4v|mp3|wav|ogg|aac|m4a|zip|rar|docx?|xlsx?|pptx?)$/i
+          .test(String(m.content || "").trim())
+        if (looksLikeFile) {
+          const inferredFilename = String(filename || m.content || "archivo").trim()
+          media_url = `/api/twilio/media-by-message/${encodeURIComponent(String(whatsappMessageId))}`
+          if (inferredFilename) {
+            media_url += `?filename=${encodeURIComponent(inferredFilename)}`
+          }
         }
       }
 

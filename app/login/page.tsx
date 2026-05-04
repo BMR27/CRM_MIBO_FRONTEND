@@ -38,17 +38,18 @@ function LoginForm() {
     setLoading(true)
 
     try {
+      const normalizedEmail = email.trim().toLowerCase()
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
       const response = await fetch(`${backendUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || "Login failed")
+        setError(data.message || data.error || "Login failed")
         setLoading(false)
         return
       }
@@ -60,7 +61,7 @@ function LoginForm() {
       // Construir un usuario mínimo para la sesión
       const userPayload = {
         id: data.user?.id ?? 0,
-        email,
+        email: normalizedEmail,
         name: data.user?.name ?? email,
         role: data.user?.role ?? "agent",
         status: data.user?.status ?? "available",
