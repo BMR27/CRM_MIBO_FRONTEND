@@ -224,9 +224,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         setPendingPreviewUrl(null);
         setNewMessage("");
 
-        const response = await frontendApi.post(`/api/conversations/${conversationId}/send-media`, form, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        const response = await frontendApi.post(`/api/conversations/${conversationId}/send-media`, form);
         const data = response.data;
         console.log("[ChatArea] Media response", data);
         if (data?.message) {
@@ -243,10 +241,12 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
                              error?.message || 
                              "Ocurrió un error inesperado al enviar el archivo."
         const errorHint = error?.response?.data?.hint || ""
+        const errorDetails = error?.response?.data?.details || ""
+        const fullMessage = [errorMessage, errorHint, errorDetails].filter(Boolean).join(" - ")
 
         toast({
           title: "Error al enviar adjunto",
-          description: errorHint ? `${errorMessage} - ${errorHint}` : errorMessage,
+          description: fullMessage || "Ocurrió un error inesperado al enviar el archivo.",
           variant: "destructive",
         });
 

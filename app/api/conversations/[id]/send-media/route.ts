@@ -124,7 +124,8 @@ export async function POST(
     const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID
     const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN
     const twilioFrom = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886"
-    const backendUrl = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
+    const backendUrlRaw = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "")
+    const backendUrl = backendUrlRaw.replace(/\/api$/i, "")
     const canSendDirectlyWithFrontendTwilio = Boolean(twilioAccountSid && twilioAuthToken)
 
     if (!canSendDirectlyWithFrontendTwilio && !backendUrl) {
@@ -243,15 +244,22 @@ export async function POST(
 
     // 3) Build public media URL (Twilio must fetch this over the internet)
     const appUrl = (process.env.APP_URL || "").replace(/\/$/, "")
-    const requestOrigin = new URL(request.url).origin.replace(/\/$/, "")
+    const requestUrl = new URL(request.url)
+    const requestOrigin = requestUrl.origin.replace(/\/$/, "")
+    const forwardedProto = (request.headers.get("x-forwarded-proto") || "").trim()
+    const forwardedHost = (request.headers.get("x-forwarded-host") || "").trim()
+    const forwardedOrigin =
+      forwardedProto && forwardedHost
+        ? `${forwardedProto}://${forwardedHost}`.replace(/\/$/, "")
+        : ""
 
-    // Avoid false-positive local sends: Twilio cannot fetch localhost URLs.
-    const effectivePublicBase = appUrl || requestOrigin
-    if (!appUrl && /localhost|127\.0\.0\.1/i.test(requestOrigin)) {
+    // Prefer explicit APP_URL, then forwarded origin from proxy, then request origin.
+    const effectivePublicBase = appUrl || forwardedOrigin || requestOrigin
+    if (/localhost|127\.0\.0\.1/i.test(effectivePublicBase)) {
       return NextResponse.json(
         {
-          error: "APP_URL missing for local media send",
-          hint: "Define APP_URL con una URL publica (https://...) para que Twilio pueda descargar el archivo. En local, Twilio no puede acceder a localhost.",
+          error: "Public APP_URL is required for media send",
+          hint: "Define APP_URL con una URL publica (https://...). Twilio no puede descargar archivos desde localhost/127.0.0.1.",
         },
         { status: 500 },
       )
