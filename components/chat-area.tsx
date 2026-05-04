@@ -441,9 +441,27 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         || null
       if (!raw || typeof window === "undefined") return raw
 
+      const token = localStorage.getItem("access_token") || localStorage.getItem("token") || ""
+
+      // Twilio API URLs (api.twilio.com) require Basic Auth — route through proxy using message SID
+      if (raw.includes("api.twilio.com")) {
+        const sid = msg.whatsapp_message_id || metadata?.whatsapp_message_id || null
+        if (sid) {
+          const inferredFilename = String(metadata?.filename || metadata?.media_filename || msg.content || "").trim()
+          let proxyUrl = `/api/twilio/media-by-message/${encodeURIComponent(String(sid))}`
+          if (inferredFilename) proxyUrl += `?filename=${encodeURIComponent(inferredFilename)}`
+          if (token) {
+            const sep = proxyUrl.includes("?") ? "&" : "?"
+            proxyUrl += `${sep}token=${encodeURIComponent(token)}`
+          }
+          return proxyUrl
+        }
+        // No SID available → can't proxy; return null so the SID fallback block handles it
+        return null
+      }
+
       // For media proxy links that need JWT, add token as query param
       if (raw.startsWith("/api/whatsapp/media/") || raw.startsWith("/api/twilio/media-by-message/")) {
-        const token = localStorage.getItem("access_token") || localStorage.getItem("token") || ""
         if (!token) return raw
         const separator = raw.includes("?") ? "&" : "?"
         return `${raw}${separator}token=${encodeURIComponent(token)}`
