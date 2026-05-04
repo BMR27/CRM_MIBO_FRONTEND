@@ -45,6 +45,7 @@ interface Message {
   message_type?: string
   metadata?: any
   media_url?: string | null
+  whatsapp_message_id?: string | null
 }
 
 interface ChatAreaProps {
@@ -474,16 +475,55 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
           </p>
         )
       }
+
+      const sid = msg.whatsapp_message_id || msg?.metadata?.whatsapp_message_id || null
+      let fallbackDownloadUrl: string | null = null
+      if (sid) {
+        const inferredFilename = String(filename || msg.content || "archivo").trim()
+        fallbackDownloadUrl = `/api/twilio/media-by-message/${encodeURIComponent(String(sid))}`
+        if (inferredFilename) {
+          fallbackDownloadUrl += `?filename=${encodeURIComponent(inferredFilename)}`
+        }
+
+        if (typeof window !== "undefined") {
+          const token = localStorage.getItem("access_token") || localStorage.getItem("token") || ""
+          if (token) {
+            const separator = fallbackDownloadUrl.includes("?") ? "&" : "?"
+            fallbackDownloadUrl = `${fallbackDownloadUrl}${separator}token=${encodeURIComponent(token)}`
+          }
+        }
+      }
+
       // Media message without URL (token not configured or media_id missing)
       return (
-        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
-          <span className="text-lg">
-            {type === "image" ? "🖼️" : type === "video" ? "🎬" : type === "audio" ? "🎵" : "📄"}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium truncate">{displayName}</p>
-            <p className="text-xs text-muted-foreground">Archivo no disponible para previsualizar</p>
+        <div className="space-y-2 rounded-md border border-border bg-muted/40 px-3 py-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">
+              {type === "image" ? "🖼️" : type === "video" ? "🎬" : type === "audio" ? "🎵" : "📄"}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground">Archivo no disponible para previsualizar</p>
+            </div>
           </div>
+
+          {fallbackDownloadUrl ? (
+            <a
+              href={fallbackDownloadUrl}
+              download={filename || undefined}
+              className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-full"
+            >
+              ⬇ Descargar archivo
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium w-full bg-muted text-muted-foreground border border-border cursor-not-allowed"
+            >
+              Descarga no disponible
+            </button>
+          )}
         </div>
       )
     }
