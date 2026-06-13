@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type ChangeEvent } from "react"
-import { api, frontendApi } from "@/lib/api"
+import { frontendApi } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { InboxHeader } from "@/components/inbox-header"
 import { ContactsList } from "@/components/contacts-list"
@@ -89,49 +89,22 @@ export default function ContactosPage() {
     setSelectedContactId(String(contact.id))
   }
 
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
-  // DEBUG: Mostrar el valor real de la variable en consola
-  if (typeof window !== "undefined") {
-    // Solo en cliente
-  }
-
-  // Al chatear: crea conversación y envía plantilla de bienvenida aprobada
+  // Al chatear: abre la conversación existente del contacto o la crea solo si no hay historial.
   const handleChatContact = async (contact: Contact) => {
     setSelectedContactId(String(contact.id))
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    if (!token) {
-      toast({ title: "No autenticado", description: "Debes iniciar sesión para crear una conversación.", variant: "destructive" });
-      return;
-    }
     try {
-      // 1. Crear la conversación
-      const { data } = await api.post("/api/conversations", { contact_id: String(contact.id) });
+      const { data } = await frontendApi.post("/api/conversations/ensure", {
+        contact_id: String(contact.id),
+      });
       const conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
       if (!conversationId) throw new Error("No se pudo crear/obtener la conversación");
-      toast({ title: "Conversación creada", description: `ID: ${conversationId}` })
-
-      // 2. Enviar plantilla de bienvenida
-      let phone = contact.phone_number || "";
-      if (phone.startsWith("whatsapp:")) {
-        phone = phone.replace("whatsapp:", "");
-      }
-      // Usar siempre la plantilla aprobada
-      const approvedTemplateSid = "HX99ead19f74793c6b5f0e1777523f1815"; // bienvenido_logi
-      const from = "whatsapp:+15558046791";
-      const variables = [contact.name || ""];
-      const tplRes = await api.post("/api/twilio/send-wa-template", {
-        to: phone,
-        from,
-        contentSid: approvedTemplateSid,
-        variables,
-        conversation_id: conversationId
-      });
-      toast({ title: "Plantilla enviada", description: "Se envió la plantilla de bienvenida." })
-
-      // 3. Redirigir a la conversación
+      toast({
+        title: data?.created ? "Conversación creada" : "Conversación abierta",
+        description: data?.created ? "Se creó un nuevo historial para este contacto." : "Se abrió el historial existente.",
+      })
       router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`);
     } catch (e) {
-      toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo abrir la conversación ni enviar la plantilla", variant: "destructive" })
+      toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo abrir la conversación", variant: "destructive" })
     }
   }
 

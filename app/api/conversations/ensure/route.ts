@@ -8,6 +8,10 @@ let _hasConversationExternalConversationIdColumn: boolean | null = null
 let _conversationStatusOpenValue: string | null = null
 let _conversationStatusClosedValue: string | null = null
 
+function normalizeDigits(value: unknown): string {
+  return String(value || "").replace(/\D/g, "")
+}
+
 async function hasConversationChannelColumns(): Promise<boolean> {
   if (_hasConversationChannelColumns !== null) return _hasConversationChannelColumns
   try {
@@ -138,26 +142,17 @@ export async function POST(request: Request) {
 
     const { openValue: statusOpenValue, closedValue: statusClosedValue } = await getConversationStatusValues()
 
-    // Find latest open/assigned conversation
+    // Find latest conversation for this exact contact. Reuse history even if it was closed.
     let conversationRows: any[] = []
+    let created = false
     try {
-      // IMPORTANT: compare on status::text to avoid enum cast errors across deployments.
-      conversationRows = statusClosedValue
-        ? await sql!`
-            SELECT *
-            FROM conversations
-            WHERE contact_id = ${contact.id}
-              AND status::text != ${statusClosedValue}
-            ORDER BY created_at DESC
-            LIMIT 1
-          `
-        : await sql!`
-            SELECT *
-            FROM conversations
-            WHERE contact_id = ${contact.id}
-            ORDER BY created_at DESC
-            LIMIT 1
-          `
+      conversationRows = await sql!`
+        SELECT *
+        FROM conversations
+        WHERE contact_id = ${contact.id}
+        ORDER BY last_message_at DESC NULLS LAST, updated_at DESC NULLS LAST, created_at DESC
+        LIMIT 1
+      `
     } catch {
       conversationRows = []
     }
@@ -166,6 +161,53 @@ export async function POST(request: Request) {
     const includeExternalConvId = await hasConversationExternalConversationIdColumn()
 
     if (!conversationRows.length) {
+      const contactExternalUserId = String(contact?.external_user_id || "").trim()
+      const contactPhoneDigits = normalizeDigits(contact?.phone_number || contactExternalUserId)
+      try {
+        if (includeChannelCols && (contactExternalUserId || contactPhoneDigits)) {
+          conversationRows = await sql!`
+            SELECT c.*
+            FROM conversations c
+            LEFT JOIN contacts ct ON c.contact_id = ct.id
+            WHERE (
+              (${contactExternalUserId} <> '' AND c.external_user_id = ${contactExternalUserId})
+              OR (${contactPhoneDigits} <> '' AND regexp_replace(COALESCE(ct.phone_number, ''), '[^0-9]', '', 'g') = ${contactPhoneDigits})
+              OR (${contactPhoneDigits} <> '' AND regexp_replace(COALESCE(c.external_user_id, ''), '[^0-9]', '', 'g') = ${contactPhoneDigits})
+            )
+            ORDER BY c.last_message_at DESC NULLS LAST, c.updated_at DESC NULLS LAST, c.created_at DESC
+            LIMIT 1
+          `
+        } else if (contactPhoneDigits) {
+          conversationRows = await sql!`
+            SELECT c.*
+            FROM conversations c
+            LEFT JOIN contacts ct ON c.contact_id = ct.id
+            WHERE regexp_replace(COALESCE(ct.phone_number, ''), '[^0-9]', '', 'g') = ${contactPhoneDigits}
+            ORDER BY c.last_message_at DESC NULLS LAST, c.updated_at DESC NULLS LAST, c.created_at DESC
+            LIMIT 1
+          `
+        }
+      } catch {
+        conversationRows = []
+      }
+    }
+
+    if (conversationRows.length && statusClosedValue && String(conversationRows[0]?.status || "") === statusClosedValue) {
+      try {
+        const reopenedRows: any[] = await sql!`
+          UPDATE conversations
+          SET status = ${statusOpenValue}, updated_at = NOW()
+          WHERE id = ${conversationRows[0].id}
+          RETURNING *
+        `
+        if (reopenedRows.length) conversationRows = reopenedRows
+      } catch {
+        // If this schema does not allow reopening, keep the existing conversation anyway.
+      }
+    }
+
+    if (!conversationRows.length) {
+      created = true
       const channel = (String(contact?.channel || "whatsapp").toLowerCase() === "facebook") ? "facebook" : "whatsapp"
       const externalUserId = String(contact?.external_user_id || "").trim() || null
 
@@ -261,6 +303,7 @@ export async function POST(request: Request) {
         channel: (contact as any).channel || "whatsapp",
         external_user_id: (contact as any).external_user_id || null,
       },
+      created,
     })
   } catch (error) {
     console.error("[Conversations Ensure] Error:", error)

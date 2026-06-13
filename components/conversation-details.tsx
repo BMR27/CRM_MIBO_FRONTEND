@@ -70,7 +70,8 @@ export function ConversationDetails({
   lastMessage,
   ...props
 }: DetailsPanelProps) {
-  const { isAgent } = useUserRole();
+  const { isAgent, isSupervisor } = useUserRole();
+  const showSchedulingSections = !isAgent && !isSupervisor
   // LOG: Validar externalUserId
   useEffect(() => {
     // Suponiendo que externalUserId viene de props, de contexto, o de algún fetch/conversación
@@ -100,6 +101,14 @@ export function ConversationDetails({
   const [loading, setLoading] = useState(false)
   const [commentsLoading, setCommentsLoading] = useState(false)
   const { agents, loading: agentsLoading } = require("../hooks/use-agents").useAgents();
+
+  useEffect(() => {
+    setCurrentStatus(status || "active")
+  }, [status, conversationId])
+
+  useEffect(() => {
+    setCurrentPriority(priority || "low")
+  }, [priority, conversationId])
 
   // Sincronizar el agente asignado desde props
   useEffect(() => {
@@ -218,6 +227,7 @@ export function ConversationDetails({
   }
 
   const handleStatusChange = async (value: string) => {
+    const previousStatus = currentStatus
     setCurrentStatus(value)
     onStatusChange?.(value)
 
@@ -225,13 +235,15 @@ export function ConversationDetails({
       try {
         const response = await frontendApi.put(`/api/conversations/${conversationId}/status`, { status: value })
         if (response.status === 200) {
+          toast({ title: "Estado actualizado", description: "La conversación fue actualizada correctamente." })
           onUpdate?.()
         } else {
-          setCurrentStatus(status)
+          setCurrentStatus(previousStatus)
         }
       } catch (error) {
         console.error("Error updating status:", error)
-        setCurrentStatus(status)
+        setCurrentStatus(previousStatus)
+        toast({ title: "Error al actualizar estado", description: "No se pudo guardar el estado de la conversación.", variant: "destructive" })
       }
     }
   }
@@ -264,10 +276,12 @@ export function ConversationDetails({
       if (response.status === 200) {
         setComments(response.data.comments)
         setNewComment("")
+        toast({ title: "Comentario guardado", description: "El comentario quedó registrado correctamente." })
         onUpdate?.()
       }
     } catch (error) {
       console.error("Error adding comment:", error)
+      toast({ title: "Error al guardar comentario", description: "No se pudo guardar el comentario.", variant: "destructive" })
     } finally {
       setLoading(false)
     }
@@ -329,7 +343,9 @@ export function ConversationDetails({
           <div className="flex-1 p-2">
             <div className="flex items-center gap-1.5">
               <FileText className="h-3 w-3 text-blue-500" />
-              <span className="text-xs text-foreground truncate">{contactPhone}</span>
+              <span className="text-xs font-medium text-foreground truncate">
+                {contactName?.trim() || contactPhone}
+              </span>
             </div>
             <a
               href={`https://wa.me/${contactPhone.replace("whatsapp:", "").replace("+", "")}`}
@@ -360,22 +376,10 @@ export function ConversationDetails({
                     Activa
                   </div>
                 </SelectItem>
-                <SelectItem value="pending">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
-                    Pendiente
-                  </div>
-                </SelectItem>
                 <SelectItem value="resolved">
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                     Resuelta
-                  </div>
-                </SelectItem>
-                <SelectItem value="closed">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />
-                    Cerrada
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -459,7 +463,7 @@ export function ConversationDetails({
         </div>
 
 
-        {!isAgent && (
+        {showSchedulingSections && (
           <div className="flex border-b border-border">
             <div className="w-1 bg-blue-400 shrink-0" />
             <div className="flex-1 p-2">
@@ -496,7 +500,7 @@ export function ConversationDetails({
           </div>
         )}
 
-        {!isAgent && (
+        {showSchedulingSections && (
           <div className="flex">
             <div className="w-1 bg-blue-500 shrink-0" />
             <div className="flex-1 p-2">

@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { api } from "@/lib/api"
+import { api, frontendApi } from "@/lib/api"
 
 // Configuración para Railway/producción
 const BACKEND_URL = "https://crmmibobackend-production.up.railway.app";
@@ -142,32 +142,12 @@ export default function PlantillasWASection() {
   }
 
 
-  // Abrir chat y enviar plantilla de bienvenida
+  // Abrir chat reutilizando el historial existente del contacto.
   const handleChat = async (contact: any) => {
     try {
-      // 1. Crear/obtener conversación
-      let conversationId = ""
-      try {
-        const { data } = await api.post("/api/conversations", { contact_id: String(contact.id) });
-        conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
-        if (!conversationId) throw new Error("No se pudo abrir la conversación");
-      } catch (err: any) {
-        throw new Error(err?.response?.data?.error || err?.message || "No se pudo abrir la conversación");
-      }
-      // 2. Enviar plantilla de bienvenida como primer mensaje
-      if (bienvenidaTemplate) {
-        try {
-          await api.post("/api/twilio/send-wa-template", {
-            to: contact.phone.replace(/\s/g, ""),
-            from: process.env.NEXT_PUBLIC_TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886",
-            templateSid: bienvenidaTemplate.sid,
-            variables: [contact.name]
-          });
-        } catch (err: any) {
-          // Puedes mostrar un toast si quieres
-        }
-      }
-      // 3. Redirigir al chat
+      const { data } = await frontendApi.post("/api/conversations/ensure", { contact_id: String(contact.id) });
+      const conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
+      if (!conversationId) throw new Error("No se pudo abrir la conversación");
       router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`)
     } catch (e: any) {
       setSendResult(e.message || "Error abriendo chat")
