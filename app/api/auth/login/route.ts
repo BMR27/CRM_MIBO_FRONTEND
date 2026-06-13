@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server"
 import { authenticateUser } from "@/lib/auth"
+import { isDemoMode, sql } from "@/lib/db"
 import jwt from "jsonwebtoken"
 import type { Secret, SignOptions } from "jsonwebtoken"
+import { randomUUID } from "crypto"
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json()
+    const { email, password, forceNewSession } = await request.json()
 
     // Validate input
     if (!email || !password) {
@@ -13,6 +15,10 @@ export async function POST(request: Request) {
         { error: "Email and password are required" },
         { status: 400 },
       )
+    }
+
+    if (!isDemoMode) {
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS session_key TEXT`
     }
 
     // Authenticate user
@@ -25,21 +31,58 @@ export async function POST(request: Request) {
       )
     }
 
+    if (!isDemoMode && user?.id) {
+      const [state] = (await sql`
+        SELECT status, session_key
+        FROM users
+        WHERE id = ${user.id}
+        LIMIT 1
+      `) as unknown as Array<{ status: string | null; session_key: string | null }>
+
+      const hasActiveSession = state?.status === "available" && Boolean(state?.session_key)
+      if (hasActiveSession && !forceNewSession) {
+        return NextResponse.json(
+          {
+            error: "Ya existe una sesión activa para este usuario.",
+            code: "ACTIVE_SESSION_EXISTS",
+            requiresSessionTakeover: true,
+          },
+          { status: 409 },
+        )
+      }
+    }
+
+    const sessionKey = randomUUID()
+
+    if (!isDemoMode && user?.id) {
+      await sql`
+        UPDATE users
+        SET status = 'available', session_key = ${sessionKey}
+        WHERE id = ${user.id}
+      `
+    }
+
     // Generate JWT token
     const secret = (process.env.JWT_SECRET || "secret") as Secret
     const expiresIn = (process.env.JWT_EXPIRATION || "7d") as SignOptions["expiresIn"]
     const token = jwt.sign(
-      { email: user.email, sub: user.id },
+      { email: user.email, sub: user.id, session_key: sessionKey },
       secret,
       { expiresIn },
     )
+
+    const userWithSession = {
+      ...user,
+      session_key: sessionKey,
+      status: "available",
+    }
 
     return NextResponse.json(
       {
         access_token: token,
         token_type: "Bearer",
         expires_in: process.env.JWT_EXPIRATION || "7d",
-        user,
+        user: userWithSession,
       },
       { status: 200 },
     )

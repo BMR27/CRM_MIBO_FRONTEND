@@ -1,15 +1,13 @@
 "use client"
 
 import type React from "react"
-import Link from "next/link"
-import Image from "next/image"
-
 import { useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Lock, Mail } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Lock, Mail, Shield } from "lucide-react"
 
 function LoginForm() {
   const [email, setEmail] = useState("")
@@ -17,7 +15,8 @@ function LoginForm() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [sessionConflictOpen, setSessionConflictOpen] = useState(false)
+  const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null)
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -27,13 +26,7 @@ function LoginForm() {
     }
   }, [searchParams])
 
-  const fillDemoCredentials = () => {
-    setEmail("admin@demo.com")
-    setPassword("demo123")
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const performLogin = async ({ email, password, forceNewSession = false }: { email: string; password: string; forceNewSession?: boolean }) => {
     setError("")
     setLoading(true)
 
@@ -42,10 +35,17 @@ function LoginForm() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: normalizedEmail, password }),
+        body: JSON.stringify({ email: normalizedEmail, password, forceNewSession }),
       })
 
       const data = await response.json().catch(() => ({}))
+
+      if (response.status === 409 && data?.requiresSessionTakeover) {
+        setPendingCredentials({ email: normalizedEmail, password })
+        setSessionConflictOpen(true)
+        setLoading(false)
+        return
+      }
 
       if (!response.ok) {
         setError(data.message || data.error || "No se pudo iniciar sesión")
@@ -64,6 +64,7 @@ function LoginForm() {
         name: data.user?.name ?? email,
         role: data.user?.role ?? "agent",
         status: data.user?.status ?? "available",
+        session_key: data.user?.session_key ?? null,
       }
 
       // Guardar usuario en localStorage
@@ -81,6 +82,21 @@ function LoginForm() {
       setError("No se pudo conectar con el servidor local. Revisa que el frontend esté corriendo correctamente.")
       setLoading(false)
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await performLogin({ email, password })
+  }
+
+  const handleTakeoverSession = async () => {
+    if (!pendingCredentials) return
+    setSessionConflictOpen(false)
+    await performLogin({
+      email: pendingCredentials.email,
+      password: pendingCredentials.password,
+      forceNewSession: true,
+    })
   }
 
   return (
@@ -217,36 +233,49 @@ function LoginForm() {
               </Button>
             </form>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">O conecta tu base de datos</span>
-              </div>
-            </div>
-
-            <div className="text-center text-sm text-muted-foreground">
-              <p className="font-semibold text-foreground mb-2">Mensajería y logística especializada en eCommerce</p>
-              <p className="text-xs">
-                Si vendes por internet, seremos tus mejores aliados para distribuir y entregar tus productos en la puerta de tus clientes.
-              </p>
-            </div>
-
-            <div className="text-center text-sm">
-              <span className="text-muted-foreground">¿No tienes cuenta? </span>
-              <Link href="/signup" className="text-primary hover:underline font-medium">
-                Regístrate aquí
-              </Link>
-            </div>
-              <div className="mt-2">
-                <Link href="/privacy-policy" target="_blank" className="text-xs text-muted-foreground hover:underline">
-                  Política de privacidad
-                </Link>
-              </div>
           </div>
         </div>
       </div>
+
+      <Dialog open={sessionConflictOpen} onOpenChange={setSessionConflictOpen}>
+        <DialogContent
+          showCloseButton={true}
+          className="w-[min(90vw,560px)] max-w-none border border-[#3b6db8]/55 bg-[#081a3a] text-slate-100 p-5 sm:p-7 rounded-[18px] shadow-2xl"
+        >
+          <DialogHeader className="space-y-4 text-center">
+            <DialogTitle className="flex items-start justify-center gap-3 text-[24px] sm:text-[30px] font-semibold text-[#4f9dff] leading-tight tracking-normal">
+              <Shield className="mt-1 h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0 text-[#4f9dff]" />
+              <span className="flex flex-col items-center gap-1.5 text-center">
+                <span className="block">Sesión activa</span>
+                <span className="block">detectada</span>
+              </span>
+            </DialogTitle>
+            <DialogDescription className="text-[16px] sm:text-[19px] leading-[1.4] text-slate-200 w-full max-w-none">
+              Ya existe una sesión activa para este usuario. ¿Deseas cerrar la anterior y activar esta?
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-stretch">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full border-2 border-[#2e75d1] bg-[#0a224f] text-slate-100 hover:bg-[#14366f] hover:text-white text-sm"
+              onClick={() => setSessionConflictOpen(false)}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              className="h-11 w-full px-4 text-sm sm:text-[15px] leading-tight whitespace-normal bg-[#2563eb] hover:bg-[#1d4ed8] text-white"
+              onClick={handleTakeoverSession}
+              disabled={loading}
+            >
+              Cerrar sesión anterior y continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

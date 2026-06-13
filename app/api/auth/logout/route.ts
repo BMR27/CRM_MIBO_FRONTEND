@@ -6,9 +6,10 @@ export async function POST() {
   try {
     const user = await getSession()
     if (sql && user?.id) {
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS session_key TEXT`
       await sql`
         UPDATE users
-        SET status = 'offline'
+        SET status = 'offline', session_key = NULL
         WHERE id = ${user.id}
       `
     }
