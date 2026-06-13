@@ -138,13 +138,29 @@ export async function POST(request: Request) {
       try {
         await sql!`
           INSERT INTO webhook_logs (channel, external_id, payload, processed)
-          VALUES ('twilio_whatsapp', ${messageSid}, ${JSON.stringify(payload)}::jsonb, false)
+          VALUES ('twilio_whatsapp', ${messageSid}, ${sql!.json(payload)}, false)
         `
       } catch (e) {
         console.warn("[Twilio Webhook] Failed to persist webhook log:", e)
       }
 
-      await handleTwilioIncomingMessage(payload)
+      try {
+        await handleTwilioIncomingMessage(payload)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        try {
+          await sql!`
+            UPDATE webhook_logs
+            SET error = ${message}, processed = false
+            WHERE channel = 'twilio_whatsapp'
+              AND external_id = ${messageSid}
+              AND created_at >= NOW() - INTERVAL '5 minutes'
+          `
+        } catch (logError) {
+          console.warn("[Twilio Webhook] Failed to persist processing error:", logError)
+        }
+        throw error
+      }
 
       try {
         await sql!`
@@ -379,16 +395,23 @@ async function handleIncomingMessage(
   })
 
   try {
-    // 1. Find or create contact
+    // 1. Find or create contact. Older contacts may only have phone_number, so
+    // attach Twilio's sender id instead of creating a duplicate phone record.
+    const phoneNumber = `whatsapp:+${normalizePhoneNumber(senderId)}`
     let contact = await sql!`
       SELECT * FROM contacts 
-      WHERE external_user_id = ${senderId} 
-        AND channel = 'whatsapp'
+      WHERE channel = 'whatsapp'
+        AND (
+          external_user_id = ${senderId}
+          OR phone_number = ${phoneNumber}
+        )
+      ORDER BY
+        CASE WHEN external_user_id = ${senderId} THEN 0 ELSE 1 END,
+        created_at DESC
       LIMIT 1
     `
 
     if (contact.length === 0) {
-      const phoneNumber = `whatsapp:+${normalizePhoneNumber(senderId)}`
       contact = await sql!`
         INSERT INTO contacts (
           name, 
@@ -407,6 +430,19 @@ async function handleIncomingMessage(
         RETURNING *
       `
     } else {
+      if (String((contact as any)[0]?.external_user_id || "") !== senderId) {
+        try {
+          contact = await sql!`
+            UPDATE contacts
+            SET external_user_id = ${senderId}, channel = 'whatsapp'
+            WHERE id = ${contact[0].id}
+            RETURNING *
+          `
+        } catch (e) {
+          console.warn("[WhatsApp] Failed to attach external user id:", e)
+        }
+      }
+
       // If we now have a real profile name, upgrade any placeholder name.
       if (profileName) {
         const existingName = String((contact as any)[0]?.name || "").trim()
