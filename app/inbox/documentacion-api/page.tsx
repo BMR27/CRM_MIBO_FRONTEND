@@ -15,8 +15,10 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useUserRole } from "@/hooks/use-user-role"
 
 const RAILWAY_BACKEND_URL = "https://crmmibobackend-production.up.railway.app"
+const BRYAN_ADMIN_EMAIL = "bryan.mejia@logimarket.com.mx"
 
 const clientEndpointGroups = [
   {
@@ -174,9 +176,13 @@ function methodClass(method: string) {
 }
 
 export default function DocumentacionApiPage() {
+  const { user } = useUserRole()
   const showInternalSwagger = process.env.NEXT_PUBLIC_SHOW_INTERNAL_SWAGGER === "true"
   const railwaySwaggerUrl = `${RAILWAY_BACKEND_URL}/api/docs`
   const apiBaseUrl = `${RAILWAY_BACKEND_URL}/api`
+  const isBryanAdmin =
+    user?.role === "admin" &&
+    String(user?.email || "").trim().toLowerCase() === BRYAN_ADMIN_EMAIL
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-slate-50">
@@ -273,7 +279,7 @@ export default function DocumentacionApiPage() {
           })}
         </section>
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <section className={`mt-6 grid gap-4 ${isBryanAdmin ? "lg:grid-cols-[1fr_1fr]" : "lg:grid-cols-1"}`}>
           <article className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-950">Flujo recomendado para clientes</h2>
             <div className="mt-4 space-y-3 text-sm text-slate-600">
@@ -291,20 +297,22 @@ export default function DocumentacionApiPage() {
             </div>
           </article>
 
-          <article className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-slate-950">No expuesto a clientes</h2>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {hiddenInternalAreas.map((area) => (
-                <Badge key={area} variant="outline" className="border-red-100 bg-red-50 text-red-700">
-                  {area}
-                </Badge>
-              ))}
-            </div>
-            <p className="mt-4 text-xs leading-5 text-slate-500">
-              Swagger completo es documentación interna. En Railway queda deshabilitado por defecto y solo se habilita con variables
-              administrativas.
-            </p>
-          </article>
+          {isBryanAdmin && (
+            <article className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+              <h2 className="text-sm font-semibold text-slate-950">No expuesto a clientes</h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {hiddenInternalAreas.map((area) => (
+                  <Badge key={area} variant="outline" className="border-red-100 bg-red-50 text-red-700">
+                    {area}
+                  </Badge>
+                ))}
+              </div>
+              <p className="mt-4 text-xs leading-5 text-slate-500">
+                Swagger completo es documentación interna. En Railway queda deshabilitado por defecto y solo se habilita con variables
+                administrativas.
+              </p>
+            </article>
+          )}
         </section>
       </main>
     </div>

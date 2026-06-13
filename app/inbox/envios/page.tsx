@@ -62,29 +62,18 @@ const LOCAL_CAMPAIGNS_KEY = "mibo_bulk_campaigns_v1"
 
 const waTemplates = [
   {
-    name: "lm_buen_dia_en_entrega",
-    sid: "HX9efa55d55fa323d5efa09d82d0a1c484",
-    body: "Buen día, {{1}}. Le hablamos de Logimarket.\nSu pedido con número de orden {{2}}, producto {{3}}, se encuentra en proceso de entrega.\nSi desea compartir alguna indicación adicional para la entrega, por favor responda a este mensaje. ¡Gracias!",
-  },
-  {
-    name: "lm_buen_dia_empaque",
-    sid: "HX63433782a538101c777138bca250cc54",
-    body: "Buenos días, {{1}}. Le hablamos de Logimarket.\nRecibimos su pedido de {{2}}, con número de orden {{3}} y se encuentra en proceso de empaque.\nLe avisaremos en cuanto esté listo para su entrega. ¡Gracias por su preferencia!",
-  },
-  {
-    name: "lm_buen_dia_proximo_entregar_confirma",
-    sid: "HX43be0016968ad04dbe7a7a2408a5d24b",
-    body: "Buenos días, {{1}}. Le hablamos de Logimarket.\nSu pedido con número de orden {{2}}, producto {{3}} está próximo a entregarse. ¿Puede confirmar su disponibilidad para recibirlo el día de hoy?\nQuedamos atentos a su respuesta. ¡Gracias!",
-  },
-  {
-    name: "bienvenida_logi",
-    sid: "HX99ead19f74793c6b5f0e1777523f1815",
-    body: "Hola {{1}}, ¡Bienvenido/a Logimarket! Estoy aquí para ayudarte con tus pedidos y soporte.",
-  },
-  {
-    name: "lm_mensajeria_disponibilidad_paquete",
-    sid: "HXdf73cf1db9d8dc586d94d576fa2e140c",
-    body: "Estimado/a {{1}},\n\nSoy de mensajería Logimarket. Deseo que se encuentre bien.\nLe escribo porque aún tenemos su paquete de {{2}}.\nSi ya está en condiciones de recibirlo, por favor confírmenos su disponibilidad.\n\n¡Gracias!",
+    name: "customer_service_intro_v1",
+    sid: "HXf9420e6e4ff17a94fe3dfaceb7aa657b",
+    language: "es_MX",
+    body: "¡Hola, {{1}}! Mi nombre es {{2}} y lo contacto del departamento de atención al cliente del producto {{3}}. ¡Estoy a disposición para asistir!",
+    paramMap: {
+      "1": "CLIENTE",
+      "2": "ASESOR",
+      "3": "PRODUCTS_A",
+    },
+    paramFallbacks: {
+      "2": "Juan Pérez",
+    },
   },
 ]
 
@@ -189,7 +178,7 @@ function EnviosMasivosPage() {
   const [excelError, setExcelError] = useState("")
   const [sending, setSending] = useState(false)
   const [sendResult, setSendResult] = useState("")
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("")
+  const [selectedTemplate, setSelectedTemplate] = useState<string>(waTemplates[0]?.sid || "")
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [localCampaigns, setLocalCampaigns] = useState<Campaign[]>([])
   const [loadingCampaigns, setLoadingCampaigns] = useState(false)
@@ -316,17 +305,16 @@ function EnviosMasivosPage() {
     let match
     while ((match = paramRegex.exec(tpl.body)) !== null) params.push(match[1])
 
-    const paramMap: Record<string, string> = {
-      "1": "CLIENTE",
-      "2": "ORDEN",
-      "3": "PRODUCTS_A",
-    }
+    const paramMap: Record<string, string> = tpl.paramMap || {}
+    const paramFallbacks: Record<string, string> = tpl.paramFallbacks || {}
 
     for (let i = 0; i < contacts.length; i++) {
       const c = contacts[i]
       for (const p of params) {
         const campo = paramMap[p] || `param${p}`
-        if (typeof c[campo] === "undefined" || c[campo] === null || String(c[campo]).trim() === "") {
+        const hasValue = typeof c[campo] !== "undefined" && c[campo] !== null && String(c[campo]).trim() !== ""
+        const hasFallback = typeof paramFallbacks[p] !== "undefined" && String(paramFallbacks[p]).trim() !== ""
+        if (!hasValue && !hasFallback) {
           setSendResult(`El contacto ${c["CLIENTE"] || c["PHONE_A"] || i + 1} no tiene el campo requerido para {{${p}}} (${campo}).`)
           setSending(false)
           return
@@ -354,6 +342,9 @@ function EnviosMasivosPage() {
           contacts,
           templateSid: selectedTemplate,
           templateName: tpl.name,
+          templateLanguage: tpl.language,
+          templateParamMap: tpl.paramMap,
+          templateParamFallbacks: tpl.paramFallbacks,
         }),
       })
       const data = await res.json()
@@ -393,7 +384,7 @@ function EnviosMasivosPage() {
     setContacts([])
     setCampaignName("")
     setCampaignNotes("")
-    setSelectedTemplate("")
+    setSelectedTemplate(waTemplates[0]?.sid || "")
   }
 
   const resetFilters = () => {
