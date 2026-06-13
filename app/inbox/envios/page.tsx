@@ -22,6 +22,16 @@ import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -226,6 +236,8 @@ function EnviosMasivosPage() {
   const [loadingRecipients, setLoadingRecipients] = useState(false)
   const [recipientsError, setRecipientsError] = useState("")
   const [deletingCampaignId, setDeletingCampaignId] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null)
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -392,9 +404,14 @@ function EnviosMasivosPage() {
     }
   }
 
-  const handleDeleteCampaign = async (campaign: Campaign) => {
-    const ok = window.confirm(`¿Eliminar la campaña "${campaign.name}"? Esta acción solo quitará el registro de campaña, no los mensajes del chat.`)
-    if (!ok) return
+  const requestDeleteCampaign = (campaign: Campaign) => {
+    setCampaignToDelete(campaign)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteCampaign = async () => {
+    if (!campaignToDelete) return
+    const campaign = campaignToDelete
 
     setDeletingCampaignId(campaign.id)
     setCampaignsError("")
@@ -420,6 +437,8 @@ function EnviosMasivosPage() {
     } catch (error) {
       setCampaignsError(error instanceof Error ? error.message : "No se pudo eliminar la campaña.")
     } finally {
+      setDeleteDialogOpen(false)
+      setCampaignToDelete(null)
       setDeletingCampaignId(null)
     }
   }
@@ -499,7 +518,9 @@ function EnviosMasivosPage() {
       return
     }
 
-    if (contactSource === "saved" && params.some((p) => tpl.paramMap[p] === "PRODUCTS_A") && !campaignProduct.trim()) {
+    const templateParamMap = tpl.paramMap as Record<string, string>
+
+    if (contactSource === "saved" && params.some((p) => templateParamMap[p] === "PRODUCTS_A") && !campaignProduct.trim()) {
       setSendResult("Captura el producto para completar la plantilla antes de enviar.")
       setSending(false)
       return
@@ -509,7 +530,9 @@ function EnviosMasivosPage() {
       const c = contactsToSend[i]
       for (const p of params) {
         const campo = paramMap[p] || `param${p}`
-        const hasValue = typeof c[campo] !== "undefined" && c[campo] !== null && String(c[campo]).trim() !== ""
+        const contactRecord = c as Record<string, unknown>
+        const campoValue = contactRecord[campo]
+        const hasValue = typeof campoValue !== "undefined" && campoValue !== null && String(campoValue).trim() !== ""
         const hasFallback = typeof paramFallbacks[p] !== "undefined" && String(paramFallbacks[p]).trim() !== ""
         if (!hasValue && !hasFallback) {
           setSendResult(`El contacto ${c["CLIENTE"] || c["PHONE_A"] || i + 1} no tiene el campo requerido para {{${p}}} (${campo}).`)
@@ -916,7 +939,7 @@ function EnviosMasivosPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteCampaign(campaign)}
+                            onClick={() => requestDeleteCampaign(campaign)}
                             disabled={deletingCampaignId === campaign.id}
                             className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
                             title="Eliminar campaña"
@@ -991,6 +1014,27 @@ function EnviosMasivosPage() {
             </Table>
           </section>
         )}
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent className="border-red-200">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-slate-950">¿Eliminar campaña?</AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-600">
+                {`¿Eliminar la campaña "${campaignToDelete?.name || ""}"? Esta acción solo quitará el registro de campaña, no los mensajes del chat.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={Boolean(deletingCampaignId)}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteCampaign}
+                className="bg-red-600 hover:bg-red-700 focus-visible:ring-red-400"
+                disabled={Boolean(deletingCampaignId)}
+              >
+                {deletingCampaignId ? "Eliminando..." : "Eliminar campaña"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )
