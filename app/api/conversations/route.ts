@@ -4,6 +4,7 @@ import { sql, isDemoMode } from "@/lib/db"
 import { DEMO_CONVERSATIONS } from "@/lib/demo-data"
 
 let _hasConversationChannelColumns: boolean | null = null
+let _ensuredMessagesReadAtColumn = false
 
 async function hasConversationChannelColumns(): Promise<boolean> {
   if (_hasConversationChannelColumns !== null) return _hasConversationChannelColumns
@@ -20,6 +21,16 @@ async function hasConversationChannelColumns(): Promise<boolean> {
     _hasConversationChannelColumns = false
   }
   return _hasConversationChannelColumns
+}
+
+async function ensureMessagesReadAtColumn() {
+  if (_ensuredMessagesReadAtColumn) return
+  try {
+    await sql!`ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP`
+    _ensuredMessagesReadAtColumn = true
+  } catch (error) {
+    console.warn("[conversations] Could not ensure messages.read_at column:", error)
+  }
 }
 
 export async function GET(request: Request) {
@@ -57,15 +68,18 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status") || "all"
-    const userRole = user.role
+    const userRole = String(user.role || "").trim().toLowerCase()
+    const canSeeAllConversations = ["administrador", "admin", "supervisor"].includes(userRole)
+    const isAgentRole = ["agente", "agent"].includes(userRole)
 
     const includeChannelCols = await hasConversationChannelColumns()
+    await ensureMessagesReadAtColumn()
 
     let conversations
 
     // Build query based on user role and status
-    if (userRole === "Administrador") {
-      // Admin can see all conversations
+    if (canSeeAllConversations) {
+      // Admins and supervisors can see all conversations
       if (status === "all") {
         conversations = includeChannelCols
           ? await sql`
@@ -161,7 +175,7 @@ export async function GET(request: Request) {
               LIMIT 50
             `
       }
-    } else if (userRole === "Agente") {
+    } else if (isAgentRole) {
       // Agent can only see conversations assigned to them
       if (status === "all") {
         conversations = includeChannelCols ? await sql`

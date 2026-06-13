@@ -26,6 +26,19 @@ async function ensureWebhookLogsTable(db: Db) {
   }
 }
 
+async function ensureWhatsappSchema(db: Db) {
+  await db`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS channel VARCHAR(50) DEFAULT 'whatsapp'`
+  await db`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS external_user_id VARCHAR(255)`
+  await db`ALTER TABLE conversations ADD COLUMN IF NOT EXISTS channel VARCHAR(50) DEFAULT 'whatsapp'`
+  await db`ALTER TABLE conversations ADD COLUMN IF NOT EXISTS external_user_id VARCHAR(255)`
+  await db`ALTER TABLE conversations ADD COLUMN IF NOT EXISTS external_conversation_id VARCHAR(255)`
+  await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS channel VARCHAR(50) DEFAULT 'whatsapp'`
+  await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS external_message_id VARCHAR(255)`
+  await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS direction VARCHAR(20) DEFAULT 'inbound'`
+  await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS metadata JSONB`
+  await db`ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP`
+}
+
 let _hasMessagesReadAtColumn: boolean | null = null
 let _hasMessagesExternalMessageIdColumn: boolean | null = null
 
@@ -108,6 +121,7 @@ export async function POST(request: Request) {
     }
 
     await ensureWebhookLogsTable(sql)
+    await ensureWhatsappSchema(sql)
 
     const rawBody = await request.text()
     const signature = request.headers.get("x-hub-signature-256")
@@ -331,7 +345,7 @@ async function handleIncomingMessage(
       SELECT * FROM conversations 
       WHERE contact_id = ${contactId} 
         AND channel = 'whatsapp'
-        AND status IN ('open', 'assigned')
+        AND status IN ('active', 'open', 'assigned')
       ORDER BY created_at DESC
       LIMIT 1
     `
@@ -350,7 +364,7 @@ async function handleIncomingMessage(
         )
         VALUES (
           ${contactId},
-          'open',
+          'active',
           'medium',
           'whatsapp',
           ${senderId},
@@ -379,7 +393,7 @@ async function handleIncomingMessage(
       )
       VALUES (
         ${conversationId},
-        'customer',
+        'contact',
         ${parsed.content || ""},
         'whatsapp',
         ${messageId},
