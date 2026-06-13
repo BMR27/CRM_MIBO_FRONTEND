@@ -124,6 +124,42 @@ export async function POST(request: Request) {
     await ensureWhatsappSchema(sql)
 
     const rawBody = await request.text()
+    const contentType = request.headers.get("content-type") || ""
+    const isTwilioPayload =
+      contentType.includes("application/x-www-form-urlencoded") ||
+      rawBody.includes("MessageSid=") ||
+      rawBody.includes("SmsMessageSid=")
+
+    if (isTwilioPayload) {
+      const payload = Object.fromEntries(new URLSearchParams(rawBody))
+      const messageSid = String(payload.MessageSid || payload.SmsMessageSid || "unknown")
+
+      try {
+        await sql!`
+          INSERT INTO webhook_logs (channel, external_id, payload, processed)
+          VALUES ('twilio_whatsapp', ${messageSid}, ${JSON.stringify(payload)}::jsonb, false)
+        `
+      } catch (e) {
+        console.warn("[Twilio Webhook] Failed to persist webhook log:", e)
+      }
+
+      await handleTwilioIncomingMessage(payload)
+
+      try {
+        await sql!`
+          UPDATE webhook_logs
+          SET processed = true
+          WHERE channel = 'twilio_whatsapp'
+            AND external_id = ${messageSid}
+            AND created_at >= NOW() - INTERVAL '5 minutes'
+        `
+      } catch (e) {
+        console.warn("[Twilio Webhook] Failed to mark webhook as processed:", e)
+      }
+
+      return NextResponse.json({ status: "ok" }, { status: 200 })
+    }
+
     const signature = request.headers.get("x-hub-signature-256")
 
     if (!verifyWebhookSignature(rawBody, signature)) {
@@ -265,6 +301,60 @@ function verifyWebhookSignature(rawBody: string, signatureHeader: string | null)
   } catch {
     return false
   }
+}
+
+async function handleTwilioIncomingMessage(payload: Record<string, string>) {
+  const from = String(payload.From || "").trim()
+  const to = String(payload.To || "").trim()
+  const messageId = String(payload.MessageSid || payload.SmsMessageSid || "").trim()
+  const body = String(payload.Body || "").trim()
+  const senderId = normalizePhoneNumber(from)
+  const phoneNumberId = normalizePhoneNumber(to) || "twilio"
+
+  if (!senderId || !messageId) {
+    throw new Error("Twilio webhook missing From or MessageSid")
+  }
+
+  const contactsByWaId = new Map<string, string>()
+  const profileName = String(payload.ProfileName || payload.WaProfileName || "").trim()
+  if (profileName) contactsByWaId.set(senderId, profileName)
+
+  const numMedia = Number.parseInt(String(payload.NumMedia || "0"), 10) || 0
+  let message: any = {
+    from: senderId,
+    id: messageId,
+    timestamp: String(Math.floor(Date.now() / 1000)),
+    type: "text",
+    text: { body },
+  }
+
+  if (numMedia > 0) {
+    const mediaUrl = payload.MediaUrl0
+    const mimeType = payload.MediaContentType0 || ""
+    const mediaType = mimeType.startsWith("image/")
+      ? "image"
+      : mimeType.startsWith("video/")
+        ? "video"
+        : mimeType.startsWith("audio/")
+          ? "audio"
+          : "document"
+
+    message = {
+      from: senderId,
+      id: messageId,
+      timestamp: String(Math.floor(Date.now() / 1000)),
+      type: mediaType,
+      [mediaType]: {
+        id: messageId,
+        mime_type: mimeType,
+        caption: body,
+        filename: mediaUrl ? mediaUrl.split("/").pop() : undefined,
+        link: mediaUrl,
+      },
+    }
+  }
+
+  await handleIncomingMessage(message, phoneNumberId, contactsByWaId)
 }
 
 async function handleIncomingMessage(
