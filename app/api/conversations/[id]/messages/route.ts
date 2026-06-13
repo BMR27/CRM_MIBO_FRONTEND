@@ -55,6 +55,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           m.media_filename,
           m.media_mime_type,
           m.media_caption,
+          m.external_message_id,
           m.whatsapp_message_id,
           m.sender_type,
           m.sender_id,
@@ -89,6 +90,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               m.content,
               m.message_type,
               m.metadata,
+              m.external_message_id,
               m.sender_type,
               m.sender_id,
               m.created_at,
@@ -120,9 +122,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               m.media_id,
               m.media_url,
               m.media_filename,
-              m.media_mime_type,
-              m.media_caption,
-              m.whatsapp_message_id,
+                m.media_mime_type,
+                m.media_caption,
+                m.external_message_id,
+                m.whatsapp_message_id,
               m.sender_type,
               m.sender_id,
               m.created_at,
@@ -152,6 +155,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 m.content,
                 m.message_type,
                 m.metadata,
+                m.external_message_id,
                 m.sender_type,
                 m.sender_id,
                 m.created_at,
@@ -188,6 +192,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       const rowCaption = (m as any)?.media_caption
       const rowMimeType = (m as any)?.media_mime_type
       const whatsappMessageId = (m as any)?.whatsapp_message_id
+      const externalMessageId = (m as any)?.external_message_id
 
       const mediaId =
         metadata?.media_id ??
@@ -231,7 +236,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       // Fallback for old Twilio inbound media rows that were stored as plain text
       // (no media_id/media_url), but still have whatsapp_message_id (Twilio Message SID).
         // Try fallback if message_type indicates media OR content looks like a file
-        if (!media_url && whatsappMessageId) {
+      const messageSid = whatsappMessageId || externalMessageId
+
+      if (!media_url && messageSid) {
           const isMediaType = ["image", "video", "audio", "document", "sticker"].includes(
             String(m.message_type || "").toLowerCase()
           )
@@ -240,7 +247,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         
           if (isMediaType || looksLikeFile) {
           const inferredFilename = String(filename || m.content || "archivo").trim()
-          media_url = `/api/twilio/media-by-message/${encodeURIComponent(String(whatsappMessageId))}`
+          media_url = `/api/twilio/media-by-message/${encodeURIComponent(String(messageSid))}`
           if (inferredFilename) {
             media_url += `?filename=${encodeURIComponent(inferredFilename)}`
           }
@@ -250,6 +257,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return {
         ...m,
         metadata,
+        whatsapp_message_id: whatsappMessageId || externalMessageId || null,
         media_url,
       }
     })

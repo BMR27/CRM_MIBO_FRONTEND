@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { api } from "@/lib/api"
+import { frontendApi } from "@/lib/api"
 
 export type UserRole = "admin" | "supervisor" | "agent"
 
@@ -20,37 +20,24 @@ export function useUserRole() {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const backendUrl = "https://crmmibobackend-production.up.railway.app"
-          const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
+        const { data } = await frontendApi.get("/api/auth/me")
         
-        if (!token) {
-          setError("No authentication token found")
-          setLoading(false)
-          return
+        const currentUser = data?.user || data
+        const roleName = String(currentUser?.role || "").trim().toLowerCase()
+        const roleMap: Record<string, UserRole> = {
+          administrador: "admin",
+          admin: "admin",
+          supervisor: "supervisor",
+          agente: "agent",
+          agent: "agent",
         }
 
-          const { data } = await api.get("/api/auth/me", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-        
-        // Mapear roles españoles a inglés
-        const roleMap: Record<string, UserRole> = {
-          "Administrador": "admin",
-          "Supervisor": "supervisor",
-          "Agente": "agent",
-          "admin": "admin",
-          "supervisor": "supervisor",
-          "agent": "agent"
-        }
-        
-        const mappedRole = roleMap[data.role] || "agent"
+        const mappedRole = roleMap[roleName] || "agent"
         
         setUser({
-          id: data.id,
-          email: data.email,
-          name: data.name,
+          id: String(currentUser.id),
+          email: currentUser.email,
+          name: currentUser.name,
           role: mappedRole,
         })
         setError(null)

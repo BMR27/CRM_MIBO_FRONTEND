@@ -7,8 +7,29 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Bell, Lock, Save, Settings, Zap } from "lucide-react"
 import { InboxHeader } from "@/components/inbox-header"
+import { getSession } from "@/lib/session"
+import { redirect } from "next/navigation"
 
-export default function ConfiguracionPage() {
+function normalizeRole(role: string | undefined | null) {
+  const value = String(role || "").trim().toLowerCase()
+  const roleMap: Record<string, "admin" | "supervisor" | "agent"> = {
+    administrador: "admin",
+    admin: "admin",
+    supervisor: "supervisor",
+    agente: "agent",
+    agent: "agent",
+  }
+
+  return roleMap[value] || "agent"
+}
+
+export default async function ConfiguracionPage() {
+  const user = await getSession()
+
+  if (!user || normalizeRole(user.role) !== "admin") {
+    redirect("/inbox")
+  }
+
   return (
     <>
       <InboxHeader />

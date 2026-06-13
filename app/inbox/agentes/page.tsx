@@ -14,10 +14,19 @@ import { useAgentStats } from "@/hooks/use-agent-stats"
 import { useRouter } from "next/navigation"
 import { useConversations } from "@/hooks/use-conversations"
 
+function cnRoleBadge(role: string) {
+  if (role === "admin") return "bg-purple-100 text-purple-700"
+  if (role === "supervisor") return "bg-sky-100 text-sky-700"
+  return "bg-slate-100 text-slate-700"
+}
+
 export default function AgentesPage() {
   const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null)
   const { role, loading } = useUserRole()
   const router = useRouter()
+  const { agents, loading: loadingAgents, error, refetch: refetchAgents } = useAgents()
+  const { stats, loading: loadingStats, refetch: refetchStats } = useAgentStats()
+  const { conversations, loading: loadingConversations, error: errorConversations, refetch: refetchConversations } = useConversations()
 
   // Proteger acceso: solo admin y supervisor
   if (!loading && role !== "admin" && role !== "supervisor") {
@@ -42,10 +51,6 @@ export default function AgentesPage() {
       </>
     )
   }
-  // Fetch agents from backend
-  const { agents, loading: loadingAgents, error, refetch: refetchAgents } = useAgents()
-  const { stats, loading: loadingStats, refetch: refetchStats } = useAgentStats()
-  const { conversations, loading: loadingConversations, error: errorConversations, refetch: refetchConversations } = useConversations()
 
   // Merge agents with their stats y conversaciones asignadas
   type AgentConversation = {
@@ -57,7 +62,15 @@ export default function AgentesPage() {
     last_message_at: string
   }
 
-  const agentStats = agents.map((agent) => {
+  const visibleAgents = agents.filter((agent) => agent.role === "agent")
+
+  const roleLabels: Record<string, string> = {
+    admin: "Administrador",
+    supervisor: "Supervisor",
+    agent: "Agente",
+  }
+
+  const agentStats = visibleAgents.map((agent) => {
     const stat = stats.find((s) => s.id === agent.id)
     // Filtrar conversaciones asignadas a este agente
     const assignedConversations = conversations.filter((conv) => String(conv.assigned_agent_id) === String(agent.id))
@@ -84,7 +97,7 @@ export default function AgentesPage() {
     <>
       <InboxHeader />
       <main className="flex-1 overflow-y-auto p-6 bg-background">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-6xl space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
@@ -102,9 +115,9 @@ export default function AgentesPage() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{loadingAgents ? "-" : agents.length}</div>
+                <div className="text-2xl font-bold">{loadingAgents ? "-" : visibleAgents.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  {loadingAgents ? "-" : agents.filter((a) => a.status === "available").length} en línea
+                  {loadingAgents ? "-" : visibleAgents.filter((a) => a.status === "available").length} en línea
                 </p>
               </CardContent>
             </Card>
@@ -180,11 +193,12 @@ export default function AgentesPage() {
                                 Desconectado
                               </Badge>
                             )}
-                            {agent.role === "admin" && (
-                              <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                                Admin
-                              </Badge>
-                            )}
+                            <Badge
+                              variant="secondary"
+                              className={cnRoleBadge(agent.role)}
+                            >
+                              {roleLabels[agent.role] || "Agente"}
+                            </Badge>
                           </div>
                           <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                             <Mail className="h-3 w-3" />

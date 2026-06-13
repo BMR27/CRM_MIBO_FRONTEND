@@ -582,10 +582,13 @@ function parseIncomingMessage(message: any): {
     const metadata = {
       type,
       media_id: media?.id,
+      media_url: media?.link,
       mime_type: media?.mime_type,
       sha256: media?.sha256,
       filename,
       caption,
+      whatsapp_message_id: message?.id,
+      external_message_id: message?.id,
     }
     return { message_type: type, content, metadata }
   }

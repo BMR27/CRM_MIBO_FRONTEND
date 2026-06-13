@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { useUserRole } from "@/hooks/use-user-role"
 
 interface InboxSidebarProps {
   user: {
@@ -22,7 +21,20 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const { isAdminOrSupervisor, isAgent } = useUserRole()
+  const normalizedRole = (() => {
+    const value = String(user.role || "").trim().toLowerCase()
+    const roleMap: Record<string, "admin" | "supervisor" | "agent"> = {
+      administrador: "admin",
+      admin: "admin",
+      supervisor: "supervisor",
+      agente: "agent",
+      agent: "agent",
+    }
+
+    return roleMap[value] || "agent"
+  })()
+  const isAdmin = normalizedRole === "admin"
+  const isAgent = normalizedRole === "agent"
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
@@ -47,6 +59,18 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
     return labels[status] || "Conectado"
   }
 
+  const getRoleLabel = (role?: string) => {
+    const labels: Record<string, string> = {
+      admin: "Administrador",
+      administrador: "Administrador",
+      supervisor: "Supervisor",
+      agent: "Agente",
+      agente: "Agente",
+    }
+    const key = String(role || "").trim().toLowerCase()
+    return labels[key] || role || "Usuario"
+  }
+
   const isInbox = pathname === "/inbox"
   const isContactos = pathname.startsWith("/inbox/contactos")
   const isEnvios = pathname.startsWith("/inbox/envios")
@@ -65,7 +89,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
     >
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && (
-          <span className="text-sidebar-foreground font-semibold text-lg">MIBO CRM</span>
+          <span className="text-sidebar-foreground font-semibold text-lg">OMNI CRM</span>
         )}
         <Button
           variant="ghost"
@@ -124,8 +148,8 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           {!collapsed && <span className="ml-3">Envíos masivos</span>}
         </Button>
         
-        {/* Citas: solo visible para admin y supervisor */}
-        {!isAgent && (
+        {/* Citas: solo visible para administrador */}
+        {isAdmin && (
           <Button
             variant="ghost"
             onClick={() => router.push("/inbox/citas")}
@@ -142,8 +166,8 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           </Button>
         )}
         
-        {/* Agentes tab - solo visible para admin y supervisor */}
-        {isAdminOrSupervisor && (
+        {/* Agentes tab - visible para admin y supervisor */}
+        {!isAgent && (
           <Button
             variant="ghost"
             onClick={() => router.push("/inbox/agentes")}
@@ -175,20 +199,22 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           {!collapsed && <span className="ml-3">Documentación API</span>}
         </Button>
         
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/inbox/configuracion")}
-          className={cn(
-            "w-full justify-start transition-colors",
-            collapsed && "justify-center px-2",
-            isConfiguracion
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
-              : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
-          )}
-        >
-          <Settings className="h-5 w-5" />
-          {!collapsed && <span className="ml-3">Configuración</span>}
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/inbox/configuracion")}
+            className={cn(
+              "w-full justify-start transition-colors",
+              collapsed && "justify-center px-2",
+              isConfiguracion
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+                : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
+            )}
+          >
+            <Settings className="h-5 w-5" />
+            {!collapsed && <span className="ml-3">Configuración</span>}
+          </Button>
+        )}
       </nav>
 
       <Separator className="bg-sidebar-border" />
@@ -202,7 +228,10 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           {!collapsed && (
             <div className="flex-1 overflow-hidden">
               <p className="truncate font-medium text-foreground text-sm">{user.name}</p>
-              <p className="truncate text-emerald-600 text-xs">{getStatusLabel(user.status || "available")}</p>
+              <p className="truncate text-muted-foreground text-xs">
+                {getRoleLabel(user.role)} ·{" "}
+                <span className="text-emerald-600">{getStatusLabel(user.status || "available")}</span>
+              </p>
             </div>
           )}
         </div>

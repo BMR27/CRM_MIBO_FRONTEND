@@ -103,15 +103,18 @@ async function recordCampaignEvent(db: Db, campaignId: string, payload: any) {
   }
 }
 
-function renderMessageTemplate(template: string, contact: any) {
+function renderMessageTemplate(template: string, contact: any, agentName = "") {
   const name = String(contact?.name || "").trim()
   const phone = String(contact?.phone_number || "").trim()
   const externalUserId = String(contact?.external_user_id || "").trim()
   const id = String(contact?.id || "").trim()
+  const agent = String(agentName || "").trim()
 
   // Common variables used in UI templates
   return String(template || "")
     .replace(/\{\{\s*nombre\s*\}\}/gi, name || "")
+    .replace(/\{\{\s*agente\s*\}\}/gi, agent || "")
+    .replace(/\{\{\s*asesor\s*\}\}/gi, agent || "")
     .replace(/\{\{\s*telefono\s*\}\}/gi, phone || "")
     .replace(/\{\{\s*phone_number\s*\}\}/gi, phone || "")
     .replace(/\{\{\s*external_user_id\s*\}\}/gi, externalUserId || "")
@@ -678,6 +681,7 @@ export async function POST(request: Request) {
     const contactIds = Array.isArray(body?.contactIds) ? body.contactIds.map((x: any) => String(x).trim()).filter(Boolean) : []
     const messageTemplateRaw = String(body?.message || "")
     const messageTemplate = messageTemplateRaw.trim()
+    const agentName = String((user as any)?.name || (user as any)?.email || "Agente").trim()
 
     const sendMode: SendMode = (String(body?.sendMode || "auto") as SendMode)
     // Important: only skip when explicitly requested by the client.
@@ -789,9 +793,11 @@ export async function POST(request: Request) {
         const conversationId = String(ensured.conversation.id)
         const channel = ensured.channel === "facebook" ? "facebook" : "whatsapp"
 
-        const renderedBodyParams = (whatsappTemplate?.bodyParams || []).map((p) => renderMessageTemplate(p, ensured.contact))
+        const renderedBodyParams = (whatsappTemplate?.bodyParams || []).map((p) =>
+          renderMessageTemplate(p, ensured.contact, agentName),
+        )
         const renderedDisplayContent = messageTemplate
-          ? renderMessageTemplate(messageTemplate, ensured.contact)
+          ? renderMessageTemplate(messageTemplate, ensured.contact, agentName)
           : `Plantilla WhatsApp: ${whatsappTemplate.name} (${whatsappTemplate.language})${renderedBodyParams.length ? ` | ${renderedBodyParams.join(" | ")}` : ""}`
 
         let sendRes:

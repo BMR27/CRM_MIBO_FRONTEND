@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { isDemoMode, sql } from "@/lib/db"
 import { getSession } from "@/lib/session"
+import { DEMO_CONVERSATIONS } from "@/lib/demo-data"
 
 let _hasConversationCommentsColumn: boolean | null = null
 
@@ -37,111 +38,105 @@ export async function GET(
       return NextResponse.json({ error: "Conversation ID required" }, { status: 400 })
     }
 
+    if (isDemoMode) {
+      const demoConversation = DEMO_CONVERSATIONS.find((conversation) => String(conversation.id) === String(id))
+      if (!demoConversation) {
+        return NextResponse.json({ error: "Conversation not found" }, { status: 404 })
+      }
+
+      return NextResponse.json({
+        id: demoConversation.id,
+        status: demoConversation.status,
+        priority: demoConversation.priority,
+        comments: JSON.stringify([]),
+        created_at: demoConversation.created_at,
+        last_message_at: demoConversation.last_message_at,
+        contact_name: demoConversation.contact.name,
+        phone_number: demoConversation.contact.phone_number,
+        agent_name: demoConversation.assigned_agent?.name || null,
+      })
+    }
+
     const includeComments = await hasConversationCommentsColumn()
 
-    // Try UUID format first, then integer
-    let result: any = includeComments
-      ? await sql!`
-          SELECT 
-            id, 
-            status, 
-            priority, 
-            contact_id,
-            assigned_agent_id,
-            comments,
-            created_at, 
-            last_message_at
-          FROM conversations 
-          WHERE id::text = ${id}
-          LIMIT 1
-        `
-      : await sql!`
-          SELECT 
-            id, 
-            status, 
-            priority, 
-            contact_id,
-            assigned_agent_id,
-            created_at, 
-            last_message_at
-          FROM conversations 
-          WHERE id::text = ${id}
-          LIMIT 1
-        `
-
-    if (result.length === 0 && !isNaN(Number(id))) {
-      result = includeComments
-        ? await sql!`
-            SELECT 
-              id, 
-              status, 
-              priority, 
-              contact_id,
-              assigned_agent_id,
-              comments,
-              created_at, 
-              last_message_at
-            FROM conversations 
-            WHERE id = ${Number.parseInt(id)}
-            LIMIT 1
-          `
-        : await sql!`
-            SELECT 
-              id, 
-              status, 
-              priority, 
-              contact_id,
-              assigned_agent_id,
-              created_at, 
-              last_message_at
-            FROM conversations 
-            WHERE id = ${Number.parseInt(id)}
-            LIMIT 1
-          `
-    }
+    // SELECT * keeps this route compatible with older deployments where optional
+    // columns may not exist yet. Required values are read defensively below.
+    const result: any = await sql!`
+      SELECT *
+      FROM conversations
+      WHERE id::text = ${id}
+      LIMIT 1
+    `
 
     if (result.length === 0) {
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 })
     }
 
     const conversation = result[0]
+    const role = normalizeRole((user as any).role)
 
     // Check permissions based on user role
-    if (user.role === "Agente") {
+    if (role === "agent") {
       // Agents can only access conversations assigned to them
-      if (conversation.assigned_agent_id !== user.id) {
+      if (String(conversation.assigned_agent_id || "") !== String(user.id)) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 })
       }
-    } else if (user.role !== "Administrador") {
+    } else if (role !== "admin" && role !== "supervisor") {
       // Non-admin users (regular contacts/users) can only access their own conversations
-      const contactCheck = await sql!`
-        SELECT id FROM contacts WHERE id = ${conversation.contact_id} AND created_by_user_id = ${user.id}
-      `
-      if (contactCheck.length === 0) {
+      let contactCheck: any[] = []
+      try {
+        contactCheck = await sql!`
+          SELECT id
+          FROM contacts
+          WHERE id::text = ${String(conversation.contact_id || "")}
+            AND created_by_user_id::text = ${String(user.id)}
+          LIMIT 1
+        `
+      } catch (error) {
+        console.warn("[Conversations GET] Could not validate contact ownership:", error)
+      }
+      if (!contactCheck.length) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 })
       }
     }
-    // Admins can access all conversations
+    // Admins and supervisors can access all conversations
 
     // Fetch contact info
-    let contactResult: any = await sql!`
-      SELECT name, phone_number FROM contacts WHERE id = ${conversation.contact_id}
-    `
+    let contactResult: any = []
+    if (conversation.contact_id) {
+      try {
+        contactResult = await sql!`
+          SELECT name, phone_number
+          FROM contacts
+          WHERE id::text = ${String(conversation.contact_id)}
+          LIMIT 1
+        `
+      } catch (error) {
+        console.warn("[Conversations GET] Could not load contact info:", error)
+      }
+    }
 
     const contact = contactResult.length > 0 ? contactResult[0] : { name: "Unknown", phone_number: "" }
 
     // Fetch agent info if assigned
     let agentResult: any = []
     if (conversation.assigned_agent_id) {
-      agentResult = await sql!`
-        SELECT name FROM users WHERE id = ${conversation.assigned_agent_id}
-      `
+      try {
+        agentResult = await sql!`
+          SELECT name
+          FROM users
+          WHERE id::text = ${String(conversation.assigned_agent_id)}
+          LIMIT 1
+        `
+      } catch (error) {
+        console.warn("[Conversations GET] Could not load agent info:", error)
+      }
     }
 
     const agent = agentResult.length > 0 ? agentResult[0] : null
 
     // Convert old text comments to JSON array if needed
-    let comments = conversation.comments
+    let comments = includeComments ? conversation.comments : null
     if (comments) {
       try {
         // Try to parse as JSON
@@ -170,11 +165,11 @@ export async function GET(
 
     return NextResponse.json({
       id: conversation.id,
-      status: conversation.status,
-      priority: conversation.priority,
+      status: conversation.status || "active",
+      priority: conversation.priority || "low",
       comments: comments,
-      created_at: conversation.created_at,
-      last_message_at: conversation.last_message_at,
+      created_at: conversation.created_at || null,
+      last_message_at: conversation.last_message_at || conversation.updated_at || conversation.created_at || null,
       contact_name: contact.name,
       phone_number: contact.phone_number,
       agent_name: agent?.name || null,

@@ -155,7 +155,11 @@ export function ConversationDetails({
             });
             setComments([]);
           } else {
-            console.error("Error loading comments:", error);
+            console.warn("No se pudieron cargar los comentarios de la conversación", {
+              status,
+              message: error?.response?.data?.error || error?.message || "Error desconocido",
+            });
+            setComments([]);
           }
       } finally {
         setCommentsLoading(false)

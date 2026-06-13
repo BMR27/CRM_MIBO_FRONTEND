@@ -32,7 +32,7 @@ export function useAgents() {
         
         if (roleName === "Administrador" || roleName === "admin") {
           role = "admin"
-        } else if (roleName === "Supervisor" || roleName === "super") {
+        } else if (roleName === "Supervisor" || roleName === "supervisor" || roleName === "super") {
           role = "supervisor"
         }
         

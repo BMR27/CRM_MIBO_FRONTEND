@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
+import { useUserRole } from "@/hooks/use-user-role"
 import {
   Calendar,
   Plus,
@@ -69,6 +70,7 @@ const getStartOfWeek = (date: Date) => {
 }
 
 export default function AgendaPage() {
+  const { role, loading: roleLoading } = useUserRole()
   const today = useMemo(() => {
     const now = new Date()
     now.setHours(0, 0, 0, 0)
@@ -296,11 +298,12 @@ export default function AgendaPage() {
   }
 
   useEffect(() => {
+    if (roleLoading || role !== "admin") return
     fetchSessions()
     const handler = () => fetchSessions()
     window.addEventListener("calls-updated", handler)
     return () => window.removeEventListener("calls-updated", handler)
-  }, [])
+  }, [role, roleLoading])
 
   const filteredSessions = filter === "all" ? sessions : sessions.filter((s) => s.status === filter)
 
@@ -433,6 +436,40 @@ export default function AgendaPage() {
   const todaySessions = sessions.filter((s) => s.date === todayIso && s.status === "scheduled")
   const upcomingSessions = sessions.filter((s) => s.status === "scheduled").length
   const completedSessions = sessions.filter((s) => s.status === "completed").length
+
+  if (roleLoading) {
+    return (
+      <div className="flex flex-1 flex-col h-full overflow-hidden">
+        <InboxHeader />
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/30">
+          <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
+            Validando permisos...
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (role !== "admin") {
+    return (
+      <div className="flex flex-1 flex-col h-full overflow-hidden">
+        <InboxHeader />
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/30">
+          <Card className="mx-auto mt-6 max-w-xl border-red-200">
+            <CardHeader>
+              <CardTitle className="text-red-600">Acceso denegado</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                La sección de Citas solo está disponible para el rol Administrador.
+              </p>
+              <Button onClick={() => window.location.assign("/inbox")}>Volver a Conversaciones</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-1 flex-col h-full overflow-hidden">

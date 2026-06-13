@@ -46,6 +46,7 @@ interface Message {
   metadata?: any
   media_url?: string | null
   whatsapp_message_id?: string | null
+  external_message_id?: string | null
 }
 
 interface ChatAreaProps {
@@ -450,7 +451,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
       // Twilio API URLs (api.twilio.com) require Basic Auth — route through proxy using message SID
       if (raw.includes("api.twilio.com")) {
-        const sid = msg.whatsapp_message_id || metadata?.whatsapp_message_id || null
+        const sid = msg.whatsapp_message_id || msg.external_message_id || metadata?.whatsapp_message_id || metadata?.external_message_id || null
         if (sid) {
           const inferredFilename = String(metadata?.filename || metadata?.media_filename || msg.content || "").trim()
           let proxyUrl = `/api/twilio/media-by-message/${encodeURIComponent(String(sid))}`
@@ -517,7 +518,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         )
       }
 
-      const sid = msg.whatsapp_message_id || metadata?.whatsapp_message_id || null
+      const sid = msg.whatsapp_message_id || msg.external_message_id || metadata?.whatsapp_message_id || metadata?.external_message_id || null
       let fallbackDownloadUrl: string | null = null
       if (sid) {
         const inferredFilename = String(filename || msg.content || "archivo").trim()
