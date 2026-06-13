@@ -436,7 +436,7 @@ async function handleIncomingMessage(
       SELECT * FROM conversations 
       WHERE contact_id = ${contactId} 
         AND channel = 'whatsapp'
-        AND status IN ('active', 'open', 'assigned')
+        AND status <> 'resolved'
       ORDER BY created_at DESC
       LIMIT 1
     `
