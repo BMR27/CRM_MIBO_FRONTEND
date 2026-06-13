@@ -27,6 +27,7 @@ async function ensureWebhookLogsTable(db: Db) {
 }
 
 async function ensureWhatsappSchema(db: Db) {
+  await db`ALTER TABLE contacts ALTER COLUMN phone_number TYPE VARCHAR(100)`
   await db`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS channel VARCHAR(50) DEFAULT 'whatsapp'`
   await db`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS external_user_id VARCHAR(255)`
   await db`ALTER TABLE conversations ADD COLUMN IF NOT EXISTS channel VARCHAR(50) DEFAULT 'whatsapp'`
