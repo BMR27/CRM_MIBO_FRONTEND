@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Manual Interno CRM MIBO - Supervisor y Agente</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.45; color: #111; margin: 30px; }
+    h1, h2, h3 { color: #0f172a; }
+    h1 { margin-bottom: 8px; }
+    p.meta { color: #475569; margin-top: 0; }
+    .section { margin-top: 28px; }
+    img { width: 100%; max-width: 1000px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    .caption { font-size: 12px; color: #334155; margin: 8px 0 20px 0; }
+    .note {
+      background: #fff7ed;
+      border: 1px solid #fdba74;
+      border-left: 6px solid #f97316;
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    }
+    .note-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: #9a3412;
+      margin-bottom: 6px;
+    }
+    .note-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+    .note-text {
+      margin: 0;
+      color: #7c2d12;
+    }
+    ul { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Manual Interno de Uso - CRM MIBO</h1>
+  <p class="meta">Version 1.1 | Fecha: 2026-06-13 | Formato: Manual operativo con imagenes reales</p>
+
+  <div class="section">
+    <h2>1. Objetivo</h2>
+    <p>Este manual explica como usar el sistema por rol (Supervisor y Agente), incluyendo procesos diarios, modulos clave y ejemplos visuales reales capturados desde el entorno en puerto 3001.</p>
+  </div>
+
+  <div class="section">
+    <h2>2. Acceso al Sistema</h2>
+    <h3>2.1 Pantalla de Login</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/01-login-3001.png" alt="Pantalla de login" />
+    <p class="caption">Figura 1. Pantalla de inicio de sesion.</p>
+
+    <h3>2.2 Pantalla de Registro</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/02-signup.png" alt="Pantalla de registro" />
+    <p class="caption">Figura 2. Pantalla de registro de usuario.</p>
+  </div>
+
+  <div class="section">
+    <h2>3. Rol Supervisor</h2>
+    <ul>
+      <li>Visualiza todas las conversaciones.</li>
+      <li>Accede al modulo de Agentes para monitoreo operativo.</li>
+      <li>Gestiona contactos y envios masivos.</li>
+      <li>Consulta documentacion API interna.</li>
+    </ul>
+
+    <h3>3.1 Bandeja Principal (Supervisor)</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/04-supervisor-inbox.png" alt="Inbox supervisor" />
+    <p class="caption">Figura 3. Vista de conversaciones para supervisor (incluye acceso a Agentes).</p>
+
+    <h3>3.2 Modulo Contactos (Supervisor)</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/05-supervisor-contactos.png" alt="Contactos supervisor" />
+    <p class="caption">Figura 4. Vista de contactos para supervisor.</p>
+
+    <h3>3.3 Modulo Envios Masivos (Supervisor)</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/06-supervisor-envios.png" alt="Envios supervisor" />
+    <p class="caption">Figura 5. Vista de campanas para supervisor.</p>
+
+    <h3>3.4 Modulo Agentes (Supervisor)</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/07-supervisor-agentes.png" alt="Agentes supervisor" />
+    <p class="caption">Figura 6. Vista de gestion/monitoreo de agentes.</p>
+
+    <h3>3.5 Documentacion API (Supervisor)</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/08-supervisor-doc-api.png" alt="Documentacion API supervisor" />
+    <p class="caption">Figura 7. Vista de documentacion API interna.</p>
+  </div>
+
+  <div class="section">
+    <h2>4. Rol Agente</h2>
+    <ul>
+      <li>Atiende conversaciones asignadas.</li>
+      <li>No tiene acceso al modulo Agentes en sidebar.</li>
+      <li>Puede consultar contactos y envios segun politica operativa.</li>
+    </ul>
+
+    <h3>4.1 Bandeja Principal (Agente)</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/09-agente-inbox.png" alt="Inbox agente" />
+    <p class="caption">Figura 8. Vista de inbox para agente (sin modulo Agentes).</p>
+
+    <h3>4.2 Modulo Contactos (Agente)</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/10-agente-contactos.png" alt="Contactos agente" />
+    <p class="caption">Figura 9. Vista de contactos para agente.</p>
+
+    <h3>4.3 Modulo Envios Masivos (Agente)</h3>
+    <img src="file:///Users/bryanmejiaruiz/Documents/Repositorios/CRM_MIBO_FRONTEND/docs/manual-img/11-agente-envios.png" alt="Envios agente" />
+    <p class="caption">Figura 10. Vista de envios masivos para agente.</p>
+  </div>
+
+  <div class="section">
+    <h2>5. Flujos Operativos Recomendados</h2>
+    <h3>5.1 Supervisor</h3>
+    <ol>
+      <li>Revisar backlog y conversaciones criticas.</li>
+      <li>Asignar casos a agentes.</li>
+      <li>Monitorear avance por agente.</li>
+      <li>Coordinar envios/campanas cuando aplique.</li>
+    </ol>
+
+    <h3>5.2 Agente</h3>
+    <ol>
+      <li>Tomar conversaciones asignadas.</li>
+      <li>Responder con texto, plantillas o media.</li>
+      <li>Actualizar estatus de la conversacion.</li>
+      <li>Escalar casos al supervisor cuando aplique.</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>6. Endpoints Clave de Operacion</h2>
+    <ul>
+      <li>/api/auth/login, /api/auth/me, /api/auth/logout</li>
+      <li>/api/conversations, /api/conversations/[id], /api/conversations/[id]/assign</li>
+      <li>/api/conversations/[id]/messages, /api/messages/mark-read/[conversationId]</li>
+      <li>/api/contacts, /api/contacts/[id], /api/contacts/import</li>
+      <li>/api/users/agents, /api/users/agents/stats</li>
+      <li>/api/campaigns, /api/campaigns/send, /api/campaigns/stats</li>
+    </ul>
+  </div>
+
+  <div class="section note">
+    <div class="note-header">
+      <span class="note-icon">&#9888;</span>
+      <span>Nota tecnica</span>
+    </div>
+    <p class="note-text">Las imagenes fueron capturadas en el entorno local activo (localhost:3001). Si se modifican menus o permisos, actualizar este manual para mantener consistencia operativa.</p>
+  </div>
+</body>
+</html>
