@@ -93,8 +93,15 @@ export function useConversations(onlyAssigned = false, forceAgentFilter = false)
       }
       console.log('[DEBUG] userId:', userId, '| userRole:', userRole);
       console.log('[DEBUG] filtered conversations:', filtered);
-        // Ordenar por último mensaje descendente (más recientes arriba)
-        filtered.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+        // Ordenar por actividad más reciente (prioriza timestamp real del último mensaje)
+        const getLastActivityTs = (conv: Conversation) => {
+          const messageTs = conv.last_message?.created_at ? new Date(conv.last_message.created_at).getTime() : 0
+          const updatedTs = conv.updated_at ? new Date(conv.updated_at).getTime() : 0
+          const createdTs = conv.created_at ? new Date(conv.created_at).getTime() : 0
+          return Math.max(messageTs, updatedTs, createdTs)
+        }
+
+        filtered.sort((a, b) => getLastActivityTs(b) - getLastActivityTs(a))
         // Notificación si hay nuevos mensajes
         if (prevConversationsRef.current.length > 0) {
           filtered.forEach((conv, idx) => {

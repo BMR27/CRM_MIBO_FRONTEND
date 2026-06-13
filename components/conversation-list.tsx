@@ -132,10 +132,10 @@ export function ConversationList({
 
   return (
     // 🔥 ESTE WRAPPER ES LA CLAVE: crea el “recuadro” del sidebar y separa del chat
-    <div className="h-full p-3 pr-4">
-      <div className="h-full rounded-xl border bg-card shadow-sm overflow-hidden">
+    <div className="h-full p-3 pr-4 min-h-0">
+      <div className="h-full rounded-xl border bg-card shadow-sm overflow-hidden flex flex-col min-h-0">
         {/* Barra de búsqueda */}
-        <div className="p-3 pb-0">
+        <div className="p-3 pb-0 flex-shrink-0">
           <input
             type="text"
             value={searchTerm}
@@ -144,9 +144,9 @@ export function ConversationList({
             className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
-        <ScrollArea className="h-full">
+        <ScrollArea className="flex-1 min-h-0">
           {/* padding interno del panel */}
-          <div className="space-y-3 p-3">
+          <div className="space-y-3 p-3 pb-6">
             {filteredConversations.map((conv) => {
               const unreadCount = Number(conv.unread_count || 0)
 
