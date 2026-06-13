@@ -109,7 +109,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       if (!conversationId) return
       if (!shouldResolve(resolvedContactName)) return
       try {
-        const { data } = await api.get(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
+        const { data } = await frontendApi.get(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
         const name = data?.contact_name ? String(data.contact_name) : ""
         if (name.trim()) setResolvedContactName(name.trim())
       } catch {
@@ -127,7 +127,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
 
     try {
       setDeletingConversation(true)
-      const { data, status } = await api.delete(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
+      const { data, status } = await frontendApi.delete(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
       if (status !== 200) {
         const message = data?.error || "No se pudo eliminar la conversación"
         toast({
@@ -177,18 +177,22 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      // El token ya lo añade el interceptor de axios
-      const { data } = await api.get(`/api/conversations/${conversationId}/messages`)
+      const response = await fetch(`/api/conversations/${encodeURIComponent(String(conversationId))}/messages`, {
+        credentials: "include",
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      const data = await response.json().catch(() => ({ messages: [] }))
       // Ordenar por fecha ascendente (más viejos primero, más recientes último)
       const rawMessages = Array.isArray(data) ? data : (Array.isArray(data?.messages) ? data.messages : [])
       const sortedMessages = rawMessages.sort((a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       setMessages(sortedMessages)
-    } catch (error: any) {
-      if (error.response) {
-        console.error("[ChatArea] Fetch messages error:", error.response.status, error.response.data)
-      } else {
-        console.error("[ChatArea] Fetch messages error:", error)
-      }
+    } catch {
+      // Evita que errores intermitentes de red rompan la vista del chat en desarrollo.
     }
   }
 
@@ -272,7 +276,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       // Detectar canal y usar endpoint apropiado
       if (channel === 'facebook' && externalUserId) {
         console.log("[ChatArea] Sending Facebook message", { externalUserId, messageContent, conversationId });
-        const { data } = await api.post(`/api/facebook/send`, {
+        const { data } = await frontendApi.post(`/api/facebook/send`, {
           recipientId: externalUserId,
           message: messageContent,
           conversationId: conversationId
@@ -307,7 +311,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       } else {
         // Enviar via endpoint normal (otros canales)
         console.log("[ChatArea] Sending generic message", { messageContent, conversationId });
-        const response = await api.post(`/api/conversations/${conversationId}/messages`, { content: messageContent });
+        const response = await frontendApi.post(`/api/conversations/${conversationId}/messages`, { content: messageContent });
         const data = response.data;
         console.log("[ChatArea] Generic response", data);
         if (data.success === false) {
@@ -381,7 +385,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!editingContent.trim() || !conversationId) return
 
     try {
-      const response = await api.put(`/api/conversations/${conversationId}/messages/${messageId}`, { content: editingContent.trim() })
+      const response = await frontendApi.put(`/api/conversations/${conversationId}/messages/${messageId}`, { content: editingContent.trim() })
       if (response.status === 200) {
         setMessages(
           messages.map((msg) =>
@@ -403,7 +407,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     if (!conversationId) return
 
     try {
-      const response = await api.delete(`/api/conversations/${conversationId}/messages/${messageId}`)
+      const response = await frontendApi.delete(`/api/conversations/${conversationId}/messages/${messageId}`)
       if (response.status === 200) {
         setMessages(messages.filter((msg) => msg.id !== messageId))
         onUpdate?.()
@@ -572,7 +576,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             <img
               src={mediaUrl}
               alt={caption || filename || "imagen"}
-              className="max-w-full rounded-md border border-border"
+              className="max-h-[320px] w-auto max-w-[min(420px,75vw)] rounded-md border border-border object-contain"
               loading="lazy"
             />
             <a
@@ -598,7 +602,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
           <video
             src={mediaUrl}
             controls
-            className="max-w-full rounded-md border border-border"
+            className="max-h-[320px] w-auto max-w-[min(420px,75vw)] rounded-md border border-border object-contain"
           />
           <a
             href={mediaUrl}

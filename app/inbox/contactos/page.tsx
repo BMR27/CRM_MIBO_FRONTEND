@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { api } from "@/lib/api"
+import { api, frontendApi } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { InboxHeader } from "@/components/inbox-header"
 import { ContactsList } from "@/components/contacts-list"
@@ -47,7 +47,7 @@ export default function ContactosPage() {
       }
       try {
         setCreating(true)
-        const res = await api.post("/api/api/contacts", {
+        const res = await frontendApi.post("/api/contacts", {
           name: newName,
           channel: newChannel,
           phone_number: newChannel === "whatsapp" ? phoneToSend : undefined,

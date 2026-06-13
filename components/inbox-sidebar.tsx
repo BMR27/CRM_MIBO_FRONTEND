@@ -1,13 +1,12 @@
 "use client"
 
-import { MessageSquare, Users, Settings, LogOut, Menu, X, Calendar, User, Send } from "lucide-react"
+import { BookOpen, MessageSquare, Users, Settings, LogOut, Menu, X, Calendar, User, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import Image from "next/image"
 import { useUserRole } from "@/hooks/use-user-role"
 
 interface InboxSidebarProps {
@@ -40,11 +39,11 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      "available": "Disponible",
+      "available": "Conectado",
       "busy": "Ocupado",
       "offline": "Desconectado",
     }
-    return labels[status] || status
+    return labels[status] || "Conectado"
   }
 
   const isInbox = pathname === "/inbox"
@@ -53,6 +52,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
   // const isPlantillasWA = pathname.startsWith("/inbox/plantillas-wa")
   const isCitas = pathname.startsWith("/inbox/citas")
   const isAgentes = pathname.startsWith("/inbox/agentes")
+  const isDocumentacionApi = pathname.startsWith("/inbox/documentacion-api")
   const isConfiguracion = pathname.startsWith("/inbox/configuracion")
 
   return (
@@ -64,7 +64,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
     >
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && (
-          <Image src="/logimarket-logo.png" alt="LogiMarket" width={140} height={40} className="h-auto w-32" />
+          <span className="text-sidebar-foreground font-semibold text-lg">MIBO CRM</span>
         )}
         <Button
           variant="ghost"
@@ -108,25 +108,20 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           {!collapsed && <span className="ml-3">Contactos</span>}
         </Button>
 
-        {/* Envíos masivos - visible para admin, supervisor y agente */}
-        {(isAdminOrSupervisor || isAgent) && (
-          <>
-            <Button
-              variant="ghost"
-              onClick={() => router.push("/inbox/envios")}
-              className={cn(
-                "w-full justify-start transition-colors",
-                collapsed && "justify-center px-2",
-                isEnvios
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
-                  : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
-              )}
-            >
-              <Send className="h-5 w-5" />
-              {!collapsed && <span className="ml-3">Envíos masivos</span>}
-            </Button>
-          </>
-        )}
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/inbox/envios")}
+          className={cn(
+            "w-full justify-start transition-colors",
+            collapsed && "justify-center px-2",
+            isEnvios
+              ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+              : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
+          )}
+        >
+          <Send className="h-5 w-5" />
+          {!collapsed && <span className="ml-3">Envíos masivos</span>}
+        </Button>
         
         {/* Citas: solo visible para admin y supervisor */}
         {!isAgent && (
@@ -163,6 +158,21 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
             {!collapsed && <span className="ml-3">Agentes</span>}
           </Button>
         )}
+
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/inbox/documentacion-api")}
+          className={cn(
+            "w-full justify-start transition-colors",
+            collapsed && "justify-center px-2",
+            isDocumentacionApi
+              ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+              : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
+          )}
+        >
+          <BookOpen className="h-5 w-5" />
+          {!collapsed && <span className="ml-3">Documentación API</span>}
+        </Button>
         
         <Button
           variant="ghost"
@@ -191,7 +201,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           {!collapsed && (
             <div className="flex-1 overflow-hidden">
               <p className="truncate font-medium text-foreground text-sm">{user.name}</p>
-              <p className="truncate text-muted-foreground text-xs">{getStatusLabel(user.status)}</p>
+              <p className="truncate text-emerald-600 text-xs">{getStatusLabel(user.status || "available")}</p>
             </div>
           )}
         </div>

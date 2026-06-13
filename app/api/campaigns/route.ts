@@ -47,6 +47,16 @@ function formatDate(value: any) {
   }
 }
 
+function getTemplateName(value: any) {
+  try {
+    if (!value) return ""
+    if (typeof value === "string") return value
+    return String(value?.name || value?.templateName || value?.templateSid || "").trim()
+  } catch {
+    return ""
+  }
+}
+
 async function ensureWebhookLogsTable(db: Db) {
   try {
     await db`
@@ -94,6 +104,7 @@ async function loadCampaignsFromWebhookLogs(db: Db) {
 
       return {
         id,
+        campaignCode: String(p?.campaignCode || id),
         name: String(p?.name || "Campaña"),
         status,
         recipients: total,
@@ -104,6 +115,7 @@ async function loadCampaignsFromWebhookLogs(db: Db) {
         skipped,
         date,
         message: String(p?.message || ""),
+        templateName: getTemplateName(p?.whatsappTemplate || p?.templateName || p?.templateSid),
       }
     })
   } catch {
@@ -150,6 +162,7 @@ export async function GET() {
           scheduled_at,
           started_at,
           completed_at,
+          whatsapp_template,
           created_at
         FROM bulk_campaigns
         ORDER BY created_at DESC
@@ -167,6 +180,8 @@ export async function GET() {
             SELECT
               (metadata->>'campaignId') AS campaign_id,
               COALESCE(NULLIF(metadata->>'campaignName', ''), 'Campaña') AS name,
+              COALESCE(NULLIF(metadata->>'campaignCode', ''), metadata->>'campaignId') AS campaign_code,
+              COALESCE(NULLIF(metadata->>'templateName', ''), NULLIF(metadata->>'templateSid', '')) AS template_name,
               MAX(created_at) AS last_at,
               COUNT(*) AS total,
               COUNT(*) FILTER (WHERE (metadata->>'source') = 'bulk' AND (metadata->'send'->>'ok') = 'true') AS sent,
@@ -179,7 +194,7 @@ export async function GET() {
             FROM messages
             WHERE (metadata->>'campaignId') IS NOT NULL
               AND (metadata->>'source') = 'bulk'
-            GROUP BY 1, 2
+            GROUP BY 1, 2, 3, 4
           )
           SELECT *
           FROM m
@@ -197,6 +212,7 @@ export async function GET() {
 
           return {
             id: String(r?.campaign_id || ""),
+            campaignCode: String(r?.campaign_code || r?.campaign_id || ""),
             name: String(r?.name || "Campaña"),
             status,
             recipients: total,
@@ -207,6 +223,7 @@ export async function GET() {
             skipped,
             date,
             message: "",
+            templateName: String(r?.template_name || ""),
           }
         })
 
@@ -233,6 +250,7 @@ export async function GET() {
 
       return {
         id: String(r?.id),
+        campaignCode: String(r?.id || ""),
         name: String(r?.name || "Campaña"),
         status,
         recipients,
@@ -243,6 +261,7 @@ export async function GET() {
         skipped,
         date,
         message: String(r?.message || ""),
+        templateName: getTemplateName(r?.whatsapp_template),
       }
     })
 

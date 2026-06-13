@@ -123,7 +123,7 @@ export function ConversationDetails({
     const loadComments = async () => {
       setCommentsLoading(true)
       try {
-        const { data } = await api.get(`/api/conversations/${conversationId}`)
+        const { data } = await frontendApi.get(`/api/conversations/${conversationId}`)
         if (data.comments) {
           try {
             const parsed = JSON.parse(data.comments)
@@ -170,7 +170,7 @@ export function ConversationDetails({
 
     const loadCalls = async () => {
       try {
-        const { data } = await api.get(`/api/calls?conversation_id=${conversationId}`)
+        const { data } = await frontendApi.get(`/api/calls?conversation_id=${conversationId}`)
         const mapped: Meeting[] = (data.calls || []).map((call: any) => {
           const d = new Date(call.scheduled_at)
           return {

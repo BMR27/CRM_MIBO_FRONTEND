@@ -1,12 +1,24 @@
 "use client"
 
-import { api } from "@/lib/api"
-import { useMemo, useState, useEffect } from "react"
+import type React from "react"
+
+import { frontendApi } from "@/lib/api"
+import { useEffect, useMemo, useState } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -25,13 +37,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Pencil, Trash2 } from "lucide-react"
+import { Loader2, MessageCircle, Pencil, Search, Trash2, Users } from "lucide-react"
 import { cn, formatContactDisplayName, getContactAvatarText } from "@/lib/utils"
 import { useContacts, type Contact } from "@/hooks/use-contacts"
 import { toast } from "@/hooks/use-toast"
 
 function stripWhatsappPrefix(value: string) {
   return String(value || "").replace(/^whatsapp:/i, "")
+}
+
+function formatDate(value?: string) {
+  if (!value) return "-"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "-"
+  return date.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
 }
 
 interface ContactsListProps {
@@ -42,13 +61,14 @@ interface ContactsListProps {
   onDeleted?: (deletedId: string | number) => void
 }
 
+type DeleteMode = "single" | "selected" | "all"
+
 export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }: ContactsListProps) {
-  const { contacts, loading, error, refetch } = useContacts()
-  // Log automático cada vez que contacts cambia
-  useEffect(() => {
-    console.log('[ContactsList] contacts state changed:', contacts);
-  }, [contacts]);
+  const { contacts, stats, loading, error, refetch } = useContacts()
   const [query, setQuery] = useState("")
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkSelected, setBulkSelected] = useState(false)
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set())
 
   const [editOpen, setEditOpen] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -60,8 +80,77 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [deleteMode, setDeleteMode] = useState<DeleteMode>("single")
   const [deleteId, setDeleteId] = useState<string | number | null>(null)
   const [deleteLabel, setDeleteLabel] = useState<string>("")
+
+  useEffect(() => {
+    const existingIds = new Set(contacts.map((contact) => String(contact.id)))
+    setSelectedIds((prev) => {
+      const next = new Set(Array.from(prev).filter((id) => existingIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+    setExcludedIds((prev) => {
+      const next = new Set(Array.from(prev).filter((id) => existingIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [contacts])
+
+  const filteredContacts = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return contacts
+
+    return contacts.filter((c) => {
+      const channel = String(c.channel || "whatsapp")
+      const name = formatContactDisplayName(c.name || "", channel).toLowerCase()
+      const phone = formatContactDisplayName(c.phone_number || "", channel).toLowerCase()
+      const ext = String(c.external_user_id || "").toLowerCase()
+      const id = String(c.id || "").toLowerCase()
+      return name.includes(q) || phone.includes(q) || ext.includes(q) || id.includes(q)
+    })
+  }, [contacts, query])
+
+  const visibleIds = useMemo(() => filteredContacts.map((contact) => String(contact.id)), [filteredContacts])
+  const excludedVisibleCount = visibleIds.filter((id) => excludedIds.has(id)).length
+  const selectedCount = bulkSelected
+    ? Math.max(visibleIds.length - excludedVisibleCount, 0)
+    : selectedIds.size
+  const selectedVisibleCount = bulkSelected
+    ? Math.max(visibleIds.length - excludedVisibleCount, 0)
+    : visibleIds.filter((id) => selectedIds.has(id)).length
+  const allVisibleSelected = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length
+  const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected
+  const selectedContactIds = () => (
+    bulkSelected
+      ? filteredContacts.map((contact) => String(contact.id)).filter((id) => !excludedIds.has(id))
+      : Array.from(selectedIds)
+  )
+  const isContactSelected = (id: string) => bulkSelected ? !excludedIds.has(id) : selectedIds.has(id)
+
+  const toggleSelectAllVisible = (checked: boolean) => {
+    setBulkSelected(checked)
+    setSelectedIds(new Set())
+    setExcludedIds(new Set())
+  }
+
+  const toggleSelectContact = (id: string, checked: boolean) => {
+    if (bulkSelected) {
+      setExcludedIds((prev) => {
+        const next = new Set(prev)
+        if (checked) next.delete(id)
+        else next.add(id)
+        return next
+      })
+      return
+    }
+
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
 
   const openEdit = (c: Contact) => {
     setEditId(c.id)
@@ -73,85 +162,119 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
   }
 
   const openDelete = (c: Contact) => {
+    setDeleteMode("single")
     setDeleteId(c.id)
     setDeleteLabel(String(c.name || c.phone_number || c.external_user_id || c.id))
     setDeleteOpen(true)
   }
 
+  const openDeleteSelected = () => {
+    if (selectedCount === 0) return
+    setDeleteMode("selected")
+    setDeleteId(null)
+    setDeleteLabel(`${selectedCount} contacto${selectedCount === 1 ? "" : "s"} seleccionado${selectedCount === 1 ? "" : "s"}`)
+    setDeleteOpen(true)
+  }
+
+  const openDeleteAll = () => {
+    if (stats.total === 0) return
+    setDeleteMode("all")
+    setDeleteId(null)
+    setDeleteLabel(`${stats.total} contacto${stats.total === 1 ? "" : "s"}`)
+    setDeleteOpen(true)
+  }
+
   const handleSaveEdit = async () => {
-    console.log('[ContactEdit] handleSaveEdit called', { editId, editName, editPhone, editExternal });
     if (editId === null) return
-    // Normaliza el número antes de enviar (sin prefijo whatsapp:)
+
     const cleanPhone = (phone: string) => {
-      if (!phone) return "";
-      let cleaned = phone.replace(/\s+/g, "");
-      if (!cleaned.startsWith("+")) cleaned = "+" + cleaned.replace(/^\+/, "");
-      return cleaned;
-    };
+      if (!phone) return ""
+      let cleaned = phone.replace(/\s+/g, "")
+      if (!cleaned.startsWith("+")) cleaned = `+${cleaned.replace(/^\+/, "")}`
+      return cleaned
+    }
+
     try {
       setEditing(true)
-      const res = await api.patch(`/api/api/contacts/${encodeURIComponent(String(editId))}`,
-        {
-          name: editName,
-          phone_number: cleanPhone(editPhone)
-        }
-      )
-      console.log('[ContactEdit] PATCH response', res);
+      await frontendApi.patch(`/api/contacts/${encodeURIComponent(String(editId))}`, {
+        name: editName,
+        phone_number: cleanPhone(editPhone),
+        external_user_id: editExternal,
+      })
       toast({ title: "Contacto actualizado", description: "Se guardaron los cambios." })
       setEditOpen(false)
       await refetch()
     } catch (e) {
-      console.error('[ContactEdit] PATCH error', e);
-      toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo actualizar el contacto", variant: "destructive" })
+      toast({
+        title: "Error",
+        description: e instanceof Error ? e.message : "No se pudo actualizar el contacto",
+        variant: "destructive",
+      })
     } finally {
       setEditing(false)
     }
   }
 
+  const deleteOne = async (id: string | number) => {
+    const response = await frontendApi.delete(`/api/contacts/${encodeURIComponent(String(id))}`)
+    return response.data
+  }
+
   const handleConfirmDelete = async () => {
-    if (deleteId === null) return
     try {
       setDeleting(true)
-      const res = await api.delete(`/api/api/contacts/${encodeURIComponent(String(deleteId))}`)
-      if (res.status === 200 || res.status === 204) {
+      let deletedCount = 0
+
+      if (deleteMode === "all") {
+        const response = await frontendApi.delete("/api/contacts")
+        deletedCount = Number(response.data?.deleted || 0)
+        setSelectedIds(new Set())
+        setBulkSelected(false)
+        setExcludedIds(new Set())
         toast({
-          title: "Contacto eliminado",
-          description: "El contacto fue eliminado correctamente. Si tienes dudas, contacta a soporte.",
-          variant: "success"
+          title: "Contactos eliminados correctamente",
+          description: `Se eliminaron ${deletedCount} contacto${deletedCount === 1 ? "" : "s"}.`,
         })
-      } else {
+      } else if (deleteMode === "selected") {
+        const ids = selectedContactIds()
+        const response = await frontendApi.delete("/api/contacts", { data: { ids } })
+        deletedCount = Number(response.data?.deleted || ids.length)
+        setSelectedIds(new Set())
+        setBulkSelected(false)
+        setExcludedIds(new Set())
         toast({
-          title: "Error",
-          description: res.data?.error || `No se pudo eliminar el contacto (status ${res.status})`,
-          variant: "destructive"
+          title: "Contactos eliminados correctamente",
+          description: `Se eliminaron ${deletedCount} contacto${deletedCount === 1 ? "" : "s"}.`,
         })
+      } else if (deleteId !== null) {
+        await deleteOne(deleteId)
+        deletedCount = 1
+        setSelectedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(String(deleteId))
+          return next
+        })
+        setExcludedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(String(deleteId))
+          return next
+        })
+        onDeleted?.(String(deleteId))
+        toast({ title: "Contacto eliminado correctamente", description: "Se eliminó 1 contacto." })
       }
-      console.log('[ContactDelete] DELETE response', res);
+
       setDeleteOpen(false)
-      onDeleted?.(String(deleteId))
       await refetch()
-      setTimeout(() => {
-        console.log('[ContactDelete] contacts after refetch:', contacts);
-      }, 500);
     } catch (e) {
-      toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo eliminar el contacto", variant: "destructive" })
+      toast({
+        title: "Error",
+        description: e instanceof Error ? e.message : "No se pudo eliminar",
+        variant: "destructive",
+      })
     } finally {
       setDeleting(false)
     }
   }
-
-  const filteredContacts = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return contacts
-
-    return contacts.filter((c) => {
-      const channel = String(c.channel || "whatsapp")
-      const name = formatContactDisplayName(c.name || "", channel).toLowerCase()
-      const phone = formatContactDisplayName(c.phone_number || "", channel).toLowerCase()
-      const ext = String(c.external_user_id || "").toLowerCase()
-      return name.includes(q) || phone.includes(q) || ext.includes(q)
-    })
-  }, [contacts, query])
 
   if (loading) {
     return (
@@ -179,139 +302,174 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
   return (
     <div className="h-full p-3 pr-4">
       <div className="h-full rounded-xl border bg-card shadow-sm overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-          <div>
-            <p className="text-sm font-semibold">Contactos</p>
-            <p className="text-xs text-muted-foreground">Selecciona para chatear</p>
+        <div className="border-b border-border px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-base font-semibold">Contactos</p>
+              <p className="text-xs text-muted-foreground">Administra tu base y abre conversaciones desde el mismo listado.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={selectedCount === 0 || deleting}
+                onClick={openDeleteSelected}
+                className="text-red-600 hover:text-red-700"
+              >
+                {deleting && deleteMode === "selected" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {deleting && deleteMode === "selected" ? "Eliminando..." : "Eliminar seleccionados"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={stats.total === 0 || deleting}
+                onClick={openDeleteAll}
+                className="text-red-600 hover:text-red-700"
+              >
+                {deleting && deleteMode === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {deleting && deleteMode === "all" ? "Eliminando..." : "Eliminar todos"}
+              </Button>
+              {headerRight}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {headerRight}
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border bg-background px-3 py-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Users className="h-4 w-4" />
+                Total
+              </div>
+              <p className="mt-1 text-xl font-semibold">{stats.total}</p>
+            </div>
+            <div className="rounded-lg border bg-background px-3 py-2">
+              <p className="text-xs text-muted-foreground">WhatsApp</p>
+              <p className="mt-1 text-xl font-semibold text-green-700">{stats.whatsapp}</p>
+            </div>
+            <div className="rounded-lg border bg-background px-3 py-2">
+              <p className="text-xs text-muted-foreground">Seleccionados</p>
+              <p className="mt-1 text-xl font-semibold">{selectedCount}</p>
+            </div>
           </div>
         </div>
 
-        <div className="border-b border-border px-3 py-2">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por nombre, teléfono o ID..."
-          />
-          {!!query.trim() && (
-            <div className="mt-2 flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
-                Mostrando {filteredContacts.length} de {contacts.length}
-              </p>
-              <Button variant="ghost" size="sm" onClick={() => setQuery("")}
-              >
+        <div className="border-b border-border px-4 py-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre, teléfono, ID o canal..."
+              className="pl-9"
+            />
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Mostrando {filteredContacts.length} de {stats.total}</span>
+            {!!query.trim() && (
+              <Button variant="ghost" size="sm" onClick={() => setQuery("")}>
                 Limpiar
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         <ScrollArea className="flex-1 min-h-0">
-          <div className="space-y-2 p-3 pr-4">
-            {filteredContacts.length === 0 ? (
-              <div className="rounded-lg border bg-background p-4 text-center text-sm text-muted-foreground">
-                {contacts.length === 0 ? "No hay contactos" : "Sin resultados"}
-              </div>
-            ) : (
-              filteredContacts.map((c) => {
-                const channel = String(c.channel || "whatsapp")
-                const displayName = formatContactDisplayName(c.name || c.phone_number, channel)
-                const secondary = formatContactDisplayName(c.phone_number, channel)
+          {filteredContacts.length === 0 ? (
+            <div className="m-4 rounded-lg border bg-background p-8 text-center text-sm text-muted-foreground">
+              {contacts.length === 0 ? "No hay contactos" : "Sin resultados"}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-card">
+                <TableRow>
+                  <TableHead className="w-10 px-4">
+                    <Checkbox
+                      checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+                      onCheckedChange={(value) => toggleSelectAllVisible(value === true)}
+                      aria-label="Seleccionar contactos visibles"
+                    />
+                  </TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead>Canal</TableHead>
+                  <TableHead>Teléfono / ID</TableHead>
+                  <TableHead>Creado</TableHead>
+                  <TableHead className="text-right pr-4">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredContacts.map((c) => {
+                  const channel = String(c.channel || "whatsapp")
+                  const displayName = formatContactDisplayName(c.name || c.phone_number, channel)
+                  const secondary = formatContactDisplayName(c.phone_number || c.external_user_id || "", channel)
+                  const rowSelected = selectedId === String(c.id)
+                  const checked = isContactSelected(String(c.id))
 
-                return (
-                  <div
-                    key={String(c.id)}
-                    onClick={() => onSelect?.(c)}
-                    className={cn(
-                      "w-full rounded-lg border bg-background p-3 text-left transition-[background-color,border-color] duration-150 hover:bg-muted/30",
-                      selectedId === String(c.id)
-                        ? "border-primary/60 bg-primary/10 ring-2 ring-inset ring-primary/25"
-                        : "border-border/70 hover:border-border",
-                    )}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault()
-                        onSelect?.(c)
-                      }
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
-                        <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm">
-                          {getContactAvatarText(displayName, channel)}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="min-w-0 truncate font-bold text-sm">{displayName || "Contacto"}</p>
-                          <span className={cn(
-                            "text-xs px-2 py-0.5 rounded-full font-medium",
-                            channel === 'facebook' && "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
-                            channel === 'whatsapp' && "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300",
-                          )}>
-                            {channel === 'facebook' ? 'Facebook' : 'WhatsApp'}
-                          </span>
+                  return (
+                    <TableRow
+                      key={String(c.id)}
+                      data-state={rowSelected ? "selected" : undefined}
+                      className={cn("cursor-pointer", rowSelected && "bg-primary/10")}
+                      onClick={() => onSelect?.(c)}
+                    >
+                      <TableCell className="px-4" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(value) => toggleSelectContact(String(c.id), value === true)}
+                          aria-label={`Seleccionar ${displayName || "contacto"}`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex min-w-[260px] items-center gap-3">
+                          <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
+                            <AvatarFallback className="bg-primary text-primary-foreground font-bold text-sm">
+                              {getContactAvatarText(displayName, channel)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-sm">{displayName || "Contacto"}</p>
+                            <p className="text-xs text-muted-foreground">ID {String(c.id)}</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">{secondary}</p>
-                      </div>
-
-                      <div className="flex-shrink-0">
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="whitespace-nowrap"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              onChat(c)
-                            }}
-                          >
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            channel === "facebook"
+                              ? "border-blue-200 bg-blue-50 text-blue-700"
+                              : "border-green-200 bg-green-50 text-green-700",
+                          )}
+                        >
+                          {channel === "facebook" ? "Facebook" : "WhatsApp"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-[260px] truncate text-muted-foreground">{secondary || "-"}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(c.created_at)}</TableCell>
+                      <TableCell className="pr-4">
+                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          <Button size="sm" variant="outline" disabled={deleting} onClick={() => onChat(c)}>
+                            <MessageCircle className="h-4 w-4" />
                             Chatear
                           </Button>
-
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-9 w-9"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              openEdit(c)
-                            }}
-                            title="Editar"
-                            aria-label="Editar"
-                          >
+                          <Button size="icon" variant="ghost" className="h-9 w-9" disabled={deleting} onClick={() => openEdit(c)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-
                           <Button
                             size="icon"
                             variant="ghost"
                             className="h-9 w-9 text-red-600 hover:text-red-700"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              openDelete(c)
-                            }}
-                            title="Eliminar"
-                            aria-label="Eliminar"
+                            disabled={deleting}
+                            onClick={() => openDelete(c)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          )}
         </ScrollArea>
       </div>
 
@@ -355,18 +513,39 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <AlertDialog open={deleteOpen} onOpenChange={(open) => !deleting && setDeleteOpen(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar contacto</AlertDialogTitle>
+            <AlertDialogTitle>
+              {deleteMode === "all" ? "Eliminar todos los contactos" : deleteMode === "selected" ? "Eliminar contactos seleccionados" : "Eliminar contacto"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará el contacto <span className="font-medium">{deleteLabel}</span>.
+              Esta acción no se puede deshacer. Se eliminará {deleteMode === "single" ? "el contacto" : "la selección"}{" "}
+              <span className="font-medium">{deleteLabel}</span>.
+              {deleteMode === "all" ? " También se intentarán limpiar conversaciones y mensajes relacionados." : null}
             </AlertDialogDescription>
+            {deleting ? (
+              <div className="mt-4 flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Eliminando contactos, por favor espera...
+              </div>
+            ) : null}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handleConfirmDelete()} disabled={deleting}>
-              {deleting ? "Eliminando..." : "Eliminar"}
+            <AlertDialogAction
+              onClick={() => void handleConfirmDelete()}
+              disabled={deleting}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Eliminar"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

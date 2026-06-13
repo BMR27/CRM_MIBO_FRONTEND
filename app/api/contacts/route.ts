@@ -44,22 +44,43 @@ export async function GET() {
 
     const includeChannelCols = await hasContactChannelColumns()
 
+    const statsRows = includeChannelCols
+      ? await sql!`
+          SELECT
+            COUNT(*)::int as total,
+            COUNT(*) FILTER (WHERE COALESCE(channel, 'whatsapp') = 'whatsapp')::int as whatsapp,
+            COUNT(*) FILTER (WHERE channel = 'facebook')::int as facebook
+          FROM contacts
+        `
+      : await sql!`
+          SELECT
+            COUNT(*)::int as total,
+            COUNT(*)::int as whatsapp,
+            0::int as facebook
+          FROM contacts
+        `
+
     const rows = includeChannelCols
       ? await sql!`
           SELECT id, name, phone_number, avatar_url, channel, external_user_id, created_at
           FROM contacts
           ORDER BY created_at DESC
-          LIMIT 200
         `
       : await sql!`
           SELECT id, name, phone_number, avatar_url, NULL::varchar as channel, NULL::varchar as external_user_id, created_at
           FROM contacts
           ORDER BY created_at DESC
-          LIMIT 200
         `
 
     return NextResponse.json(
-      { contacts: rows || [] },
+      {
+        contacts: rows || [],
+        stats: {
+          total: Number(statsRows?.[0]?.total || 0),
+          whatsapp: Number(statsRows?.[0]?.whatsapp || 0),
+          facebook: Number(statsRows?.[0]?.facebook || 0),
+        },
+      },
       { headers: { "Cache-Control": "no-store, max-age=0" } },
     )
   } catch (error) {
@@ -163,5 +184,198 @@ export async function POST(request: Request) {
     const msg = String((error as any)?.message || "")
     const isUnique = msg.toLowerCase().includes("unique")
     return NextResponse.json({ error: isUnique ? "Contact already exists" : "Internal server error" }, { status: isUnique ? 409 : 500 })
+  }
+}
+
+function normalizeRole(role: string | undefined | null): "admin" | "supervisor" | "agent" | "other" {
+  const r = String(role || "").trim()
+  const roleMap: Record<string, "admin" | "supervisor" | "agent"> = {
+    Administrador: "admin",
+    Supervisor: "supervisor",
+    Agente: "agent",
+    admin: "admin",
+    supervisor: "supervisor",
+    agent: "agent",
+  }
+  return roleMap[r] || "other"
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const user = await getSession()
+    if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+
+    const role = normalizeRole((user as any).role)
+    if (role !== "admin" && role !== "supervisor") {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 })
+    }
+
+    if (isDemoMode) {
+      return NextResponse.json(
+        { ok: true, deleted: DEMO_CONTACTS.length, demo: true },
+        { headers: { "Cache-Control": "no-store, max-age=0" } },
+      )
+    }
+
+    const body = await request.json().catch(() => ({}))
+    const ids = Array.isArray(body?.ids)
+      ? body.ids.map((id: unknown) => String(id || "").trim()).filter(Boolean)
+      : []
+
+    const deleted = await sql!.begin(async (tx) => {
+      const tryDelete = async (fn: () => Promise<any>) => {
+        try {
+          await fn()
+        } catch {
+          // Algunas instalaciones no tienen todas las tablas o constraints iguales.
+        }
+      }
+
+      if (ids.length) {
+        const idsJson = JSON.stringify(ids)
+        const countRows: any[] = await (tx as any)`
+          WITH selected_ids AS (
+            SELECT selected.value as id_text
+            FROM jsonb_array_elements_text(${idsJson}::jsonb) AS selected(value)
+          )
+          SELECT COUNT(*)::int as count
+          FROM contacts c
+          JOIN selected_ids s ON c.id::text = s.id_text
+        `
+        const count = Number(countRows?.[0]?.count || 0)
+
+        await tryDelete(() => (tx as any)`
+          WITH selected_ids AS (
+            SELECT selected.value as id_text
+            FROM jsonb_array_elements_text(${idsJson}::jsonb) AS selected(value)
+          ),
+          target_contacts AS (
+            SELECT c.id
+            FROM contacts c
+            JOIN selected_ids s ON c.id::text = s.id_text
+          ),
+          target_conversations AS (
+            SELECT conv.id
+            FROM conversations conv
+            JOIN target_contacts tc ON conv.contact_id = tc.id
+          )
+          DELETE FROM conversation_tags
+          WHERE conversation_id IN (SELECT id FROM target_conversations)
+        `)
+
+        await tryDelete(() => (tx as any)`
+          WITH selected_ids AS (
+            SELECT selected.value as id_text
+            FROM jsonb_array_elements_text(${idsJson}::jsonb) AS selected(value)
+          ),
+          target_contacts AS (
+            SELECT c.id
+            FROM contacts c
+            JOIN selected_ids s ON c.id::text = s.id_text
+          ),
+          target_conversations AS (
+            SELECT conv.id
+            FROM conversations conv
+            JOIN target_contacts tc ON conv.contact_id = tc.id
+          )
+          DELETE FROM messages
+          WHERE conversation_id IN (SELECT id FROM target_conversations)
+        `)
+
+        await tryDelete(() => (tx as any)`
+          WITH selected_ids AS (
+            SELECT selected.value as id_text
+            FROM jsonb_array_elements_text(${idsJson}::jsonb) AS selected(value)
+          ),
+          target_contacts AS (
+            SELECT c.id
+            FROM contacts c
+            JOIN selected_ids s ON c.id::text = s.id_text
+          )
+          DELETE FROM messages
+          WHERE sender_type IN ('contact', 'customer')
+            AND sender_id IN (SELECT id FROM target_contacts)
+        `)
+
+        await tryDelete(() => (tx as any)`
+          WITH selected_ids AS (
+            SELECT selected.value as id_text
+            FROM jsonb_array_elements_text(${idsJson}::jsonb) AS selected(value)
+          ),
+          target_contacts AS (
+            SELECT c.id
+            FROM contacts c
+            JOIN selected_ids s ON c.id::text = s.id_text
+          ),
+          target_conversations AS (
+            SELECT conv.id
+            FROM conversations conv
+            JOIN target_contacts tc ON conv.contact_id = tc.id
+          )
+          DELETE FROM calls
+          WHERE conversation_id IN (SELECT id FROM target_conversations)
+        `)
+
+        await tryDelete(() => (tx as any)`
+          WITH selected_ids AS (
+            SELECT selected.value as id_text
+            FROM jsonb_array_elements_text(${idsJson}::jsonb) AS selected(value)
+          ),
+          target_contacts AS (
+            SELECT c.id
+            FROM contacts c
+            JOIN selected_ids s ON c.id::text = s.id_text
+          )
+          DELETE FROM conversations
+          WHERE contact_id IN (SELECT id FROM target_contacts)
+        `)
+
+        await tryDelete(() => (tx as any)`
+          WITH selected_ids AS (
+            SELECT selected.value as id_text
+            FROM jsonb_array_elements_text(${idsJson}::jsonb) AS selected(value)
+          ),
+          target_contacts AS (
+            SELECT c.id
+            FROM contacts c
+            JOIN selected_ids s ON c.id::text = s.id_text
+          )
+          UPDATE orders
+          SET contact_id = NULL
+          WHERE contact_id IN (SELECT id FROM target_contacts)
+        `)
+
+        await (tx as any)`
+          WITH selected_ids AS (
+            SELECT selected.value as id_text
+            FROM jsonb_array_elements_text(${idsJson}::jsonb) AS selected(value)
+          )
+          DELETE FROM contacts
+          WHERE id::text IN (SELECT id_text FROM selected_ids)
+        `
+
+        return count
+      } else {
+        const countRows: any[] = await (tx as any)`SELECT COUNT(*)::int as count FROM contacts`
+        const count = Number(countRows?.[0]?.count || 0)
+
+        await tryDelete(() => (tx as any)`DELETE FROM conversation_tags`)
+        await tryDelete(() => (tx as any)`DELETE FROM messages`)
+        await tryDelete(() => (tx as any)`DELETE FROM calls`)
+        await tryDelete(() => (tx as any)`DELETE FROM conversations`)
+        await tryDelete(() => (tx as any)`UPDATE orders SET contact_id = NULL`)
+        await (tx as any)`DELETE FROM contacts`
+
+        return count
+      }
+    })
+
+    return NextResponse.json(
+      { ok: true, deleted },
+      { headers: { "Cache-Control": "no-store, max-age=0" } },
+    )
+  } catch (error) {
+    console.error("[Contacts DELETE ALL] Error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

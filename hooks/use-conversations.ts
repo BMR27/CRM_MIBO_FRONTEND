@@ -1,5 +1,5 @@
 "use client"
-import { api } from "@/lib/api"
+import { frontendApi } from "@/lib/api"
 import { toast } from "@/hooks/use-toast"
 import { useState, useEffect, useCallback, useRef } from "react"
 
@@ -64,7 +64,7 @@ export function useConversations(onlyAssigned = false, forceAgentFilter = false)
         setLoading(false);
         return;
       }
-      const { data } = await api.get("/api/conversations");
+      const { data } = await frontendApi.get("/api/conversations");
       const conversationsArray = Array.isArray(data) ? data : (data.conversations || []);
       console.log('[DEBUG] conversationsArray:', conversationsArray);
       const mappedConversations: Conversation[] = conversationsArray.map((conv: any) => ({
@@ -126,7 +126,7 @@ export function useConversations(onlyAssigned = false, forceAgentFilter = false)
       conv.id === conversationId ? { ...conv, unread_count: 0 } : conv
     ));
     try {
-      await api.post(`/api/messages/mark-read/${conversationId}`);
+      await frontendApi.post(`/api/messages/mark-read/${conversationId}`);
       // Refrescar en background sin loading visual
       fetchConversations(false);
     } catch (err) {

@@ -39,17 +39,16 @@ function LoginForm() {
 
     try {
       const normalizedEmail = email.trim().toLowerCase()
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
-      const response = await fetch(`${backendUrl}/api/auth/login`, {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: normalizedEmail, password }),
       })
 
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
 
       if (!response.ok) {
-        setError(data.message || data.error || "Login failed")
+        setError(data.message || data.error || "No se pudo iniciar sesión")
         setLoading(false)
         return
       }
@@ -79,7 +78,7 @@ function LoginForm() {
       }
     } catch (err) {
       console.error("Login error:", err)
-      setError("An error occurred. Please try again.")
+      setError("No se pudo conectar con el servidor local. Revisa que el frontend esté corriendo correctamente.")
       setLoading(false)
     }
   }
@@ -90,14 +89,6 @@ function LoginForm() {
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="mb-8">
             <div className="mb-8 animate-fade-in">
-              <Image
-                src="/logimarket-logo.png"
-                alt="LogiMarket"
-                width={300}
-                height={80}
-                className="h-auto w-72 mb-6 drop-shadow-lg"
-                priority
-              />
             </div>
             <h1 className="text-4xl font-bold mb-4 text-balance animate-fade-in-up">CRM de Whatshapp - Ecommerce</h1>
             <p className="text-lg text-white/90 leading-relaxed text-pretty animate-fade-in-up delay-100">
@@ -135,13 +126,6 @@ function LoginForm() {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
           <div className="lg:hidden text-center mb-8">
-            <Image
-              src="/logimarket-logo.png"
-              alt="LogiMarket"
-              width={200}
-              height={60}
-              className="h-auto w-48 mx-auto mb-4"
-            />
             <h2 className="text-xl font-bold text-muted-foreground">CRM de Whatshapp - Ecommerce</h2>
           </div>
 

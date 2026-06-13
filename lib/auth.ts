@@ -25,9 +25,10 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   }
 
   const users = (await sql`
-    SELECT id, email, name, role, avatar_url, status
-    FROM users
-    WHERE email = ${email}
+    SELECT u.id, u.email, u.name, COALESCE(r.name, 'agent') as role, u.avatar_url, u.status
+    FROM users u
+    LEFT JOIN roles r ON r.id = u.role_id
+    WHERE u.email = ${email}
     LIMIT 1
   `) as unknown as User[]
   return users.length > 0 ? users[0] : null
@@ -39,9 +40,10 @@ export async function authenticateUser(email: string, password: string): Promise
   }
 
   const users = (await sql`
-    SELECT id, email, password_hash, name, role, avatar_url, status
-    FROM users
-    WHERE email = ${email}
+    SELECT u.id, u.email, u.password_hash, u.name, COALESCE(r.name, 'agent') as role, u.avatar_url, u.status
+    FROM users u
+    LEFT JOIN roles r ON r.id = u.role_id
+    WHERE u.email = ${email}
     LIMIT 1
   `) as unknown as Array<User & { password_hash: string }>
 

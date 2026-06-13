@@ -14,8 +14,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import {
   Calendar,
@@ -30,7 +39,11 @@ import {
   ExternalLink,
   Copy,
   Check,
+  Edit2,
+  Trash2,
+  Send,
 } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 interface Session {
   id: number
@@ -69,9 +82,59 @@ export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState<Date>(today)
   const [calendarView, setCalendarView] = useState<CalendarView>("week")
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false)
+  const [editingSession, setEditingSession] = useState<Session | null>(null)
+  const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null)
+  const [savingSession, setSavingSession] = useState(false)
+  const [busySessionId, setBusySessionId] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
+  const [formData, setFormData] = useState({
+    title: "",
+    clientName: "",
+    clientPhone: "",
+    date: "",
+    time: "",
+    type: "video" as Session["type"],
+    status: "scheduled" as Session["status"],
+    meetLink: "",
+  })
 
   const calendarBookingLink = "https://calendly.com/logimarket/sesion-cliente"
+
+  const resetForm = () => {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() + 30)
+    setEditingSession(null)
+    setFormData({
+      title: "",
+      clientName: "",
+      clientPhone: "",
+      date: now.toISOString().split("T")[0],
+      time: now.toTimeString().slice(0, 5),
+      type: "video",
+      status: "scheduled",
+      meetLink: calendarBookingLink,
+    })
+  }
+
+  const openCreateDialog = () => {
+    resetForm()
+    setShowNewSessionDialog(true)
+  }
+
+  const openEditDialog = (session: Session) => {
+    setEditingSession(session)
+    setFormData({
+      title: session.title,
+      clientName: session.clientName,
+      clientPhone: session.clientPhone,
+      date: session.date,
+      time: session.time,
+      type: session.type,
+      status: session.status,
+      meetLink: session.meetLink || "",
+    })
+    setShowNewSessionDialog(true)
+  }
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(calendarBookingLink)
@@ -101,6 +164,121 @@ export default function AgendaPage() {
       conversationId: call.conversation_id,
       meetLink: call.meet_link || undefined,
     }
+  }
+
+  const buildScheduledAt = () => {
+    if (!formData.date || !formData.time) return ""
+    return new Date(`${formData.date}T${formData.time}:00`).toISOString()
+  }
+
+  const saveSession = async () => {
+    if (!formData.title.trim() || !formData.clientName.trim() || !formData.date || !formData.time) {
+      toast({
+        title: "Campos incompletos",
+        description: "Captura título, cliente, fecha y hora.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSavingSession(true)
+    try {
+      const url = editingSession ? `/api/calls/${editingSession.id}` : "/api/calls"
+      const method = editingSession ? "PUT" : "POST"
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contact_name: formData.clientName,
+          phone_number: formData.clientPhone,
+          scheduled_at: buildScheduledAt(),
+          call_type: formData.type,
+          meet_link: formData.meetLink,
+          notes: formData.title,
+          status: formData.status,
+        }),
+      })
+
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data?.error || "No se pudo guardar la sesión")
+      }
+
+      toast({
+        title: editingSession ? "Sesión actualizada" : "Sesión guardada",
+        description: "Los cambios quedaron guardados correctamente.",
+      })
+      setShowNewSessionDialog(false)
+      setEditingSession(null)
+      await fetchSessions()
+      window.dispatchEvent(new Event("calls-updated"))
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo guardar la sesión",
+        variant: "destructive",
+      })
+    } finally {
+      setSavingSession(false)
+    }
+  }
+
+  const deleteSession = async (session: Session) => {
+    setBusySessionId(session.id)
+    try {
+      const response = await fetch(`/api/calls/${session.id}`, { method: "DELETE" })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data?.details || data?.error || "No se pudo eliminar")
+
+      toast({ title: "Sesión eliminada", description: "La sesión fue eliminada correctamente." })
+      setSessionToDelete(null)
+      await fetchSessions()
+      window.dispatchEvent(new Event("calls-updated"))
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo eliminar la sesión",
+        variant: "destructive",
+      })
+    } finally {
+      setBusySessionId(null)
+    }
+  }
+
+  const updateSessionStatus = async (session: Session, status: Session["status"]) => {
+    setBusySessionId(session.id)
+    try {
+      const response = await fetch(`/api/calls/${session.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data?.details || data?.error || "No se pudo actualizar")
+
+      toast({ title: "Sesión actualizada", description: "El estado fue actualizado." })
+      await fetchSessions()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo actualizar la sesión",
+        variant: "destructive",
+      })
+    } finally {
+      setBusySessionId(null)
+    }
+  }
+
+  const inviteSession = (session: Session) => {
+    const phone = String(session.clientPhone || "").replace(/^whatsapp:/i, "").replace(/\D/g, "")
+    const link = session.meetLink || calendarBookingLink
+    const text = `Hola ${session.clientName}, te comparto la invitación para tu sesión "${session.title}" el ${session.date} a las ${session.time}. Link: ${link}`
+    if (phone) {
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer")
+      return
+    }
+    navigator.clipboard.writeText(text)
+    toast({ title: "Invitación copiada", description: "No hay teléfono válido; copié el texto de invitación." })
   }
 
   const fetchSessions = async () => {
@@ -503,39 +681,73 @@ export default function AgendaPage() {
               <div className="flex items-center justify-between mb-3">
                 <CardTitle className="text-lg">Sesiones</CardTitle>
                 <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" className="h-8">
-                      <Plus className="h-3 w-3 mr-1" />
-                      Nueva
-                    </Button>
-                  </DialogTrigger>
+                  <Button size="sm" className="h-8" onClick={openCreateDialog}>
+                    <Plus className="h-3 w-3 mr-1" />
+                    Nueva
+                  </Button>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Agendar nueva sesión</DialogTitle>
-                      <DialogDescription>Crea una nueva sesión con un cliente</DialogDescription>
+                      <DialogTitle>{editingSession ? "Actualizar sesión" : "Agendar nueva sesión"}</DialogTitle>
+                      <DialogDescription>
+                        {editingSession ? "Edita los datos de la sesión seleccionada." : "Crea una nueva sesión con un cliente."}
+                      </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="grid gap-2">
                         <Label htmlFor="title">Título</Label>
-                        <Input id="title" placeholder="Ej: Seguimiento pedido" />
+                        <Input
+                          id="title"
+                          value={formData.title}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                          placeholder="Ej: Seguimiento pedido"
+                        />
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="client">Cliente</Label>
-                        <Input id="client" placeholder="Nombre del cliente" />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="client">Cliente</Label>
+                          <Input
+                            id="client"
+                            value={formData.clientName}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, clientName: e.target.value }))}
+                            placeholder="Nombre del cliente"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="phone">Teléfono</Label>
+                          <Input
+                            id="phone"
+                            value={formData.clientPhone}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, clientPhone: e.target.value }))}
+                            placeholder="+52 1 55..."
+                          />
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="date">Fecha</Label>
-                          <Input id="date" type="date" />
+                          <Input
+                            id="date"
+                            type="date"
+                            value={formData.date}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+                          />
                         </div>
                         <div className="grid gap-2">
                           <Label htmlFor="time">Hora</Label>
-                          <Input id="time" type="time" />
+                          <Input
+                            id="time"
+                            type="time"
+                            value={formData.time}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, time: e.target.value }))}
+                          />
                         </div>
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="type">Tipo</Label>
-                        <Select defaultValue="video">
+                        <Select
+                          value={formData.type}
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, type: value as Session["type"] }))}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -556,15 +768,38 @@ export default function AgendaPage() {
                         </Select>
                       </div>
                       <div className="grid gap-2">
+                        <Label htmlFor="status">Estatus</Label>
+                        <Select
+                          value={formData.status}
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value as Session["status"] }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="scheduled">Programada</SelectItem>
+                            <SelectItem value="completed">Completada</SelectItem>
+                            <SelectItem value="cancelled">Cancelada</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
                         <Label htmlFor="meetLink">Link de reunión (opcional)</Label>
-                        <Input id="meetLink" placeholder="https://meet.google.com/..." />
+                        <Input
+                          id="meetLink"
+                          value={formData.meetLink}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, meetLink: e.target.value }))}
+                          placeholder="https://meet.google.com/..."
+                        />
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setShowNewSessionDialog(false)}>
+                      <Button variant="outline" onClick={() => setShowNewSessionDialog(false)} disabled={savingSession}>
                         Cancelar
                       </Button>
-                      <Button onClick={() => setShowNewSessionDialog(false)}>Agendar</Button>
+                      <Button onClick={() => void saveSession()} disabled={savingSession}>
+                        {savingSession ? "Guardando..." : editingSession ? "Actualizar" : "Guardar sesión"}
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -637,12 +872,101 @@ export default function AgendaPage() {
                         </div>
                       )}
                     </div>
+                    <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs bg-transparent"
+                        onClick={() => inviteSession(session)}
+                        disabled={busySessionId === session.id}
+                      >
+                        <Send className="mr-1 h-3 w-3" />
+                        Invitar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs bg-transparent"
+                        onClick={() => openEditDialog(session)}
+                        disabled={busySessionId === session.id}
+                      >
+                        <Edit2 className="mr-1 h-3 w-3" />
+                        Editar
+                      </Button>
+                      {session.status === "scheduled" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs bg-transparent"
+                          onClick={() => void updateSessionStatus(session, "completed")}
+                          disabled={busySessionId === session.id}
+                        >
+                          <Check className="mr-1 h-3 w-3" />
+                          Completar
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs bg-transparent"
+                          onClick={() => void updateSessionStatus(session, "scheduled")}
+                          disabled={busySessionId === session.id}
+                        >
+                          <Calendar className="mr-1 h-3 w-3" />
+                          Programar
+                        </Button>
+                      )}
+                      {session.status !== "cancelled" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs bg-transparent"
+                          onClick={() => void updateSessionStatus(session, "cancelled")}
+                          disabled={busySessionId === session.id}
+                        >
+                          Cancelar
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-red-500 hover:bg-red-50 hover:text-red-600"
+                        onClick={() => setSessionToDelete(session)}
+                        disabled={busySessionId === session.id}
+                        aria-label="Eliminar sesión"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
         </div>
+        <AlertDialog open={!!sessionToDelete} onOpenChange={(open) => !open && setSessionToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Eliminar sesión</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vas a eliminar la sesión "{sessionToDelete?.title}". Esta acción no se puede deshacer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busySessionId === sessionToDelete?.id}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 text-white hover:bg-red-700"
+                disabled={!sessionToDelete || busySessionId === sessionToDelete?.id}
+                onClick={(event) => {
+                  event.preventDefault()
+                  if (sessionToDelete) void deleteSession(sessionToDelete)
+                }}
+              >
+                {busySessionId === sessionToDelete?.id ? "Eliminando..." : "Eliminar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         </>
         )}
       </div>

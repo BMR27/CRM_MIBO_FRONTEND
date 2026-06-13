@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server"
-import { clearSession } from "@/lib/session"
+import { clearSession, getSession } from "@/lib/session"
+import { sql } from "@/lib/db"
 
 export async function POST() {
   try {
+    const user = await getSession()
+    if (sql && user?.id) {
+      await sql`
+        UPDATE users
+        SET status = 'offline'
+        WHERE id = ${user.id}
+      `
+    }
+
     await clearSession()
     return NextResponse.json({ success: true })
   } catch (error) {

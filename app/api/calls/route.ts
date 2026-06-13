@@ -21,12 +21,13 @@ const ensureCallsTable = async () => {
       await sql!`
         CREATE TABLE calls (
           id SERIAL PRIMARY KEY,
-          agent_id UUID REFERENCES users(id) ON DELETE SET NULL,
-          conversation_id UUID REFERENCES conversations(id) ON DELETE SET NULL,
+          agent_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+          conversation_id INTEGER REFERENCES conversations(id) ON DELETE SET NULL,
           contact_name TEXT,
           phone_number TEXT,
           scheduled_at TIMESTAMP NOT NULL,
           call_type VARCHAR(20) DEFAULT 'phone',
+          meet_link TEXT,
           notes TEXT,
           status VARCHAR(20) DEFAULT 'pending',
           created_at TIMESTAMP DEFAULT NOW(),
@@ -41,6 +42,8 @@ const ensureCallsTable = async () => {
       
       console.log("[ensureCallsTable] Table created successfully")
     }
+
+    await sql!`ALTER TABLE calls ADD COLUMN IF NOT EXISTS meet_link TEXT`
   } catch (error) {
     console.error("[ensureCallsTable] Error:", error instanceof Error ? error.message : "Unknown error")
     throw error
@@ -95,7 +98,9 @@ export async function POST(request: NextRequest) {
       conversation_id,
       scheduled_at,
       call_type,
+      meet_link,
       notes,
+      status,
     } = body
 
     console.log("[POST Calls] Request body:", body)
@@ -120,6 +125,7 @@ export async function POST(request: NextRequest) {
         phone_number,
         scheduled_at,
         call_type,
+        meet_link,
         notes,
         status,
         created_at
@@ -130,8 +136,9 @@ export async function POST(request: NextRequest) {
         ${phone_number || null},
         ${scheduled_at},
         ${call_type || 'phone'},
+        ${meet_link || null},
         ${notes || null},
-        'pending',
+        ${status || 'pending'},
         NOW()
       )
       RETURNING *
