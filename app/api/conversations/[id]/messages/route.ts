@@ -78,9 +78,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       const queryMsg = String((queryError as any)?.message || "")
       const missingMediaColumns =
         queryMsg.includes("m.media_id") ||
+        queryMsg.includes("m.media_url") ||
         queryMsg.includes("m.media_filename") ||
         queryMsg.includes("m.media_mime_type") ||
-        queryMsg.includes("m.media_caption")
+        queryMsg.includes("m.media_caption") ||
+        queryMsg.includes("m.external_message_id") ||
+        queryMsg.includes("m.whatsapp_message_id")
 
       if (missingMediaColumns) {
         try {
@@ -90,7 +93,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               m.content,
               m.message_type,
               m.metadata,
-              m.external_message_id,
               m.sender_type,
               m.sender_id,
               m.created_at,
@@ -144,9 +146,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           const castMsg = String(castError?.message || "")
           const castMissingMediaColumns =
             castMsg.includes("m.media_id") ||
+            castMsg.includes("m.media_url") ||
             castMsg.includes("m.media_filename") ||
             castMsg.includes("m.media_mime_type") ||
-            castMsg.includes("m.media_caption")
+            castMsg.includes("m.media_caption") ||
+            castMsg.includes("m.external_message_id") ||
+            castMsg.includes("m.whatsapp_message_id")
 
           if (castMissingMediaColumns) {
             messages = await sql`
@@ -155,7 +160,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 m.content,
                 m.message_type,
                 m.metadata,
-                m.external_message_id,
                 m.sender_type,
                 m.sender_id,
                 m.created_at,

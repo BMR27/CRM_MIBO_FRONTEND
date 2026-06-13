@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ChangeEvent } from "react"
 import { api, frontendApi } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { InboxHeader } from "@/components/inbox-header"
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from "@/hooks/use-toast"
 import type { Contact } from "@/hooks/use-contacts"
+import { Loader2, Upload } from "lucide-react"
 
 export default function ContactosPage() {
     // Normaliza el número de teléfono al formato internacional sin espacios
@@ -79,6 +80,10 @@ export default function ContactosPage() {
   const [newChannel, setNewChannel] = useState<"whatsapp" | "facebook">("whatsapp")
   const [newPhone, setNewPhone] = useState("")
   const [newExternalUserId, setNewExternalUserId] = useState("")
+  const [importOpen, setImportOpen] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importFileName, setImportFileName] = useState("")
+  const [pendingImportContacts, setPendingImportContacts] = useState<any[]>([])
 
   const handleSelectContact = (contact: Contact) => {
     setSelectedContactId(String(contact.id))
@@ -129,6 +134,74 @@ export default function ContactosPage() {
       toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo abrir la conversación ni enviar la plantilla", variant: "destructive" })
     }
   }
+
+  const handleImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setImportFileName(file.name)
+    try {
+      const XLSX = await import("xlsx")
+      const buffer = await file.arrayBuffer()
+      const workbook = XLSX.read(buffer, { type: "array" })
+      const sheet = workbook.Sheets[workbook.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" }) as any[]
+      const contacts = rows
+        .map((row) => ({
+          name: row.name || row.nombre || row.Nombre || row.CLIENTE || row.Cliente || "",
+          phone_number: row.phone_number || row.telefono || row.Teléfono || row.Telefono || row.PHONE_A || row.phone || "",
+          channel: row.channel || row.canal || "whatsapp",
+          external_user_id: row.external_user_id || row.externalUserId || "",
+        }))
+        .filter((contact) => String(contact.phone_number || contact.external_user_id || "").trim())
+
+      setPendingImportContacts(contacts)
+      toast({
+        title: "Archivo leído",
+        description: `${contacts.length} contacto${contacts.length === 1 ? "" : "s"} listo${contacts.length === 1 ? "" : "s"} para importar.`,
+      })
+    } catch {
+      setPendingImportContacts([])
+      toast({
+        title: "Error al leer archivo",
+        description: "Revisa que sea un Excel o CSV válido.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleImportContacts = async () => {
+    if (pendingImportContacts.length === 0) {
+      toast({
+        title: "Sin contactos",
+        description: "Selecciona un archivo con contactos antes de importar.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setImporting(true)
+      const { data } = await frontendApi.post("/api/contacts/import", { contacts: pendingImportContacts })
+      toast({
+        title: "Contactos importados",
+        description: `${data.imported || 0} creados, ${data.updated || 0} actualizados, ${data.failed || 0} fallidos.`,
+      })
+      setImportOpen(false)
+      setImportFileName("")
+      setPendingImportContacts([])
+      setRefreshKey((p) => p + 1)
+    } catch (error) {
+      toast({
+        title: "Error al importar",
+        description: error instanceof Error ? error.message : "No se pudieron importar los contactos.",
+        variant: "destructive",
+      })
+    } finally {
+      setImporting(false)
+    }
+  }
+
   return (
     <>
       <InboxHeader />
@@ -144,64 +217,102 @@ export default function ContactosPage() {
               setRefreshKey((p) => p + 1) // Fuerza el remount y refresca la lista
             }}
             headerRight={
-              <Dialog open={newOpen} onOpenChange={setNewOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">Nuevo</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Nuevo contacto</DialogTitle>
-                    <DialogDescription>
-                      Crea un contacto para iniciar una conversación y enviarle mensajes.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label>Canal</Label>
-                      <select
-                        value={newChannel}
-                        onChange={(e) => setNewChannel(e.target.value === "facebook" ? "facebook" : "whatsapp")}
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                      >
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="facebook">Facebook</option>
-                      </select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Nombre</Label>
-                      <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Ej. Ana Martínez" />
-                    </div>
-                    {newChannel === "whatsapp" ? (
-                      <div className="grid gap-2">
-                        <Label>Teléfono</Label>
-                        <Input
-                          value={newPhone}
-                          onChange={(e) => setNewPhone(e.target.value)}
-                          placeholder="Ej. +52 1 5611 205 872"
-                        />
-                        <p className="text-xs text-muted-foreground">Puedes pegarlo con o sin espacios; se normaliza automáticamente.</p>
-                      </div>
-                    ) : (
-                      <div className="grid gap-2">
-                        <Label>PSID (external_user_id)</Label>
-                        <Input
-                          value={newExternalUserId}
-                          onChange={(e) => setNewExternalUserId(e.target.value)}
-                          placeholder="Ej. 1234567890"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setNewOpen(false)} disabled={creating}>
-                      Cancelar
+              <div className="flex flex-wrap items-center gap-2">
+                <Dialog open={importOpen} onOpenChange={setImportOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="gap-2">
+                      <Upload className="h-4 w-4" />
+                      Importar masivo
                     </Button>
-                    <Button onClick={() => void handleCreateContact()} disabled={creating}>
-                      {creating ? "Creando..." : "Crear"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Importar contactos masivamente</DialogTitle>
+                      <DialogDescription>
+                        Sube un Excel o CSV con columnas Nombre/name/CLIENTE y Teléfono/phone_number/PHONE_A.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-3">
+                      <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleImportFile} />
+                      <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+                        {importFileName ? (
+                          <span>{importFileName}: {pendingImportContacts.length} contacto{pendingImportContacts.length === 1 ? "" : "s"} detectado{pendingImportContacts.length === 1 ? "" : "s"}.</span>
+                        ) : (
+                          <span>Formato recomendado: CLIENTE, PHONE_A, canal.</span>
+                        )}
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setImportOpen(false)} disabled={importing}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={() => void handleImportContacts()} disabled={importing || pendingImportContacts.length === 0}>
+                        {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Importar
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={newOpen} onOpenChange={setNewOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">Nuevo</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Nuevo contacto</DialogTitle>
+                      <DialogDescription>
+                        Crea un contacto para iniciar una conversación y enviarle mensajes.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label>Canal</Label>
+                        <select
+                          value={newChannel}
+                          onChange={(e) => setNewChannel(e.target.value === "facebook" ? "facebook" : "whatsapp")}
+                          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                          <option value="whatsapp">WhatsApp</option>
+                          <option value="facebook">Facebook</option>
+                        </select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Nombre</Label>
+                        <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Ej. Ana Martínez" />
+                      </div>
+                      {newChannel === "whatsapp" ? (
+                        <div className="grid gap-2">
+                          <Label>Teléfono</Label>
+                          <Input
+                            value={newPhone}
+                            onChange={(e) => setNewPhone(e.target.value)}
+                            placeholder="Ej. +52 1 5611 205 872"
+                          />
+                          <p className="text-xs text-muted-foreground">Puedes pegarlo con o sin espacios; se normaliza automáticamente.</p>
+                        </div>
+                      ) : (
+                        <div className="grid gap-2">
+                          <Label>PSID (external_user_id)</Label>
+                          <Input
+                            value={newExternalUserId}
+                            onChange={(e) => setNewExternalUserId(e.target.value)}
+                            placeholder="Ej. 1234567890"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setNewOpen(false)} disabled={creating}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={() => void handleCreateContact()} disabled={creating}>
+                        {creating ? "Creando..." : "Crear"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             }
           />
         </div>

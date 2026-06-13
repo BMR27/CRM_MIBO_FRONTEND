@@ -12,9 +12,12 @@ import {
   RefreshCw,
   Search,
   Send,
+  Trash2,
+  Upload,
   Users,
   XCircle,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -189,6 +192,7 @@ function mergeCampaigns(apiCampaigns: Campaign[], localCampaigns: Campaign[]) {
 }
 
 function EnviosMasivosPage() {
+  const router = useRouter()
   const [showNewForm, setShowNewForm] = useState(false)
   const [campaignName, setCampaignName] = useState("")
   const [campaignNotes, setCampaignNotes] = useState("")
@@ -221,6 +225,7 @@ function EnviosMasivosPage() {
   const [campaignRecipients, setCampaignRecipients] = useState<CampaignRecipient[]>([])
   const [loadingRecipients, setLoadingRecipients] = useState(false)
   const [recipientsError, setRecipientsError] = useState("")
+  const [deletingCampaignId, setDeletingCampaignId] = useState<string | null>(null)
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -384,6 +389,38 @@ function EnviosMasivosPage() {
       setRecipientsError(error instanceof Error ? error.message : "No se pudo cargar el detalle de la campaña.")
     } finally {
       setLoadingRecipients(false)
+    }
+  }
+
+  const handleDeleteCampaign = async (campaign: Campaign) => {
+    const ok = window.confirm(`¿Eliminar la campaña "${campaign.name}"? Esta acción solo quitará el registro de campaña, no los mensajes del chat.`)
+    if (!ok) return
+
+    setDeletingCampaignId(campaign.id)
+    setCampaignsError("")
+    try {
+      if (campaign.source === "local") {
+        const next = getStoredCampaigns().filter((item) => item.id !== campaign.id)
+        localStorage.setItem(LOCAL_CAMPAIGNS_KEY, JSON.stringify(next))
+        setLocalCampaigns(next)
+      } else {
+        const response = await fetch(`/api/campaigns?id=${encodeURIComponent(campaign.id)}`, { method: "DELETE" })
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(data?.error || "No se pudo eliminar la campaña.")
+        setCampaigns((current) => current.filter((item) => item.id !== campaign.id))
+      }
+
+      if (selectedCampaignId === campaign.id) {
+        setSelectedCampaignId(null)
+        setCampaignRecipients([])
+      }
+
+      setSendResult(`Campaña ${campaign.campaignCode || campaign.id} eliminada correctamente.`)
+      await loadCampaigns()
+    } catch (error) {
+      setCampaignsError(error instanceof Error ? error.message : "No se pudo eliminar la campaña.")
+    } finally {
+      setDeletingCampaignId(null)
     }
   }
 
@@ -574,6 +611,10 @@ function EnviosMasivosPage() {
             <Button variant="outline" onClick={loadCampaigns} disabled={loadingCampaigns} className="gap-2">
               {loadingCampaigns ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               Actualizar
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/inbox/contactos")} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Importar contactos
             </Button>
             <Button onClick={() => setShowNewForm((v) => !v)} className="gap-2">
               <Send className="h-4 w-4" />
@@ -871,6 +912,17 @@ function EnviosMasivosPage() {
                           >
                             <Copy className="h-4 w-4" />
                             Copiar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteCampaign(campaign)}
+                            disabled={deletingCampaignId === campaign.id}
+                            className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            title="Eliminar campaña"
+                          >
+                            {deletingCampaignId === campaign.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                            Eliminar
                           </Button>
                         </div>
                       </TableCell>

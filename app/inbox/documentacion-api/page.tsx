@@ -67,6 +67,29 @@ const clientEndpointGroups = [
     "phone_number": "+5215512345678"
   }'`,
       },
+      {
+        method: "POST",
+        path: "/api/contacts/import",
+        summary: "Crea o actualiza contactos de manera masiva.",
+        useCase: "Importar una base de destinatarios desde un sistema externo antes de enviar campañas.",
+        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/contacts/import" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "contacts": [
+      {
+        "name": "Ana Martinez",
+        "phone_number": "+5215512345678",
+        "channel": "whatsapp"
+      },
+      {
+        "name": "Luis Perez",
+        "phone_number": "+5215598765432",
+        "channel": "whatsapp"
+      }
+    ]
+  }'`,
+      },
     ],
   },
   {
@@ -131,6 +154,14 @@ const clientEndpointGroups = [
       }
     ]
   }'`,
+      },
+      {
+        method: "DELETE",
+        path: "/api/campaigns?id={campaignId}",
+        summary: "Elimina una campaña del historial operativo.",
+        useCase: "Depurar campañas de prueba sin borrar los mensajes del chat.",
+        example: `curl -X DELETE "${RAILWAY_BACKEND_URL}/api/campaigns?id=bulk_123456789" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT"`,
       },
     ],
   },

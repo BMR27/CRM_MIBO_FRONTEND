@@ -278,3 +278,80 @@ export async function GET() {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const user = await getSession()
+    if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+
+    if (isDemoMode) {
+      return NextResponse.json({ ok: true, deleted: 1, demo: true })
+    }
+
+    if (!sql) {
+      return NextResponse.json({ error: "DATABASE_URL missing" }, { status: 500 })
+    }
+
+    const url = new URL(request.url)
+    const body = await request.json().catch(() => ({}))
+    const id = String(url.searchParams.get("id") || body?.id || "").trim()
+
+    if (!id) {
+      return NextResponse.json({ error: "Campaign id is required" }, { status: 400 })
+    }
+
+    const db = sql
+    await ensureWebhookLogsTable(db)
+
+    let deleted = 0
+
+    try {
+      const rows: any[] = await db`
+        DELETE FROM webhook_logs
+        WHERE channel = 'bulk_campaign'
+          AND external_id = ${id}
+        RETURNING id
+      `
+      deleted += rows?.length || 0
+    } catch {
+      // ignore optional table/schema differences
+    }
+
+    try {
+      if (/^\d+$/.test(id)) {
+        const rows: any[] = await db`
+          DELETE FROM bulk_campaigns
+          WHERE id = ${Number(id)}
+          RETURNING id
+        `
+        deleted += rows?.length || 0
+      }
+    } catch {
+      // ignore optional table/schema differences
+    }
+
+    try {
+      const rows: any[] = await db`
+        UPDATE messages
+        SET metadata = metadata
+          - 'campaignId'
+          - 'campaignCode'
+          - 'campaignName'
+          - 'templateName'
+          - 'templateSid'
+          - 'source'
+        WHERE metadata IS NOT NULL
+          AND metadata->>'campaignId' = ${id}
+        RETURNING id
+      `
+      deleted += rows?.length || 0
+    } catch {
+      // ignore if messages/metadata is not available in this installation
+    }
+
+    return NextResponse.json({ ok: true, deleted })
+  } catch (error) {
+    console.error("[Campaigns DELETE] Error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}

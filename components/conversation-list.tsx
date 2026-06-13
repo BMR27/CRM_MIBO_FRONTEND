@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn, formatContactDisplayName, getContactAvatarText } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
+import { MessageCircle } from "lucide-react"
 
 import { useConversations, Conversation } from "@/hooks/use-conversations"
 
@@ -146,7 +147,10 @@ export function ConversationList({
         <ScrollArea className="h-full">
           {/* padding interno del panel */}
           <div className="space-y-3 p-3">
-            {filteredConversations.map((conv) => (
+            {filteredConversations.map((conv) => {
+              const unreadCount = Number(conv.unread_count || 0)
+
+              return (
               <div
                 key={conv.id}
                 onClick={async () => {
@@ -156,6 +160,7 @@ export function ConversationList({
                 }}
                 className={cn(
                   "relative w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-[box-shadow,background-color,border-color] duration-150 cursor-pointer hover:z-10",
+                  unreadCount > 0 && "border-emerald-300 bg-emerald-50/60 shadow-md",
                   selectedId === conv.id
                     ? "z-10 border-primary/60 bg-primary/10 ring-2 ring-inset ring-primary/25 shadow-md"
                     : "border-border/70 hover:border-border hover:shadow-md",
@@ -179,12 +184,6 @@ export function ConversationList({
                       {getChannelIcon(conv.channel)}
                     </div>
 
-                    {/* Badge de mensajes no leídos */}
-                    {conv.unread_count > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] px-1.5 py-0.5 font-bold border border-white shadow-lg z-10">
-                        {conv.unread_count}
-                      </span>
-                    )}
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -199,6 +198,18 @@ export function ConversationList({
                         })}
                       </span>
                     </div>
+
+                    {unreadCount > 0 && (
+                      <div
+                        className="mb-2 inline-flex h-6 max-w-full items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-2 text-[11px] font-semibold text-emerald-800"
+                        title={`${unreadCount} mensaje${unreadCount === 1 ? "" : "s"} entrante${unreadCount === 1 ? "" : "s"} sin leer`}
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">
+                          {unreadCount} nuevo{unreadCount === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    )}
 
                     <p className="line-clamp-1 text-muted-foreground text-xs leading-relaxed mb-2">
                       {typeof conv.last_message === "string"
@@ -227,7 +238,8 @@ export function ConversationList({
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         </ScrollArea>
       </div>

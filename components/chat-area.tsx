@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { api, frontendApi } from "@/lib/api"
+import { frontendApi } from "@/lib/api"
 
 interface Message {
   id: number | string
@@ -285,20 +285,17 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         console.log("[ChatArea] Facebook response", data);
         fetchMessages();
       } else if (channel === 'whatsapp' && externalUserId) {
-        // Enviar mensaje por WhatsApp usando el endpoint del backend real
-        const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app";
-        const token = localStorage.getItem('token') || '';
         console.log("[ChatArea] Sending WhatsApp message", { externalUserId, messageContent, conversationId });
-        const { data } = await api.post(`${BACKEND_URL}/api/whatsapp/send`, {
-          phone_number: externalUserId,
-          message: messageContent
+        const token = localStorage.getItem("access_token") || localStorage.getItem("token") || ""
+        const { data } = await frontendApi.post(`/api/conversations/${conversationId}/messages`, {
+          content: messageContent,
         }, {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
         console.log("[ChatArea] WhatsApp response", data);
-        if (data.success) {
+        if (data.message || data.success !== false) {
           fetchMessages();
         } else {
           console.log("[ChatArea] WhatsApp error", data.error);
