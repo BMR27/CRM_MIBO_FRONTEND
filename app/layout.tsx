@@ -8,7 +8,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CRM de Whatshapp - Ecommerce", // updated title
+  title: "Hilo — CRM de WhatsApp para Ecommerce",
   description: "CRM de WhatsApp para eCommerce - Gestión de conversaciones y atención al cliente", // updated description
   generator: "v0.app",
   icons: {
