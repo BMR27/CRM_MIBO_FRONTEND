@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server"
-import { authenticateUser } from "@/lib/auth"
 import { isDemoMode, sql } from "@/lib/db"
-import jwt from "jsonwebtoken"
-import type { Secret, SignOptions } from "jsonwebtoken"
+import type { User } from "@/lib/auth"
 import { randomUUID } from "crypto"
 
 export async function POST(request: Request) {
@@ -17,25 +15,41 @@ export async function POST(request: Request) {
       )
     }
 
-    if (!isDemoMode) {
-      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS session_key TEXT`
+    // Autenticar contra el backend NestJS: única fuente de verdad para credenciales,
+    // rol y tenant. Reemplaza la verificación local que hacía SQL directo + bcrypt.
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
+    let backendResponse: Response
+    try {
+      backendResponse = await fetch(`${backendUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+    } catch (err) {
+      return NextResponse.json(
+        { error: "No se pudo conectar con el servidor de autenticación." },
+        { status: 500 },
+      )
     }
 
-    // Authenticate user
-    const user = await authenticateUser(email, password)
+    const backendData = await backendResponse.json().catch(() => ({}))
 
-    if (!user) {
+    if (!backendResponse.ok) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: backendData?.message || "Invalid email or password" },
         { status: 401 },
       )
     }
 
-    if (!isDemoMode && user?.id) {
+    const backendUser: User = backendData.user
+
+    if (!isDemoMode) {
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS session_key TEXT`
+
       const [state] = (await sql`
         SELECT status, session_key
         FROM users
-        WHERE id = ${user.id}
+        WHERE id = ${backendUser.id}
         LIMIT 1
       `) as unknown as Array<{ status: string | null; session_key: string | null }>
 
@@ -54,34 +68,27 @@ export async function POST(request: Request) {
 
     const sessionKey = randomUUID()
 
-    if (!isDemoMode && user?.id) {
+    if (!isDemoMode) {
       await sql`
         UPDATE users
         SET status = 'available', session_key = ${sessionKey}
-        WHERE id = ${user.id}
+        WHERE id = ${backendUser.id}
       `
     }
 
-    // Generate JWT token
-    const secret = (process.env.JWT_SECRET || "secret") as Secret
-    const expiresIn = (process.env.JWT_EXPIRATION || "7d") as SignOptions["expiresIn"]
-    const token = jwt.sign(
-      { email: user.email, sub: user.id, session_key: sessionKey },
-      secret,
-      { expiresIn },
-    )
-
-    const userWithSession = {
-      ...user,
-      session_key: sessionKey,
+    const userWithSession: User & { session_key: string } = {
+      ...backendUser,
       status: "available",
+      session_key: sessionKey,
     }
 
     return NextResponse.json(
       {
-        access_token: token,
-        token_type: "Bearer",
-        expires_in: process.env.JWT_EXPIRATION || "7d",
+        // El access_token es el JWT real del backend (incluye role y tenantId),
+        // no uno generado localmente.
+        access_token: backendData.access_token,
+        token_type: backendData.token_type,
+        expires_in: backendData.expires_in,
         user: userWithSession,
       },
       { status: 200 },

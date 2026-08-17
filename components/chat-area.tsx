@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { frontendApi } from "@/lib/api"
+import { frontendApi, api } from "@/lib/api"
 
 interface Message {
   id: number | string
@@ -277,10 +277,9 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       // Detectar canal y usar endpoint apropiado
       if (channel === 'facebook' && externalUserId) {
         console.log("[ChatArea] Sending Facebook message", { externalUserId, messageContent, conversationId });
-        const { data } = await frontendApi.post(`/api/facebook/send`, {
-          recipientId: externalUserId,
+        const { data } = await api.post(`/api/facebook/send`, {
+          psid: externalUserId,
           message: messageContent,
-          conversationId: conversationId
         });
         console.log("[ChatArea] Facebook response", data);
         fetchMessages();

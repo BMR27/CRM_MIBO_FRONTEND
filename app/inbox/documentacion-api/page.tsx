@@ -166,6 +166,44 @@ const clientEndpointGroups = [
     ],
   },
   {
+    title: "Leads",
+    icon: Users,
+    description: "Captura leads desde tu sitio web u otros sistemas, sin necesidad de iniciar sesión.",
+    endpoints: [
+      {
+        method: "POST",
+        path: "/api/public/leads",
+        summary: "Registra un lead nuevo usando una API key (no requiere JWT).",
+        useCase: "Conectar un formulario web o un sistema externo para enviar leads directo al CRM.",
+        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/public/leads" \\
+  -H "X-API-Key: TU_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Juan Perez",
+    "email": "juan@ejemplo.com",
+    "phone_number": "+5215512345678",
+    "company": "Acme Inc."
+  }'`,
+      },
+      {
+        method: "GET",
+        path: "/api/leads",
+        summary: "Lista los leads recibidos (requiere sesión).",
+        useCase: "Revisar y dar seguimiento a los leads capturados.",
+        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/leads" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT"`,
+      },
+      {
+        method: "POST",
+        path: "/api/leads/{id}/convert",
+        summary: "Convierte un lead en un contacto del CRM.",
+        useCase: "Pasar un lead calificado a la bandeja de conversaciones.",
+        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/leads/LEAD_ID/convert" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT"`,
+      },
+    ],
+  },
+  {
     title: "Webhooks",
     icon: Webhook,
     description: "Recepción de eventos externos cuando se habilitan integraciones.",

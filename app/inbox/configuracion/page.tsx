@@ -7,6 +7,11 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Bell, Lock, Save, Settings, Zap } from "lucide-react"
 import { InboxHeader } from "@/components/inbox-header"
+import { ApiKeysSection } from "@/components/api-keys-section"
+import { WorkspaceNameSection } from "@/components/workspace-name-section"
+import { WhatsappIntegrationSection } from "@/components/whatsapp-integration-section"
+import { FacebookIntegrationSection } from "@/components/facebook-integration-section"
+import { VoiceIntegrationSection } from "@/components/voice-integration-section"
 import { getSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 
@@ -61,10 +66,7 @@ export default async function ConfiguracionPage() {
                   <CardDescription>Ajusta las preferencias básicas del sistema</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="empresa">Nombre de la Empresa</Label>
-                    <Input id="empresa" placeholder="LogiMarket" defaultValue="LogiMarket" />
-                  </div>
+                  <WorkspaceNameSection />
 
                   <div className="space-y-2">
                     <Label htmlFor="timezone">Zona Horaria</Label>
@@ -175,50 +177,19 @@ export default async function ConfiguracionPage() {
                   <CardDescription>Conecta servicios externos para extender funcionalidad</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="database">Base de Datos (Railway Postgres)</Label>
-                    <Input
-                      id="database"
-                      type="password"
-                      placeholder="postgresql://..."
-                      defaultValue={process.env.DATABASE_URL ? "••••••••••••" : ""}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {process.env.DATABASE_URL
-                        ? "✓ Conectado - Modo Demo Activo"
-                        : "No configurado - Usando datos demo"}
-                    </p>
-                  </div>
+                  <ApiKeysSection />
 
                   <Separator />
 
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-foreground">WhatsApp Business API</h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="whatsapp-token">Token de Acceso</Label>
-                      <Input id="whatsapp-token" type="password" placeholder="EAAxxxxxx..." />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone-id">Phone Number ID</Label>
-                      <Input id="phone-id" placeholder="123456789012345" />
-                    </div>
-                    <Button variant="outline">Conectar WhatsApp</Button>
-                  </div>
+                  <WhatsappIntegrationSection />
 
                   <Separator />
 
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-foreground">Webhooks</h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="webhook-url">URL del Webhook</Label>
-                      <Input id="webhook-url" placeholder="https://tu-dominio.com/webhook" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="webhook-secret">Secret</Label>
-                      <Input id="webhook-secret" type="password" placeholder="webhook_secret_key" />
-                    </div>
-                    <Button variant="outline">Guardar Webhook</Button>
-                  </div>
+                  <FacebookIntegrationSection />
+
+                  <Separator />
+
+                  <VoiceIntegrationSection />
                 </CardContent>
               </Card>
             </TabsContent>
