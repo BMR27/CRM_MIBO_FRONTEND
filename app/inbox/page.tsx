@@ -5,6 +5,7 @@ import { InboxHeader } from "@/components/inbox-header"
 import { ConversationList } from "@/components/conversation-list"
 import { ChatArea } from "@/components/chat-area"
 import { OrdersPanel } from "@/components/orders-panel"
+import { WorkspaceOverview } from "@/components/workspace-overview"
 import { useSearchParams } from "next/navigation"
 import { useConversations } from "@/hooks/use-conversations"
 import { useAgents } from "@/hooks/use-agents"
@@ -26,7 +27,7 @@ interface ConversationData {
 }
 
 export default function InboxPage() {
-  const { isAgent, loading: loadingRole } = useUserRole();
+  const { isAgent, isAdminOrSupervisor, loading: loadingRole } = useUserRole();
   const [selectedConversationId, setSelectedConversationId] = useState<string>()
   const [selectedContactName, setSelectedContactName] = useState<string>()
   const [selectedContactId, setSelectedContactId] = useState<string>()
@@ -35,13 +36,18 @@ export default function InboxPage() {
   const searchParams = typeof window !== "undefined" ? useSearchParams() : { get: () => undefined }
   const [refreshKey, setRefreshKey] = useState(0)
   const { conversations, refetch: refetchConversations } = useConversations(true, true)
-  const { refetch: refetchAgents } = useAgents()
+  const { agents, refetch: refetchAgents } = useAgents()
 
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
   useEffect(() => {
     const queryConvId = searchParams.get("conversationId")
     if (queryConvId && conversations.some(c => String(c.id) === queryConvId)) {
       handleSelectConversation(queryConvId)
+      setHasAutoSelected(true);
+      return;
+    }
+    // Admin/supervisor ven el resumen general primero; no se autoselecciona una conversación concreta.
+    if (isAdminOrSupervisor) {
       setHasAutoSelected(true);
       return;
     }
@@ -68,7 +74,7 @@ export default function InboxPage() {
       });
       setHasAutoSelected(true);
     }
-  }, [searchParams, conversations, selectedConversationId, hasAutoSelected]);
+  }, [searchParams, conversations, selectedConversationId, hasAutoSelected, isAdminOrSupervisor]);
   const [isMobile, setIsMobile] = useState(false)
   const [showOrdersPanel, setShowOrdersPanel] = useState(true)
 
@@ -83,12 +89,12 @@ export default function InboxPage() {
   }, [])
 
   useEffect(() => {
-    if (!selectedConversationId && conversations.length > 0) {
+    if (!isAdminOrSupervisor && !selectedConversationId && conversations.length > 0) {
       const first = conversations[0]
       setSelectedConversationId(String(first.id))
       setSelectedContactName(first.customer_name)
       setSelectedContactId(undefined)
-      
+
       setCurrentAgentId(first.assigned_agent_id ? String(first.assigned_agent_id) : undefined)
       setConversationDetails({
         id: String(first.id),
@@ -105,7 +111,7 @@ export default function InboxPage() {
         last_message: undefined,
       })
     }
-  }, [selectedConversationId, conversations])
+  }, [selectedConversationId, conversations, isAdminOrSupervisor])
 
   const handleSelectConversation = (id: string) => {
     setSelectedConversationId(id);
@@ -177,25 +183,29 @@ export default function InboxPage() {
         <div className="hidden md:block w-4 flex-shrink-0 bg-muted/40" aria-hidden="true" />
         {/* Chat area - flex grow */}
         <div className="flex flex-1 flex-col min-w-0">
-          <ChatArea
-            conversationId={selectedConversationId}
-            contactName={selectedContactName}
-            currentAgentId={currentAgentId}
-            channel={selectedConversationId ? conversations.find(c => String(c.id) === String(selectedConversationId))?.channel : undefined}
-            externalUserId={
-              selectedConversationId
-                ? (
-                    conversations.find(c => String(c.id) === String(selectedConversationId))?.external_user_id ||
-                    conversations.find(c => String(c.id) === String(selectedConversationId))?.customer_phone
-                  )
-                : undefined
-            }
-            onUpdate={handleUpdate}
-            onConversationDeleted={handleConversationDeleted}
-          />
+          {isAdminOrSupervisor && !selectedConversationId ? (
+            <WorkspaceOverview conversations={conversations} agents={agents} />
+          ) : (
+            <ChatArea
+              conversationId={selectedConversationId}
+              contactName={selectedContactName}
+              currentAgentId={currentAgentId}
+              channel={selectedConversationId ? conversations.find(c => String(c.id) === String(selectedConversationId))?.channel : undefined}
+              externalUserId={
+                selectedConversationId
+                  ? (
+                      conversations.find(c => String(c.id) === String(selectedConversationId))?.external_user_id ||
+                      conversations.find(c => String(c.id) === String(selectedConversationId))?.customer_phone
+                    )
+                  : undefined
+              }
+              onUpdate={handleUpdate}
+              onConversationDeleted={handleConversationDeleted}
+            />
+          )}
         </div>
         {/* Orders/Details panel - responsive */}
-        {showOrdersPanel && (
+        {showOrdersPanel && selectedConversationId && (
           <>
           <div className="hidden xl:block w-4 flex-shrink-0 bg-muted/40" aria-hidden="true" />
           <div className="hidden xl:flex h-full w-72 flex-col border-l border-border bg-card flex-shrink-0 overflow-hidden">

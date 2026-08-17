@@ -3,28 +3,33 @@
 import {
   BookOpen,
   CheckCircle2,
+  Copy,
   ExternalLink,
   KeyRound,
+  Lock,
   MessageCircle,
-  RefreshCw,
   Send,
   ShieldCheck,
   Users,
   Webhook,
 } from "lucide-react"
+import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { InboxHeader } from "@/components/inbox-header"
 import { useUserRole } from "@/hooks/use-user-role"
 
 const RAILWAY_BACKEND_URL = "https://crmmibobackend-production.up.railway.app"
-const BRYAN_ADMIN_EMAIL = "bryan.mejia@logimarket.com.mx"
 
 const clientEndpointGroups = [
   {
+    id: "auth",
     title: "Autenticación",
     icon: KeyRound,
-    description: "Permite iniciar sesión y obtener el token necesario para usar la API autorizada.",
+    description: "Inicia sesión y obtén el token necesario para usar la API.",
     endpoints: [
       {
         method: "POST",
@@ -41,6 +46,7 @@ const clientEndpointGroups = [
     ],
   },
   {
+    id: "contactos",
     title: "Contactos",
     icon: Users,
     description: "Alta y consulta de contactos autorizados para campañas o seguimiento.",
@@ -71,28 +77,21 @@ const clientEndpointGroups = [
         method: "POST",
         path: "/api/contacts/import",
         summary: "Crea o actualiza contactos de manera masiva.",
-        useCase: "Importar una base de destinatarios desde un sistema externo antes de enviar campañas.",
+        useCase: "Importar una base de destinatarios antes de enviar campañas.",
         example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/contacts/import" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
     "contacts": [
-      {
-        "name": "Ana Martinez",
-        "phone_number": "+5215512345678",
-        "channel": "whatsapp"
-      },
-      {
-        "name": "Luis Perez",
-        "phone_number": "+5215598765432",
-        "channel": "whatsapp"
-      }
+      { "name": "Ana Martinez", "phone_number": "+5215512345678", "channel": "whatsapp" },
+      { "name": "Luis Perez", "phone_number": "+5215598765432", "channel": "whatsapp" }
     ]
   }'`,
       },
     ],
   },
   {
+    id: "conversaciones",
     title: "Conversaciones",
     icon: MessageCircle,
     description: "Consulta conversaciones y mensajes relacionados con la operación del cliente.",
@@ -116,6 +115,7 @@ const clientEndpointGroups = [
     ],
   },
   {
+    id: "campanas",
     title: "Campañas",
     icon: Send,
     description: "Operación de campañas y seguimiento de envíos masivos autorizados.",
@@ -147,12 +147,7 @@ const clientEndpointGroups = [
   -d '{
     "name": "Campaña recordatorio",
     "message": "Hola {{name}}, tenemos información para ti.",
-    "recipients": [
-      {
-        "name": "Ana Martinez",
-        "phone_number": "+5215512345678"
-      }
-    ]
+    "recipients": [{ "name": "Ana Martinez", "phone_number": "+5215512345678" }]
   }'`,
       },
       {
@@ -166,6 +161,7 @@ const clientEndpointGroups = [
     ],
   },
   {
+    id: "leads",
     title: "Leads",
     icon: Users,
     description: "Captura leads desde tu sitio web u otros sistemas, sin necesidad de iniciar sesión.",
@@ -204,6 +200,7 @@ const clientEndpointGroups = [
     ],
   },
   {
+    id: "webhooks",
     title: "Webhooks",
     icon: Webhook,
     description: "Recepción de eventos externos cuando se habilitan integraciones.",
@@ -233,157 +230,188 @@ const hiddenInternalAreas = [
   "Operaciones directas sobre media y mensajes sensibles",
 ]
 
-function methodClass(method: string) {
+function methodClassName(method: string) {
   const map: Record<string, string> = {
-    GET: "border-blue-200 bg-blue-50 text-blue-700",
-    POST: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    PUT: "border-amber-200 bg-amber-50 text-amber-700",
-    PATCH: "border-violet-200 bg-violet-50 text-violet-700",
-    DELETE: "border-red-200 bg-red-50 text-red-700",
+    GET: "bg-blue-50 text-blue-700 border-blue-200",
+    POST: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    PUT: "bg-amber-50 text-amber-700 border-amber-200",
+    PATCH: "bg-violet-50 text-violet-700 border-violet-200",
+    DELETE: "bg-red-50 text-red-700 border-red-200",
   }
-  return map[method] || "border-slate-200 bg-slate-50 text-slate-700"
+  return map[method] || "bg-muted text-muted-foreground border-border"
+}
+
+function CodeBlock({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    navigator.clipboard?.writeText(code)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+  return (
+    <div className="relative rounded-lg border border-border bg-slate-950">
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-[11px] font-medium text-slate-200 hover:bg-white/20 transition-colors"
+      >
+        <Copy className="h-3 w-3" />
+        {copied ? "Copiado" : "Copiar"}
+      </button>
+      <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words p-4 pr-20 text-xs leading-5 text-slate-100">
+        <code>{code}</code>
+      </pre>
+    </div>
+  )
 }
 
 export default function DocumentacionApiPage() {
   const { user } = useUserRole()
-  const showInternalSwagger = process.env.NEXT_PUBLIC_SHOW_INTERNAL_SWAGGER === "true"
-  const railwaySwaggerUrl = `${RAILWAY_BACKEND_URL}/api/docs`
+  const isAdmin = String(user?.role || "").toLowerCase().startsWith("admin")
   const apiBaseUrl = `${RAILWAY_BACKEND_URL}/api`
-  const isBryanAdmin =
-    user?.role === "admin" &&
-    String(user?.email || "").trim().toLowerCase() === BRYAN_ADMIN_EMAIL
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-slate-50">
-      <header className="border-b border-slate-200 bg-white px-6 py-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-50 text-blue-700">
-              <BookOpen className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-semibold text-slate-950">Documentación API para clientes</h1>
-                <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-                  Producción
-                </Badge>
-                <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
-                  Acceso seguro
-                </Badge>
+    <>
+      <InboxHeader />
+      <div className="flex-1 overflow-y-auto bg-background p-6">
+        <div className="mx-auto max-w-5xl space-y-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <BookOpen className="h-5 w-5" />
               </div>
-              <p className="mt-1 text-sm text-slate-500">
-                Endpoints permitidos para integraciones de clientes. La documentación interna completa queda protegida.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={() => window.location.reload()} className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Recargar
-            </Button>
-            {showInternalSwagger ? (
-              <Button onClick={() => window.open(railwaySwaggerUrl, "_blank", "noopener,noreferrer")} className="gap-2">
-                <ExternalLink className="h-4 w-4" />
-                Abrir Swagger interno
-              </Button>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 lg:grid-cols-[1.2fr_1fr]">
-          <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            <div className="flex items-center gap-2 font-medium text-slate-800">
-              <ShieldCheck className="h-4 w-4 text-slate-500" />
-              Política de acceso
-            </div>
-            <p className="mt-1">
-              Esta vista evita exponer endpoints administrativos. Para integraciones externas, entrega solo tokens y permisos necesarios.
-            </p>
-          </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            <p className="font-medium text-slate-800">Base URL de producción</p>
-            <code className="mt-1 block break-all rounded bg-white px-2 py-1 text-xs text-slate-700">{apiBaseUrl}</code>
-          </div>
-        </div>
-      </header>
-
-      <main className="min-h-0 flex-1 overflow-y-auto p-6">
-        <section className="grid gap-4 xl:grid-cols-5">
-          {clientEndpointGroups.map((group) => {
-            const Icon = group.icon
-            return (
-              <article key={group.title} className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-slate-700">
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <h2 className="text-sm font-semibold text-slate-950">{group.title}</h2>
-                </div>
-                <p className="mt-3 min-h-[42px] text-xs leading-5 text-slate-500">{group.description}</p>
-                <div className="mt-4 space-y-2">
-                  {group.endpoints.map((endpoint) => (
-                    <div key={`${endpoint.method}-${endpoint.path}`} className="rounded-md border border-slate-100 bg-slate-50 p-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${methodClass(endpoint.method)}`}>
-                          {endpoint.method}
-                        </span>
-                        <code className="truncate text-xs text-slate-800">{endpoint.path}</code>
-                      </div>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">{endpoint.summary}</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-600">
-                        <span className="font-medium">Uso:</span> {endpoint.useCase}
-                      </p>
-                      <div className="mt-2 rounded-md border border-slate-200 bg-slate-950 p-2">
-                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ejemplo curl</p>
-                        <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-5 text-slate-100">
-                          <code>{endpoint.example}</code>
-                        </pre>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            )
-          })}
-        </section>
-
-        <section className={`mt-6 grid gap-4 ${isBryanAdmin ? "lg:grid-cols-[1fr_1fr]" : "lg:grid-cols-1"}`}>
-          <article className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-slate-950">Flujo recomendado para clientes</h2>
-            <div className="mt-4 space-y-3 text-sm text-slate-600">
-              {[
-                "Solicitar credenciales o token de integración.",
-                "Crear o sincronizar contactos autorizados.",
-                "Enviar campañas o consultar conversaciones según permisos contratados.",
-                "Consultar métricas de campañas y estados de entrega.",
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          {isBryanAdmin && (
-            <article className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-semibold text-slate-950">No expuesto a clientes</h2>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {hiddenInternalAreas.map((area) => (
-                  <Badge key={area} variant="outline" className="border-red-100 bg-red-50 text-red-700">
-                    {area}
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold tracking-tight text-foreground">Documentación API</h1>
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                    Producción
                   </Badge>
-                ))}
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground max-w-xl">
+                  Endpoints disponibles para integrar tu sitio web o sistemas externos con el CRM.
+                </p>
               </div>
-              <p className="mt-4 text-xs leading-5 text-slate-500">
-                Swagger completo es documentación interna. En Railway queda deshabilitado por defecto y solo se habilita con variables
-                administrativas.
-              </p>
-            </article>
-          )}
-        </section>
-      </main>
-    </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card>
+              <CardContent className="flex items-start gap-3 pt-6">
+                <ShieldCheck className="h-4.5 w-4.5 text-muted-foreground mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Política de acceso</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Esta vista muestra únicamente endpoints seguros para integraciones externas.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm font-medium text-foreground">Base URL de producción</p>
+                <code className="mt-1.5 block break-all rounded-md bg-muted px-2.5 py-1.5 text-xs text-foreground">
+                  {apiBaseUrl}
+                </code>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Endpoints por categoría</CardTitle>
+              <CardDescription>Expande una categoría para ver los endpoints y un ejemplo listo para copiar.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible defaultValue="auth" className="w-full">
+                {clientEndpointGroups.map((group) => {
+                  const Icon = group.icon
+                  return (
+                    <AccordionItem key={group.id} value={group.id}>
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-foreground shrink-0">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-semibold text-foreground">{group.title}</p>
+                            <p className="text-xs text-muted-foreground font-normal">{group.description}</p>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-4 pl-11">
+                          {group.endpoints.map((endpoint) => (
+                            <div key={`${endpoint.method}-${endpoint.path}`} className="space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span
+                                  className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${methodClassName(endpoint.method)}`}
+                                >
+                                  {endpoint.method}
+                                </span>
+                                <code className="text-xs text-foreground">{endpoint.path}</code>
+                              </div>
+                              <p className="text-sm text-foreground">{endpoint.summary}</p>
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-medium text-foreground/80">Uso:</span> {endpoint.useCase}
+                              </p>
+                              <CodeBlock code={endpoint.example} />
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )
+                })}
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          <div className={`grid gap-4 ${isAdmin ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Flujo recomendado para integraciones</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {[
+                  "Solicitar credenciales o token de integración.",
+                  "Crear o sincronizar contactos autorizados.",
+                  "Enviar campañas o consultar conversaciones según permisos contratados.",
+                  "Consultar métricas de campañas y estados de entrega.",
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 shrink-0" />
+                    <span className="text-foreground">{item}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {isAdmin && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-base">No expuesto a clientes</CardTitle>
+                  </div>
+                  <CardDescription>Visible solo para administradores.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {hiddenInternalAreas.map((area) => (
+                      <Badge key={area} variant="outline" className="border-red-100 bg-red-50 text-red-700">
+                        {area}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    El Swagger completo es documentación interna y permanece deshabilitado en producción.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
