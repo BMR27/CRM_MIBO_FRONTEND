@@ -4,7 +4,6 @@ import {
   BookOpen,
   CheckCircle2,
   Copy,
-  ExternalLink,
   KeyRound,
   Lock,
   MessageCircle,
@@ -16,7 +15,6 @@ import {
 import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { InboxHeader } from "@/components/inbox-header"
@@ -115,48 +113,37 @@ const clientEndpointGroups = [
     ],
   },
   {
-    id: "campanas",
-    title: "Campañas",
+    id: "mensajes",
+    title: "Mensajes",
     icon: Send,
-    description: "Operación de campañas y seguimiento de envíos masivos autorizados.",
+    description: "Envía un mensaje de WhatsApp directo a un contacto, sin necesidad de crear una campaña.",
     endpoints: [
       {
-        method: "GET",
-        path: "/api/campaigns",
-        summary: "Lista campañas con identificador, estado y métricas.",
-        useCase: "Consultar avance y trazabilidad de campañas.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/campaigns" \\
-  -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-      {
-        method: "GET",
-        path: "/api/campaigns/stats",
-        summary: "Resume enviados, fallidos y campañas activas.",
-        useCase: "Construir dashboards externos.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/campaigns/stats" \\
-  -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-      {
         method: "POST",
-        path: "/api/campaigns/send",
-        summary: "Crea y envía una campaña autorizada.",
-        useCase: "Disparar campañas desde un sistema externo.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/campaigns/send" \\
+        path: "/api/whatsapp/send",
+        summary: "Envía un mensaje de texto a un número de WhatsApp.",
+        useCase: "Notificar a un cliente puntual sin pasar por el flujo de campañas masivas.",
+        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/whatsapp/send" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "name": "Campaña recordatorio",
-    "message": "Hola {{name}}, tenemos información para ti.",
-    "recipients": [{ "name": "Ana Martinez", "phone_number": "+5215512345678" }]
+    "phone_number": "+5215512345678",
+    "message": "Hola Ana, tenemos información para ti."
   }'`,
       },
       {
-        method: "DELETE",
-        path: "/api/campaigns?id={campaignId}",
-        summary: "Elimina una campaña del historial operativo.",
-        useCase: "Depurar campañas de prueba sin borrar los mensajes del chat.",
-        example: `curl -X DELETE "${RAILWAY_BACKEND_URL}/api/campaigns?id=bulk_123456789" \\
-  -H "Authorization: Bearer TU_TOKEN_JWT"`,
+        method: "POST",
+        path: "/api/whatsapp/send-template",
+        summary: "Envía un mensaje usando una plantilla aprobada por WhatsApp.",
+        useCase: "Iniciar conversación fuera de la ventana de 24h (requiere plantilla autorizada).",
+        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/whatsapp/send-template" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "phone_number": "+5215512345678",
+    "template_name": "recordatorio_cita",
+    "language": "es_MX"
+  }'`,
       },
     ],
   },
@@ -315,6 +302,35 @@ export default function DocumentacionApiPage() {
               </CardContent>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Formato de respuesta</CardTitle>
+              <CardDescription>Todas las respuestas son JSON. La forma varía según el tipo de operación.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs font-semibold text-foreground mb-1">Listados (GET)</p>
+                <p className="text-xs text-muted-foreground mb-2">Devuelven un arreglo directo, sin envoltorio.</p>
+                <CodeBlock code={`[\n  { "id": "...", "name": "..." },\n  { "id": "...", "name": "..." }\n]`} />
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs font-semibold text-foreground mb-1">Creación (POST)</p>
+                <p className="text-xs text-muted-foreground mb-2">Devuelven el objeto creado con su id.</p>
+                <CodeBlock code={`{\n  "id": "...",\n  "status": "new",\n  "created_at": "..."\n}`} />
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs font-semibold text-foreground mb-1">Autenticación</p>
+                <p className="text-xs text-muted-foreground mb-2">Incluye el token y los datos del usuario.</p>
+                <CodeBlock code={`{\n  "access_token": "...",\n  "token_type": "Bearer",\n  "expires_in": "7d",\n  "user": { "id": "...", "email": "...", "role": "..." }\n}`} />
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs font-semibold text-foreground mb-1">Errores</p>
+                <p className="text-xs text-muted-foreground mb-2">Formato estándar con código HTTP.</p>
+                <CodeBlock code={`{\n  "statusCode": 404,\n  "error": "Not Found",\n  "message": "Cannot GET /api/xyz"\n}`} />
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
