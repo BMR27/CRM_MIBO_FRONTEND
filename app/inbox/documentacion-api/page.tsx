@@ -7,6 +7,7 @@ import {
   KeyRound,
   Lock,
   MessageCircle,
+  Package,
   Send,
   ShieldCheck,
   Users,
@@ -85,6 +86,75 @@ const clientEndpointGroups = [
       { "name": "Luis Perez", "phone_number": "+5215598765432", "channel": "whatsapp" }
     ]
   }'`,
+      },
+    ],
+  },
+  {
+    id: "ordenes",
+    title: "Órdenes",
+    icon: Package,
+    description: "Cada orden pertenece a un contacto existente (contact_id) y avanza por 6 estados posibles.",
+    endpoints: [
+      {
+        method: "POST",
+        path: "/api/orders",
+        summary: "Crea una orden asociada a un contacto.",
+        useCase: "Registrar un pedido después de crear o localizar al contacto (ver sección Contactos). El estado inicial siempre es \"pending\", no se puede omitir.",
+        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/orders" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "order_number": "ORD-123456",
+    "contact_id": "UUID_DEL_CONTACTO",
+    "total_amount": 499.99,
+    "items": [{ "sku": "SKU-1", "name": "Producto demo", "quantity": 2 }],
+    "shipping_address": "Calle Falsa 123, CDMX"
+  }'`,
+      },
+      {
+        method: "GET",
+        path: "/api/orders",
+        summary: "Lista todas las órdenes del espacio de trabajo.",
+        useCase: "Sincronizar el catálogo de pedidos con un sistema externo.",
+        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/orders" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT"`,
+      },
+      {
+        method: "GET",
+        path: "/api/orders/{id}",
+        summary: "Consulta una orden específica (incluye los datos del contacto).",
+        useCase: "Mostrar el detalle de un pedido en otro sistema.",
+        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/orders/ORDER_ID" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT"`,
+      },
+      {
+        method: "GET",
+        path: "/api/orders/contact/{contactId}",
+        summary: "Lista todas las órdenes de un contacto.",
+        useCase: "Ver el historial de compras de un cliente antes de atenderlo.",
+        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/orders/contact/CONTACT_ID" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT"`,
+      },
+      {
+        method: "PATCH",
+        path: "/api/orders/{id}",
+        summary: "Actualiza el estado u otros datos de una orden (envío parcial, solo mandas los campos que cambian).",
+        useCase: "Mover el pedido al siguiente estado del flujo, o agregar el número de guía al despacharlo.",
+        example: `curl -X PATCH "${RAILWAY_BACKEND_URL}/api/orders/ORDER_ID" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "status": "shipped",
+    "tracking_number": "TRK123456"
+  }'`,
+      },
+      {
+        method: "DELETE",
+        path: "/api/orders/{id}",
+        summary: "Elimina una orden.",
+        useCase: "Depurar órdenes de prueba.",
+        example: `curl -X DELETE "${RAILWAY_BACKEND_URL}/api/orders/ORDER_ID" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT"`,
       },
     ],
   },
@@ -207,6 +277,15 @@ const clientEndpointGroups = [
       },
     ],
   },
+]
+
+const orderStates = [
+  { value: "pending", label: "Pendiente", description: "Estado inicial al crear la orden. No se puede omitir en el POST." },
+  { value: "confirmed", label: "Confirmada", description: "El negocio confirmó el pedido (stock, pago, etc.)." },
+  { value: "processing", label: "En preparación", description: "Se está surtiendo/empacando el pedido." },
+  { value: "shipped", label: "Enviada", description: "Salió a reparto. Aquí suele mandarse también tracking_number." },
+  { value: "delivered", label: "Entregada", description: "El cliente ya recibió el pedido." },
+  { value: "cancelled", label: "Cancelada", description: "El pedido se canceló en cualquier punto del flujo." },
 ]
 
 const hiddenInternalAreas = [
@@ -356,6 +435,29 @@ export default function DocumentacionApiPage() {
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="space-y-4 pl-11">
+                          {group.id === "ordenes" && (
+                            <div className="rounded-lg border border-border overflow-hidden">
+                              <table className="w-full text-xs">
+                                <thead className="bg-muted/60">
+                                  <tr>
+                                    <th className="text-left font-medium text-foreground px-3 py-2">Estado</th>
+                                    <th className="text-left font-medium text-foreground px-3 py-2">Descripción</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {orderStates.map((s, i) => (
+                                    <tr key={s.value} className={i % 2 === 1 ? "bg-muted/30" : undefined}>
+                                      <td className="px-3 py-2 align-top">
+                                        <code className="text-[11px] font-semibold text-foreground">{s.value}</code>
+                                        <span className="block text-muted-foreground">{s.label}</span>
+                                      </td>
+                                      <td className="px-3 py-2 align-top text-muted-foreground">{s.description}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
                           {group.endpoints.map((endpoint) => (
                             <div key={`${endpoint.method}-${endpoint.path}`} className="space-y-2">
                               <div className="flex flex-wrap items-center gap-2">
