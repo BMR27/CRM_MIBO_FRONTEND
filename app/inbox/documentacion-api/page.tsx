@@ -249,10 +249,15 @@ const clientEndpointGroups = [
       {
         method: "POST",
         path: "/api/leads/{id}/convert",
-        summary: "Convierte un lead en un contacto del CRM.",
-        useCase: "Pasar un lead calificado a la bandeja de conversaciones.",
+        summary: "Convierte un lead en un contacto del CRM. NO crea una orden.",
+        useCase: "Pasar un lead calificado a un contacto real para poder chatear con él o, en un paso aparte, crearle una orden.",
         example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/leads/LEAD_ID/convert" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
+        response: `{
+  "lead": { "id": "...", "status": "converted", "contact_id": "..." },
+  "contact": { "id": "...", "name": "...", "phone_number": "..." },
+  "alreadyConverted": false
+}`,
       },
     ],
   },
@@ -458,6 +463,14 @@ export default function DocumentacionApiPage() {
                               </table>
                             </div>
                           )}
+                          {group.id === "leads" && (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                              <span className="font-semibold">Importante:</span> convertir un lead solo crea un{" "}
+                              <span className="font-semibold">Contacto</span>, no una orden. Si necesitas registrar
+                              una compra, crea la orden aparte con <code>POST /api/orders</code> usando el{" "}
+                              <code>contact_id</code> que devuelve el convert (ver sección "Órdenes").
+                            </div>
+                          )}
                           {group.endpoints.map((endpoint) => (
                             <div key={`${endpoint.method}-${endpoint.path}`} className="space-y-2">
                               <div className="flex flex-wrap items-center gap-2">
@@ -472,7 +485,14 @@ export default function DocumentacionApiPage() {
                               <p className="text-xs text-muted-foreground">
                                 <span className="font-medium text-foreground/80">Uso:</span> {endpoint.useCase}
                               </p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Request</p>
                               <CodeBlock code={endpoint.example} />
+                              {(endpoint as any).response && (
+                                <>
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Response</p>
+                                  <CodeBlock code={(endpoint as any).response} />
+                                </>
+                              )}
                             </div>
                           ))}
                         </div>
