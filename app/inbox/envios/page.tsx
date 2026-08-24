@@ -123,6 +123,21 @@ const waTemplates = [
 const templateBySid = new Map(waTemplates.map((t) => [t.sid, t]))
 const templateByName = new Map(waTemplates.map((t) => [t.name, t]))
 
+// Campos que ya se resuelven automáticamente desde el contacto seleccionado/guardado.
+const CONTACT_RESOLVED_FIELDS = new Set(["CLIENTE", "ASESOR", "PHONE_A"])
+
+function getExtraTemplateFields(tpl: (typeof waTemplates)[number] | undefined): string[] {
+  if (!tpl) return []
+  const seen = new Set<string>()
+  const extras: string[] = []
+  for (const campo of Object.values(tpl.paramMap)) {
+    if (CONTACT_RESOLVED_FIELDS.has(campo) || seen.has(campo)) continue
+    seen.add(campo)
+    extras.push(campo)
+  }
+  return extras
+}
+
 function getTodayInputValue() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -218,7 +233,7 @@ function EnviosMasivosPage() {
   const [showNewForm, setShowNewForm] = useState(false)
   const [campaignName, setCampaignName] = useState("")
   const [campaignNotes, setCampaignNotes] = useState("")
-  const [campaignProduct, setCampaignProduct] = useState("")
+  const [campaignParams, setCampaignParams] = useState<Record<string, string>>({})
   const [contactSource, setContactSource] = useState<"saved" | "excel">("saved")
   const [contacts, setContacts] = useState<Contacto[]>([])
   const [savedContacts, setSavedContacts] = useState<ContactOption[]>([])
@@ -258,6 +273,12 @@ function EnviosMasivosPage() {
   const [dateTo, setDateTo] = useState(getTodayInputValue())
 
   const selectedTemplateData = selectedTemplate ? templateBySid.get(selectedTemplate) : undefined
+  const extraTemplateFields = useMemo(() => getExtraTemplateFields(selectedTemplateData), [selectedTemplateData])
+
+  useEffect(() => {
+    setCampaignParams({})
+  }, [selectedTemplate])
+
   const allCampaigns = useMemo(() => mergeCampaigns(campaigns, localCampaigns), [campaigns, localCampaigns])
   const selectedSavedContacts = useMemo(
     () => savedContacts.filter((contact) => selectedSavedContactIds.has(contact.id)),
@@ -271,7 +292,7 @@ function EnviosMasivosPage() {
         CLIENTE: contact.name,
         ASESOR: currentAgentName,
         PHONE_A: contact.phone_number,
-        PRODUCTS_A: campaignProduct,
+        ...campaignParams,
       }))
     : contacts
   const filteredSavedContacts = useMemo(() => {
@@ -505,6 +526,17 @@ function EnviosMasivosPage() {
     }
   }
 
+  const handleDownloadTemplate = async () => {
+    if (!selectedTemplateData) return
+    const XLSX = await import("xlsx")
+    const headers = ["CLIENTE", "PHONE_A", ...getExtraTemplateFields(selectedTemplateData)]
+    const exampleRow = headers.map((h) => (h === "PHONE_A" ? "+525512345678" : h === "CLIENTE" ? "Juan Pérez" : "..."))
+    const sheet = XLSX.utils.aoa_to_sheet([headers, exampleRow])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, sheet, "Contactos")
+    XLSX.writeFile(wb, `plantilla_${selectedTemplateData.name}.xlsx`)
+  }
+
   const handleSend = async () => {
     setSending(true)
     setSendResult("")
@@ -532,10 +564,13 @@ function EnviosMasivosPage() {
 
     const templateParamMap = tpl.paramMap as Record<string, string>
 
-    if (contactSource === "saved" && params.some((p) => templateParamMap[p] === "PRODUCTS_A") && !campaignProduct.trim()) {
-      setSendResult("Captura el producto para completar la plantilla antes de enviar.")
-      setSending(false)
-      return
+    if (contactSource === "saved") {
+      const missingField = getExtraTemplateFields(tpl).find((campo) => !campaignParams[campo]?.trim())
+      if (missingField) {
+        setSendResult(`Captura el campo "${missingField}" para completar la plantilla antes de enviar.`)
+        setSending(false)
+        return
+      }
     }
 
     for (let i = 0; i < contactsToSend.length; i++) {
@@ -621,7 +656,7 @@ function EnviosMasivosPage() {
     setSelectedSavedContactIds(new Set())
     setCampaignName("")
     setCampaignNotes("")
-    setCampaignProduct("")
+    setCampaignParams({})
     setContactSource("saved")
     setSelectedTemplate(waTemplates[0]?.sid || "")
   }
@@ -681,28 +716,44 @@ function EnviosMasivosPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Plantilla WhatsApp</label>
-                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona una plantilla" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {waTemplates.map((tpl) => (
-                      <SelectItem key={tpl.sid} value={tpl.sid}>
-                        {tpl.name}
-                      </SelectItem>
+                <div className="flex gap-2">
+                  <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona una plantilla" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {waTemplates.map((tpl) => (
+                        <SelectItem key={tpl.sid} value={tpl.sid}>
+                          {tpl.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="sm" onClick={handleDownloadTemplate} disabled={!selectedTemplateData}>
+                    Descargar Excel
+                  </Button>
+                </div>
+              </div>
+              {extraTemplateFields.length > 0 && (
+                <div className="space-y-3 lg:col-span-2">
+                  <p className="text-sm font-medium text-slate-700">Campos de la plantilla</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {extraTemplateFields.map((campo) => (
+                      <div key={campo} className="space-y-1">
+                        <label className="text-xs font-medium text-slate-600">{campo}</label>
+                        <Input
+                          value={campaignParams[campo] || ""}
+                          onChange={(e) => setCampaignParams((prev) => ({ ...prev, [campo]: e.target.value }))}
+                          placeholder={campo}
+                        />
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2 lg:col-span-2">
-                <label className="text-sm font-medium text-slate-700">Producto para la plantilla</label>
-                <Input
-                  value={campaignProduct}
-                  onChange={(e) => setCampaignProduct(e.target.value)}
-                  placeholder="Ej: Bionica, paquete, servicio o producto"
-                />
-                <p className="text-xs text-slate-500">Se usará para completar la variable de producto en los contactos guardados.</p>
-              </div>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Se usarán para completar la plantilla en los contactos guardados. Para valores distintos por contacto, usa Excel.
+                  </p>
+                </div>
+              )}
               <div className="space-y-3 lg:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <label className="text-sm font-medium text-slate-700">Destinatarios</label>
