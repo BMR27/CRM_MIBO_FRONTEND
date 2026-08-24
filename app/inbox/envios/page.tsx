@@ -106,6 +106,18 @@ const waTemplates = [
       "2": "Juan Pérez",
     },
   },
+  {
+    name: "pedido_enviado_v1",
+    sid: "HX36751a5be358338dd5082fa394b515f5",
+    language: "es_MX",
+    body: "Buenas días, su pedido de {{1}} ha sido enviado. El número de envío {{2}} Por favor, espere una llamada del servicio de mensajería - {{3}}. Que tenga un buen día!",
+    paramMap: {
+      "1": "TOTAL_PEDIDO",
+      "2": "TRACKING",
+      "3": "PAQUETERIA",
+    },
+    paramFallbacks: {} as Record<string, string>,
+  },
 ]
 
 const templateBySid = new Map(waTemplates.map((t) => [t.sid, t]))
@@ -765,7 +777,8 @@ function EnviosMasivosPage() {
                   <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
                     <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="bg-white" />
                     <p className="mt-2 text-xs text-slate-500">
-                      Segunda opción: sube un Excel con columnas CLIENTE, PHONE_A y PRODUCTS_A.
+                      Segunda opción: sube un Excel con columnas CLIENTE, PHONE_A
+                      {selectedTemplateData ? ` y ${Object.values(selectedTemplateData.paramMap).filter((c) => c !== "CLIENTE" && c !== "ASESOR" && c !== "PHONE_A").join(", ")}` : " y PRODUCTS_A"}.
                     </p>
                     {excelError && <p className="mt-2 text-xs font-medium text-red-600">{excelError}</p>}
                   </div>
