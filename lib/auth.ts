@@ -7,4 +7,5 @@ export interface User {
   tenant_id?: string
   avatar_url?: string
   status: string
+  is_platform_admin?: boolean
 }

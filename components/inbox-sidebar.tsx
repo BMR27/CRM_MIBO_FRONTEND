@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { api } from "@/lib/api"
+import { PlatformAdminSwitcher } from "@/components/platform-admin-switcher"
 
 interface InboxSidebarProps {
   user: {
@@ -126,6 +127,12 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
         </Button>
       </div>
+
+      {!collapsed && (
+        <div className="border-b border-sidebar-border px-4 py-2">
+          <PlatformAdminSwitcher />
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 p-2">
