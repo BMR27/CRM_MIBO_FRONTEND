@@ -23,9 +23,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  if ((pathname === "/login" || pathname === "/signup-company") && authenticated) {
-    return NextResponse.redirect(new URL("/inbox", request.url))
-  }
+  // No redirigimos automáticamente /login -> /inbox aquí: el middleware solo valida
+  // la firma del JWT, no si la sesión sigue activa en la base de datos (session_key,
+  // status). Si ambos chequeos no coinciden (ej. sesión cerrada en otro dispositivo),
+  // esto causaba un loop infinito: /inbox detecta sesión inválida y manda a /login,
+  // el middleware la ve "válida" y rebota de vuelta a /inbox. El login exitoso ya
+  // redirige a /inbox del lado del cliente, así que esta regla no hace falta.
 
   return NextResponse.next()
 }
