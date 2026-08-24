@@ -35,6 +35,8 @@ export async function GET(request: Request) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       return NextResponse.json({ error: "Not available in demo mode" }, { status: 400 })
@@ -57,7 +59,7 @@ export async function GET(request: Request) {
     const rows: any[] = await db`
       SELECT id, external_id, processed, error, created_at, payload
       FROM webhook_logs
-      WHERE channel = ${channel}
+      WHERE channel = ${channel} AND tenant_id = ${tenantId}
       ORDER BY created_at DESC
       LIMIT ${limit}
     `

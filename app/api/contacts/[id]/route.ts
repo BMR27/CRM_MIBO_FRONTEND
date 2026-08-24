@@ -42,11 +42,11 @@ function normalizePhoneToDigits(value: string) {
   return digits
 }
 
-async function loadContactByIdText(id: string) {
+async function loadContactByIdText(id: string, tenantId: string) {
   const rows: any[] = await sql!`
     SELECT *
     FROM contacts
-    WHERE id::text = ${id}
+    WHERE id::text = ${id} AND tenant_id = ${tenantId}
     LIMIT 1
   `
   return rows?.[0] || null
@@ -61,6 +61,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (role !== "admin" && role !== "supervisor") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
     const idText = String(id || "").trim()
@@ -80,7 +82,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const includeChannelCols = await hasContactChannelColumns()
 
-    const contact = await loadContactByIdText(idText)
+    const contact = await loadContactByIdText(idText, tenantId)
     if (!contact) return NextResponse.json({ error: "Contact not found" }, { status: 404 })
 
     const channel = includeChannelCols ? String(contact?.channel || "whatsapp").toLowerCase() : "whatsapp"
@@ -141,6 +143,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     if (role !== "admin" && role !== "supervisor") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
     const idText = String(id || "").trim()
@@ -158,7 +162,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       const rows: any[] = await (tx as any)`
         SELECT *
         FROM contacts
-        WHERE id::text = ${idText}
+        WHERE id::text = ${idText} AND tenant_id = ${tenantId}
         LIMIT 1
       `
       const contact = rows?.[0]

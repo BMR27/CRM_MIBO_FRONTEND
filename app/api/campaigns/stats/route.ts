@@ -89,6 +89,8 @@ export async function GET() {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       return NextResponse.json({ error: "Stats not available in demo mode" }, { status: 400 })
@@ -125,6 +127,7 @@ export async function GET() {
             ) AS failed
           FROM messages
           WHERE (metadata->>'campaignId') IS NOT NULL
+            AND tenant_id = ${tenantId}
         `
         totalSent = Number(rows?.[0]?.sent || 0)
         totalFailed = Number(rows?.[0]?.failed || 0)
@@ -141,6 +144,7 @@ export async function GET() {
           COALESCE(SUM(failed), 0) AS failed,
           COALESCE(SUM(skipped), 0) AS skipped
         FROM bulk_campaigns
+        WHERE tenant_id = ${tenantId}
       `
       totalSent = Number(rows?.[0]?.sent || 0)
       totalFailed = Number(rows?.[0]?.failed || 0)
@@ -153,7 +157,7 @@ export async function GET() {
       const rows: any[] = await db`
         SELECT COUNT(*) AS c
         FROM bulk_campaigns
-        WHERE status IN ('scheduled', 'sending')
+        WHERE status IN ('scheduled', 'sending') AND tenant_id = ${tenantId}
       `
       activeCampaigns = Number(rows?.[0]?.c || 0)
     } catch {
@@ -173,6 +177,7 @@ export async function GET() {
           WHERE channel = 'bulk_campaign'
             AND external_id IS NOT NULL
             AND external_id !~ '^[0-9]+$'
+            AND tenant_id = ${tenantId}
           ORDER BY external_id, created_at DESC
         )
         SELECT COUNT(*) AS c
@@ -206,6 +211,7 @@ export async function GET() {
             WHERE direction = 'outbound'
               AND (metadata->>'campaignId') IS NOT NULL
               AND COALESCE((metadata->>'source'), '') = 'bulk'
+              AND tenant_id = ${tenantId}
           `
           const readCount = Number(rows?.[0]?.read_count || 0)
           const totalCount = Number(rows?.[0]?.total_count || 0)
@@ -220,6 +226,7 @@ export async function GET() {
             WHERE direction = 'outbound'
               AND (metadata->>'campaignId') IS NOT NULL
               AND COALESCE((metadata->>'source'), '') = 'bulk'
+              AND tenant_id = ${tenantId}
           `
           const readCount = Number(rows?.[0]?.read_count || 0)
           const totalCount = Number(rows?.[0]?.total_count || 0)
@@ -234,6 +241,7 @@ export async function GET() {
             WHERE sender_type = 'agent'
               AND (metadata->>'campaignId') IS NOT NULL
               AND COALESCE((metadata->>'source'), '') = 'bulk'
+              AND tenant_id = ${tenantId}
           `
           const readCount = Number(rows?.[0]?.read_count || 0)
           const totalCount = Number(rows?.[0]?.total_count || 0)
@@ -255,6 +263,7 @@ export async function GET() {
               WHERE direction = 'outbound'
                 AND (metadata->>'campaignId') IS NOT NULL
                 AND COALESCE((metadata->>'source'), '') = 'bulk'
+                AND tenant_id = ${tenantId}
               GROUP BY conversation_id
             ), replied AS (
               SELECT DISTINCT m.conversation_id
@@ -278,6 +287,7 @@ export async function GET() {
               WHERE sender_type = 'agent'
                 AND (metadata->>'campaignId') IS NOT NULL
                 AND COALESCE((metadata->>'source'), '') = 'bulk'
+                AND tenant_id = ${tenantId}
               GROUP BY conversation_id
             ), replied AS (
               SELECT DISTINCT m.conversation_id

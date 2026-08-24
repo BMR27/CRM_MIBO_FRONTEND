@@ -25,6 +25,8 @@ export async function GET(request: Request) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       return NextResponse.json({ error: "Not available in demo mode" }, { status: 400 })
@@ -75,6 +77,7 @@ export async function GET(request: Request) {
       FROM messages
       WHERE ${whereOutbound}
         AND COALESCE((metadata->>'source'), '') = 'bulk'
+        AND tenant_id = ${tenantId}
         ${whereCampaign}
       GROUP BY 1
       ORDER BY 2 DESC
@@ -99,6 +102,7 @@ export async function GET(request: Request) {
       FROM messages
       WHERE ${whereOutbound}
         AND COALESCE((metadata->>'source'), '') = 'bulk'
+        AND tenant_id = ${tenantId}
         ${whereCampaign}
       ORDER BY created_at DESC
       LIMIT 20
@@ -119,7 +123,7 @@ export async function GET(request: Request) {
           COALESCE(metadata->'send'->>'to', NULL) AS send_to,
           COALESCE(metadata->'send'->>'externalMessageId', NULL) AS external_message_id
         FROM messages
-        WHERE ${whereOutbound}
+        WHERE ${whereOutbound} AND tenant_id = ${tenantId}
         ORDER BY created_at DESC
         LIMIT 25
       `

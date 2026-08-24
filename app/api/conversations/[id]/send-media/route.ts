@@ -99,6 +99,8 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
 
@@ -171,7 +173,7 @@ export async function POST(
               c.phone_number
             FROM conversations conv
             LEFT JOIN contacts c ON conv.contact_id = c.id
-            WHERE conv.id::text = ${id}
+            WHERE conv.id::text = ${id} AND conv.tenant_id = ${tenantId}
             LIMIT 1
           `
         : await db`
@@ -179,7 +181,7 @@ export async function POST(
               c.phone_number
             FROM conversations conv
             LEFT JOIN contacts c ON conv.contact_id = c.id
-            WHERE conv.id::text = ${id}
+            WHERE conv.id::text = ${id} AND conv.tenant_id = ${tenantId}
             LIMIT 1
           `
 
@@ -413,6 +415,7 @@ export async function POST(
                 direction,
                 message_type,
                 metadata,
+                tenant_id,
                 created_at
               )
               VALUES (
@@ -425,6 +428,7 @@ export async function POST(
                 'outbound',
                 ${type},
                 ${JSON.stringify(metadata)}::jsonb,
+                ${tenantId},
                 NOW()
               )
               RETURNING id, content, sender_type, sender_id, created_at, message_type, metadata
@@ -437,6 +441,7 @@ export async function POST(
                 content,
                 message_type,
                 metadata,
+                tenant_id,
                 created_at
               )
               VALUES (
@@ -446,6 +451,7 @@ export async function POST(
                 ${storedContent},
                 ${type},
                 ${JSON.stringify(metadata)}::jsonb,
+                ${tenantId},
                 NOW()
               )
               RETURNING id, content, sender_type, sender_id, created_at, message_type, metadata
@@ -463,7 +469,7 @@ export async function POST(
       await db`
         UPDATE conversations
         SET last_message_at = NOW(), updated_at = NOW()
-        WHERE id::text = ${id}
+        WHERE id::text = ${id} AND tenant_id = ${tenantId}
       `
     } catch {
       // ignore

@@ -91,12 +91,12 @@ async function ensureWebhookLogsTable(db: Db) {
   }
 }
 
-async function recordCampaignEvent(db: Db, campaignId: string, payload: any) {
+async function recordCampaignEvent(db: Db, tenantId: string, campaignId: string, payload: any) {
   try {
     await ensureWebhookLogsTable(db)
     await db`
-      INSERT INTO webhook_logs (channel, external_id, payload, processed)
-      VALUES ('bulk_campaign', ${campaignId}, ${JSON.stringify(payload)}::jsonb, true)
+      INSERT INTO webhook_logs (channel, external_id, payload, processed, tenant_id)
+      VALUES ('bulk_campaign', ${campaignId}, ${JSON.stringify(payload)}::jsonb, true, ${tenantId})
     `
   } catch {
     // ignore
@@ -221,11 +221,11 @@ async function getConversationStatusValues(db: Db): Promise<{ openValue: string;
   return { openValue, closedValue }
 }
 
-async function ensureConversationForContact(db: Db, contactIdText: string) {
+async function ensureConversationForContact(db: Db, tenantId: string, contactIdText: string) {
   const contactRows: any[] = await db`
     SELECT *
     FROM contacts
-    WHERE id::text = ${contactIdText}
+    WHERE id::text = ${contactIdText} AND tenant_id = ${tenantId}
     LIMIT 1
   `
   if (!contactRows.length) {
@@ -242,6 +242,7 @@ async function ensureConversationForContact(db: Db, contactIdText: string) {
           SELECT *
           FROM conversations
           WHERE contact_id = ${contact.id}
+            AND tenant_id = ${tenantId}
             AND status::text != ${statusClosedValue}
           ORDER BY created_at DESC
           LIMIT 1
@@ -249,7 +250,7 @@ async function ensureConversationForContact(db: Db, contactIdText: string) {
       : await db`
           SELECT *
           FROM conversations
-          WHERE contact_id = ${contact.id}
+          WHERE contact_id = ${contact.id} AND tenant_id = ${tenantId}
           ORDER BY created_at DESC
           LIMIT 1
         `
@@ -273,6 +274,7 @@ async function ensureConversationForContact(db: Db, contactIdText: string) {
           channel,
           external_user_id,
           external_conversation_id,
+          tenant_id,
           created_at,
           updated_at,
           last_message_at
@@ -284,6 +286,7 @@ async function ensureConversationForContact(db: Db, contactIdText: string) {
           ${channel},
           ${externalUserId},
           ${externalUserId ? `${channel}_${externalUserId}` : null},
+          ${tenantId},
           NOW(),
           NOW(),
           NOW()
@@ -298,6 +301,7 @@ async function ensureConversationForContact(db: Db, contactIdText: string) {
           priority,
           channel,
           external_user_id,
+          tenant_id,
           created_at,
           updated_at,
           last_message_at
@@ -308,6 +312,7 @@ async function ensureConversationForContact(db: Db, contactIdText: string) {
           'medium',
           ${channel},
           ${externalUserId},
+          ${tenantId},
           NOW(),
           NOW(),
           NOW()
@@ -320,6 +325,7 @@ async function ensureConversationForContact(db: Db, contactIdText: string) {
           contact_id,
           status,
           priority,
+          tenant_id,
           created_at,
           updated_at,
           last_message_at
@@ -328,6 +334,7 @@ async function ensureConversationForContact(db: Db, contactIdText: string) {
           ${contact.id},
           ${statusOpenValue},
           'medium',
+          ${tenantId},
           NOW(),
           NOW(),
           NOW()
@@ -463,6 +470,7 @@ async function sendFacebookText(message: string, recipientId: string) {
 
 async function insertOutboundMessage(
   db: Db,
+  tenantId: string,
   opts: { conversationId: string; userId: string | number; content: string; metadata?: any },
 ) {
   const { conversationId, userId, content, metadata } = opts
@@ -473,14 +481,14 @@ async function insertOutboundMessage(
     let result: any[] = []
     try {
       result = await db`
-        INSERT INTO messages (conversation_id, sender_type, sender_id, content, metadata)
-        VALUES (${conversationId}::uuid, 'agent', ${userId}, ${content}, ${metadata ? JSON.stringify(metadata) : null}::jsonb)
+        INSERT INTO messages (conversation_id, sender_type, sender_id, content, metadata, tenant_id)
+        VALUES (${conversationId}::uuid, 'agent', ${userId}, ${content}, ${metadata ? JSON.stringify(metadata) : null}::jsonb, ${tenantId})
         RETURNING id
       `
     } catch {
       result = await db`
-        INSERT INTO messages (conversation_id, sender_type, sender_id, content)
-        VALUES (${conversationId}::uuid, 'agent', ${userId}, ${content})
+        INSERT INTO messages (conversation_id, sender_type, sender_id, content, tenant_id)
+        VALUES (${conversationId}::uuid, 'agent', ${userId}, ${content}, ${tenantId})
         RETURNING id
       `
     }
@@ -492,14 +500,14 @@ async function insertOutboundMessage(
       let result: any[] = []
       try {
         result = await db`
-          INSERT INTO messages (conversation_id, sender_type, sender_id, content, metadata)
-          VALUES (${asNumber}, 'agent', ${userId}, ${content}, ${metadata ? JSON.stringify(metadata) : null}::jsonb)
+          INSERT INTO messages (conversation_id, sender_type, sender_id, content, metadata, tenant_id)
+          VALUES (${asNumber}, 'agent', ${userId}, ${content}, ${metadata ? JSON.stringify(metadata) : null}::jsonb, ${tenantId})
           RETURNING id
         `
       } catch {
         result = await db`
-          INSERT INTO messages (conversation_id, sender_type, sender_id, content)
-          VALUES (${asNumber}, 'agent', ${userId}, ${content})
+          INSERT INTO messages (conversation_id, sender_type, sender_id, content, tenant_id)
+          VALUES (${asNumber}, 'agent', ${userId}, ${content}, ${tenantId})
           RETURNING id
         `
       }
@@ -509,14 +517,14 @@ async function insertOutboundMessage(
       let result: any[] = []
       try {
         result = await db`
-          INSERT INTO messages (conversation_id, sender_type, sender_id, content, metadata)
-          VALUES (${conversationId}, 'agent', ${userId}, ${content}, ${metadata ? JSON.stringify(metadata) : null}::jsonb)
+          INSERT INTO messages (conversation_id, sender_type, sender_id, content, metadata, tenant_id)
+          VALUES (${conversationId}, 'agent', ${userId}, ${content}, ${metadata ? JSON.stringify(metadata) : null}::jsonb, ${tenantId})
           RETURNING id
         `
       } catch {
         result = await db`
-          INSERT INTO messages (conversation_id, sender_type, sender_id, content)
-          VALUES (${conversationId}, 'agent', ${userId}, ${content})
+          INSERT INTO messages (conversation_id, sender_type, sender_id, content, tenant_id)
+          VALUES (${conversationId}, 'agent', ${userId}, ${content}, ${tenantId})
           RETURNING id
         `
       }
@@ -529,7 +537,7 @@ async function insertOutboundMessage(
     await db`
       UPDATE conversations
       SET last_message_at = NOW(), updated_at = NOW()
-      WHERE id::text = ${conversationId}
+      WHERE id::text = ${conversationId} AND tenant_id = ${tenantId}
     `
   } catch {
     // ignore
@@ -573,6 +581,7 @@ function generateCampaignId() {
 
 async function createBulkCampaign(
   db: Db,
+  tenantId: string,
   input: {
     name: string
     message: string
@@ -586,7 +595,7 @@ async function createBulkCampaign(
 ) {
   try {
     const rows: any[] = await db`
-      INSERT INTO bulk_campaigns (name, message, send_mode, whatsapp_template, status, total, scheduled_at, created_by, created_at, updated_at)
+      INSERT INTO bulk_campaigns (name, message, send_mode, whatsapp_template, status, total, scheduled_at, created_by, tenant_id, created_at, updated_at)
       VALUES (
         ${input.name},
         ${input.message},
@@ -596,6 +605,7 @@ async function createBulkCampaign(
         ${input.total},
         ${input.scheduledAt || null},
         ${typeof input.createdBy === "number" ? input.createdBy : null},
+        ${tenantId},
         NOW(),
         NOW()
       )
@@ -609,6 +619,7 @@ async function createBulkCampaign(
 
 async function updateBulkCampaign(
   db: Db,
+  tenantId: string,
   campaignId: string,
   patch: Partial<{ status: BulkCampaignStatus; sent: number; failed: number; skipped: number; total: number; startedAt: Date | null; completedAt: Date | null }>,
 ) {
@@ -624,7 +635,7 @@ async function updateBulkCampaign(
         started_at = COALESCE(${patch.startedAt ?? null}, started_at),
         completed_at = COALESCE(${patch.completedAt ?? null}, completed_at),
         updated_at = NOW()
-      WHERE id::text = ${campaignId}
+      WHERE id::text = ${campaignId} AND tenant_id = ${tenantId}
     `
   } catch {
     // ignore
@@ -662,6 +673,8 @@ export async function POST(request: Request) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       return NextResponse.json({ error: "Bulk send is not available in demo mode" }, { status: 400 })
@@ -733,7 +746,7 @@ export async function POST(request: Request) {
     await ensureBulkCampaignTables(db)
     try {
       if (!campaignIdFromClient) {
-        const created = await createBulkCampaign(db, {
+        const created = await createBulkCampaign(db, tenantId, {
           name: campaignName,
           message: messageTemplate,
           sendMode,
@@ -750,7 +763,7 @@ export async function POST(request: Request) {
         // Only attempt update if the id looks numeric (bulk_campaigns is SERIAL)
         if (/^\d+$/.test(campaignIdFromClient)) {
           persistedCampaignId = campaignIdFromClient
-          await updateBulkCampaign(db, campaignIdFromClient, { status: "sending", startedAt: new Date(), total: contactIds.length })
+          await updateBulkCampaign(db, tenantId, campaignIdFromClient, { status: "sending", startedAt: new Date(), total: contactIds.length })
         }
       }
     } catch {
@@ -758,12 +771,12 @@ export async function POST(request: Request) {
     }
 
     if (persistedCampaignId) {
-      await updateBulkCampaign(db, persistedCampaignId, { status: "sending", startedAt: new Date() })
+      await updateBulkCampaign(db, tenantId, persistedCampaignId, { status: "sending", startedAt: new Date() })
     }
 
     // If this campaign isn't in bulk_campaigns, still persist an event so it shows up in lists/stats.
     if (!persistedCampaignId && campaignId) {
-      await recordCampaignEvent(db, campaignId, {
+      await recordCampaignEvent(db, tenantId, campaignId, {
         kind: "campaign",
         id: campaignId,
         name: campaignName,
@@ -784,7 +797,7 @@ export async function POST(request: Request) {
     // Sequential send to avoid rate limits
     for (const contactIdText of contactIds) {
       try {
-        const ensured = await ensureConversationForContact(db, contactIdText)
+        const ensured = await ensureConversationForContact(db, tenantId, contactIdText)
         if (!ensured.ok) {
           results.push({ contactId: contactIdText, ok: false, error: ensured.error })
           continue
@@ -805,7 +818,7 @@ export async function POST(request: Request) {
           | { ok: false; error: string; details?: any; to?: string | null }
 
         if (channel !== "whatsapp") {
-          await insertOutboundMessage(db, {
+          await insertOutboundMessage(db, tenantId, {
             conversationId,
             userId: (user as any).id,
             content: renderedDisplayContent,
@@ -839,7 +852,7 @@ export async function POST(request: Request) {
         sendRes = await sendWhatsappTemplate(whatsappTemplate!, phoneNumber, renderedBodyParams)
 
         // Save message in DB regardless of send result (so UI shows what was attempted)
-        const inserted = await insertOutboundMessage(db, {
+        const inserted = await insertOutboundMessage(db, tenantId, {
           conversationId,
           userId: (user as any).id,
           content: renderedDisplayContent,
@@ -937,7 +950,7 @@ export async function POST(request: Request) {
 
     if (persistedCampaignId) {
       const status: BulkCampaignStatus = failed === 0 ? "completed" : sent > 0 ? "completed" : "failed"
-      await updateBulkCampaign(db, persistedCampaignId, {
+      await updateBulkCampaign(db, tenantId, persistedCampaignId, {
         status,
         total,
         sent,
@@ -949,7 +962,7 @@ export async function POST(request: Request) {
 
     if (!persistedCampaignId && campaignId) {
       const status: BulkCampaignStatus = failed === 0 ? "completed" : sent > 0 ? "completed" : "failed"
-      await recordCampaignEvent(db, campaignId, {
+      await recordCampaignEvent(db, tenantId, campaignId, {
         kind: "campaign",
         id: campaignId,
         name: campaignName,

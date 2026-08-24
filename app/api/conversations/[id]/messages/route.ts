@@ -15,6 +15,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
 
@@ -68,7 +70,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         FROM messages m
         LEFT JOIN contacts c ON m.sender_type IN ('contact','customer') AND m.sender_id = c.id
         LEFT JOIN users u ON m.sender_type = 'agent' AND m.sender_id = u.id
-        WHERE m.conversation_id::text = ${id}
+        WHERE m.conversation_id::text = ${id} AND m.tenant_id = ${tenantId}
         ORDER BY m.created_at ASC
       `
     } catch (queryError) {
@@ -104,7 +106,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             FROM messages m
             LEFT JOIN contacts c ON m.sender_type IN ('contact','customer') AND m.sender_id = c.id
             LEFT JOIN users u ON m.sender_type = 'agent' AND m.sender_id = u.id
-            WHERE m.conversation_id::text = ${id}
+            WHERE m.conversation_id::text = ${id} AND m.tenant_id = ${tenantId}
             ORDER BY m.created_at ASC
           `
         } catch {
@@ -139,7 +141,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             FROM messages m
             LEFT JOIN contacts c ON m.sender_type IN ('contact','customer') AND m.sender_id = c.id
             LEFT JOIN users u ON m.sender_type = 'agent' AND m.sender_id = u.id
-            WHERE CAST(m.conversation_id AS VARCHAR) = ${id}
+            WHERE CAST(m.conversation_id AS VARCHAR) = ${id} AND m.tenant_id = ${tenantId}
             ORDER BY m.created_at ASC
           `
         } catch (castError: any) {
@@ -171,7 +173,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               FROM messages m
               LEFT JOIN contacts c ON m.sender_type IN ('contact','customer') AND m.sender_id = c.id
               LEFT JOIN users u ON m.sender_type = 'agent' AND m.sender_id = u.id
-              WHERE CAST(m.conversation_id AS VARCHAR) = ${id}
+              WHERE CAST(m.conversation_id AS VARCHAR) = ${id} AND m.tenant_id = ${tenantId}
               ORDER BY m.created_at ASC
             `
           } else {
@@ -272,6 +274,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         UPDATE messages 
         SET read_at = NOW() 
         WHERE conversation_id::text = ${id}
+          AND tenant_id = ${tenantId}
           AND read_at IS NULL 
           AND sender_type = 'contact'
       `
@@ -292,6 +295,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
     const { content } = await request.json()
@@ -346,7 +351,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             c.phone_number
           FROM conversations conv
           LEFT JOIN contacts c ON conv.contact_id = c.id
-          WHERE conv.id::text = ${id}
+          WHERE conv.id::text = ${id} AND conv.tenant_id = ${tenantId}
           LIMIT 1
         `
       } else if (hasConvChannel) {
@@ -356,7 +361,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             c.phone_number
           FROM conversations conv
           LEFT JOIN contacts c ON conv.contact_id = c.id
-          WHERE conv.id::text = ${id}
+          WHERE conv.id::text = ${id} AND conv.tenant_id = ${tenantId}
           LIMIT 1
         `
       } else if (hasContactChannel) {
@@ -366,7 +371,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             c.phone_number
           FROM conversations conv
           LEFT JOIN contacts c ON conv.contact_id = c.id
-          WHERE conv.id::text = ${id}
+          WHERE conv.id::text = ${id} AND conv.tenant_id = ${tenantId}
           LIMIT 1
         `
       } else {
@@ -376,7 +381,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             c.phone_number
           FROM conversations conv
           LEFT JOIN contacts c ON conv.contact_id = c.id
-          WHERE conv.id::text = ${id}
+          WHERE conv.id::text = ${id} AND conv.tenant_id = ${tenantId}
           LIMIT 1
         `
       }
@@ -454,8 +459,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     try {
       // Try UUID first
       const result = await sql`
-        INSERT INTO messages (conversation_id, sender_type, sender_id, content)
-        VALUES (${id}::uuid, 'agent', ${user.id}, ${content})
+        INSERT INTO messages (conversation_id, sender_type, sender_id, content, tenant_id)
+        VALUES (${id}::uuid, 'agent', ${user.id}, ${content}, ${tenantId})
         RETURNING id, content, sender_type, sender_id, created_at
       `
       message = result[0]
@@ -464,8 +469,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       // Try as integer
       try {
         const result = await sql`
-          INSERT INTO messages (conversation_id, sender_type, sender_id, content)
-          VALUES (${Number.parseInt(id)}, 'agent', ${user.id}, ${content})
+          INSERT INTO messages (conversation_id, sender_type, sender_id, content, tenant_id)
+          VALUES (${Number.parseInt(id)}, 'agent', ${user.id}, ${content}, ${tenantId})
           RETURNING id, content, sender_type, sender_id, created_at
         `
         message = result[0]
@@ -480,7 +485,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       await sql`
         UPDATE conversations 
         SET last_message_at = NOW() 
-        WHERE id::text = ${id}
+        WHERE id::text = ${id} AND tenant_id = ${tenantId}
       `
     } catch (updateError) {
       console.error("[POST messages] Update failed (not critical):", updateError)

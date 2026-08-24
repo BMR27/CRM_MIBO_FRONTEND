@@ -60,6 +60,7 @@ async function ensureBulkCampaignTables(db: Db) {
 
 async function createBulkCampaign(
   db: Db,
+  tenantId: string,
   input: {
     name: string
     message: string
@@ -73,7 +74,7 @@ async function createBulkCampaign(
 ) {
   try {
     const rows: any[] = await db`
-      INSERT INTO bulk_campaigns (name, message, send_mode, whatsapp_template, status, total, scheduled_at, created_by, created_at, updated_at)
+      INSERT INTO bulk_campaigns (name, message, send_mode, whatsapp_template, status, total, scheduled_at, created_by, tenant_id, created_at, updated_at)
       VALUES (
         ${input.name},
         ${input.message},
@@ -83,6 +84,7 @@ async function createBulkCampaign(
         ${input.total},
         ${input.scheduledAt},
         ${typeof input.createdBy === "number" ? input.createdBy : null},
+        ${tenantId},
         NOW(),
         NOW()
       )
@@ -118,12 +120,12 @@ async function ensureWebhookLogsTable(db: Db) {
   }
 }
 
-async function recordCampaignEvent(db: Db, campaignId: string, payload: any) {
+async function recordCampaignEvent(db: Db, tenantId: string, campaignId: string, payload: any) {
   try {
     await ensureWebhookLogsTable(db)
     await db`
-      INSERT INTO webhook_logs (channel, external_id, payload, processed)
-      VALUES ('bulk_campaign', ${campaignId}, ${JSON.stringify(payload)}::jsonb, true)
+      INSERT INTO webhook_logs (channel, external_id, payload, processed, tenant_id)
+      VALUES ('bulk_campaign', ${campaignId}, ${JSON.stringify(payload)}::jsonb, true, ${tenantId})
     `
     return true
   } catch {
@@ -135,6 +137,8 @@ export async function POST(request: Request) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       return NextResponse.json({ error: "Bulk send is not available in demo mode" }, { status: 400 })
@@ -196,7 +200,7 @@ export async function POST(request: Request) {
     const db = sql
     await ensureBulkCampaignTables(db)
 
-    let campaignId = await createBulkCampaign(db, {
+    let campaignId = await createBulkCampaign(db, tenantId, {
       name,
       message: persistedMessage,
       sendMode,
@@ -210,7 +214,7 @@ export async function POST(request: Request) {
     // Fallback: if bulk_campaigns couldn't be written (permissions/schema), persist via webhook_logs
     if (!campaignId) {
       campaignId = generateFallbackCampaignId()
-      await recordCampaignEvent(db, campaignId, {
+      await recordCampaignEvent(db, tenantId, campaignId, {
         kind: "campaign",
         id: campaignId,
         name,

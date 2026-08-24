@@ -11,6 +11,8 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       const macros = demoMacrosStore.map((m) => ({
@@ -22,7 +24,7 @@ export async function GET() {
     }
 
     const macros = await sql`
-      SELECT 
+      SELECT
         m.id,
         m.title,
         m.content,
@@ -31,7 +33,8 @@ export async function GET() {
         m.created_at,
         u.name as created_by_name
       FROM macros m
-      LEFT JOIN users u ON m.created_by = u.id
+      LEFT JOIN users u ON m.created_by_id = u.id
+      WHERE m.tenant_id = ${tenantId}
       ORDER BY m.usage_count DESC, m.title ASC
     `
 
@@ -48,6 +51,8 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { title, content, shortcut } = await request.json()
 
@@ -75,8 +80,8 @@ export async function POST(request: Request) {
     }
 
     const [macro] = await sql`
-      INSERT INTO macros (title, content, shortcut, created_by)
-      VALUES (${title}, ${content}, ${shortcut || null}, ${user.id})
+      INSERT INTO macros (title, content, shortcut, created_by_id, tenant_id)
+      VALUES (${title}, ${content}, ${shortcut || null}, ${user.id}, ${tenantId})
       RETURNING id, title, content, shortcut, usage_count, created_at
     `
 

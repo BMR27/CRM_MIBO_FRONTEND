@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { getSession } from "@/lib/session"
 
 interface Comment {
   id: string
@@ -12,6 +13,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getSession()
+    if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
+
     const { id } = await params
     const body = await request.json()
     const { comment } = body
@@ -30,12 +36,12 @@ export async function POST(
     let getResult: any = []
     try {
       getResult = await sql!`
-        SELECT comments FROM conversations WHERE id::text = ${id}
+        SELECT comments FROM conversations WHERE id::text = ${id} AND tenant_id = ${tenantId}
       `
     } catch (e) {
       if (!isNaN(Number(id))) {
         getResult = await sql!`
-          SELECT comments FROM conversations WHERE id = ${Number.parseInt(id)}
+          SELECT comments FROM conversations WHERE id = ${Number.parseInt(id)} AND tenant_id = ${tenantId}
         `
       } else {
         throw e
@@ -75,7 +81,7 @@ export async function POST(
       updateResult = await sql!`
         UPDATE conversations 
         SET comments = ${commentsJson}, updated_at = NOW()
-        WHERE id::text = ${id}
+        WHERE id::text = ${id} AND tenant_id = ${tenantId}
         RETURNING id, comments
       `
     } catch (e) {
@@ -83,7 +89,7 @@ export async function POST(
         updateResult = await sql!`
           UPDATE conversations 
           SET comments = ${commentsJson}, updated_at = NOW()
-          WHERE id = ${Number.parseInt(id)}
+          WHERE id = ${Number.parseInt(id)} AND tenant_id = ${tenantId}
           RETURNING id, comments
         `
       } else {
@@ -109,6 +115,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getSession()
+    if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
+
     const { id } = await params
     const body = await request.json()
     const { commentId, text } = body
@@ -127,12 +138,12 @@ export async function PUT(
     let getResult: any = []
     try {
       getResult = await sql!`
-        SELECT comments FROM conversations WHERE id::text = ${id}
+        SELECT comments FROM conversations WHERE id::text = ${id} AND tenant_id = ${tenantId}
       `
     } catch (e) {
       if (!isNaN(Number(id))) {
         getResult = await sql!`
-          SELECT comments FROM conversations WHERE id = ${Number.parseInt(id)}
+          SELECT comments FROM conversations WHERE id = ${Number.parseInt(id)} AND tenant_id = ${tenantId}
         `
       } else {
         throw e
@@ -178,7 +189,7 @@ export async function PUT(
       updateResult = await sql!`
         UPDATE conversations 
         SET comments = ${commentsJson}, updated_at = NOW()
-        WHERE id::text = ${id}
+        WHERE id::text = ${id} AND tenant_id = ${tenantId}
         RETURNING id, comments
       `
     } catch (e) {
@@ -186,7 +197,7 @@ export async function PUT(
         updateResult = await sql!`
           UPDATE conversations 
           SET comments = ${commentsJson}, updated_at = NOW()
-          WHERE id = ${Number.parseInt(id)}
+          WHERE id = ${Number.parseInt(id)} AND tenant_id = ${tenantId}
           RETURNING id, comments
         `
       } else {
@@ -212,6 +223,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getSession()
+    if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
+
     const { id } = await params
     const body = await request.json()
     const { commentId } = body
@@ -230,12 +246,12 @@ export async function DELETE(
     let getResult: any = []
     try {
       getResult = await sql!`
-        SELECT comments FROM conversations WHERE id::text = ${id}
+        SELECT comments FROM conversations WHERE id::text = ${id} AND tenant_id = ${tenantId}
       `
     } catch (e) {
       if (!isNaN(Number(id))) {
         getResult = await sql!`
-          SELECT comments FROM conversations WHERE id = ${Number.parseInt(id)}
+          SELECT comments FROM conversations WHERE id = ${Number.parseInt(id)} AND tenant_id = ${tenantId}
         `
       } else {
         throw e
@@ -276,7 +292,7 @@ export async function DELETE(
       updateResult = await sql!`
         UPDATE conversations 
         SET comments = ${commentsJson}, updated_at = NOW()
-        WHERE id::text = ${id}
+        WHERE id::text = ${id} AND tenant_id = ${tenantId}
         RETURNING id, comments
       `
     } catch (e) {
@@ -284,7 +300,7 @@ export async function DELETE(
         updateResult = await sql!`
           UPDATE conversations 
           SET comments = ${commentsJson}, updated_at = NOW()
-          WHERE id = ${Number.parseInt(id)}
+          WHERE id = ${Number.parseInt(id)} AND tenant_id = ${tenantId}
           RETURNING id, comments
         `
       } else {

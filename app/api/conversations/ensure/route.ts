@@ -101,6 +101,8 @@ export async function POST(request: Request) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const body = await request.json().catch(() => ({}))
     const contactIdRaw = body?.contactId ?? body?.contact_id
@@ -130,7 +132,7 @@ export async function POST(request: Request) {
     const contactRows: any[] = await sql!`
       SELECT *
       FROM contacts
-      WHERE id::text = ${contactIdText}
+      WHERE id::text = ${contactIdText} AND tenant_id = ${tenantId}
       LIMIT 1
     `
 
@@ -149,7 +151,7 @@ export async function POST(request: Request) {
       conversationRows = await sql!`
         SELECT *
         FROM conversations
-        WHERE contact_id = ${contact.id}
+        WHERE contact_id = ${contact.id} AND tenant_id = ${tenantId}
         ORDER BY last_message_at DESC NULLS LAST, updated_at DESC NULLS LAST, created_at DESC
         LIMIT 1
       `
@@ -169,7 +171,8 @@ export async function POST(request: Request) {
             SELECT c.*
             FROM conversations c
             LEFT JOIN contacts ct ON c.contact_id = ct.id
-            WHERE (
+            WHERE c.tenant_id = ${tenantId}
+              AND (
               (${contactExternalUserId} <> '' AND c.external_user_id = ${contactExternalUserId})
               OR (${contactPhoneDigits} <> '' AND regexp_replace(COALESCE(ct.phone_number, ''), '[^0-9]', '', 'g') = ${contactPhoneDigits})
               OR (${contactPhoneDigits} <> '' AND regexp_replace(COALESCE(c.external_user_id, ''), '[^0-9]', '', 'g') = ${contactPhoneDigits})
@@ -182,7 +185,8 @@ export async function POST(request: Request) {
             SELECT c.*
             FROM conversations c
             LEFT JOIN contacts ct ON c.contact_id = ct.id
-            WHERE regexp_replace(COALESCE(ct.phone_number, ''), '[^0-9]', '', 'g') = ${contactPhoneDigits}
+            WHERE c.tenant_id = ${tenantId}
+              AND regexp_replace(COALESCE(ct.phone_number, ''), '[^0-9]', '', 'g') = ${contactPhoneDigits}
             ORDER BY c.last_message_at DESC NULLS LAST, c.updated_at DESC NULLS LAST, c.created_at DESC
             LIMIT 1
           `
@@ -197,7 +201,7 @@ export async function POST(request: Request) {
         const reopenedRows: any[] = await sql!`
           UPDATE conversations
           SET status = ${statusOpenValue}, updated_at = NOW()
-          WHERE id = ${conversationRows[0].id}
+          WHERE id = ${conversationRows[0].id} AND tenant_id = ${tenantId}
           RETURNING *
         `
         if (reopenedRows.length) conversationRows = reopenedRows
@@ -221,6 +225,7 @@ export async function POST(request: Request) {
             channel,
             external_user_id,
             external_conversation_id,
+            tenant_id,
             created_at,
             updated_at,
             last_message_at
@@ -232,6 +237,7 @@ export async function POST(request: Request) {
             ${channel},
             ${externalUserId},
             ${externalUserId ? `${channel}_${externalUserId}` : null},
+            ${tenantId},
             NOW(),
             NOW(),
             NOW()
@@ -246,6 +252,7 @@ export async function POST(request: Request) {
             priority,
             channel,
             external_user_id,
+            tenant_id,
             created_at,
             updated_at,
             last_message_at
@@ -256,6 +263,7 @@ export async function POST(request: Request) {
             'medium',
             ${channel},
             ${externalUserId},
+            ${tenantId},
             NOW(),
             NOW(),
             NOW()
@@ -268,6 +276,7 @@ export async function POST(request: Request) {
             contact_id,
             status,
             priority,
+            tenant_id,
             created_at,
             updated_at,
             last_message_at
@@ -276,6 +285,7 @@ export async function POST(request: Request) {
             ${contact.id},
             ${statusOpenValue},
             'medium',
+            ${tenantId},
             NOW(),
             NOW(),
             NOW()

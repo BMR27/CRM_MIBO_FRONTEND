@@ -31,6 +31,8 @@ export async function GET(
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
 
@@ -64,7 +66,7 @@ export async function GET(
     const result: any = await sql!`
       SELECT *
       FROM conversations
-      WHERE id::text = ${id}
+      WHERE id::text = ${id} AND tenant_id = ${tenantId}
       LIMIT 1
     `
 
@@ -193,14 +195,14 @@ function normalizeRole(role: string | undefined | null): "admin" | "supervisor" 
   return roleMap[r] || "other"
 }
 
-async function findConversationId(tx: typeof sql, id: string): Promise<{ id: any } | null> {
+async function findConversationId(tx: typeof sql, id: string, tenantId: string): Promise<{ id: any } | null> {
   // Prefer text comparison for UUID/int compatibility
   let rows: any[] = []
   try {
     rows = await tx`
       SELECT id
       FROM conversations
-      WHERE id::text = ${id}
+      WHERE id::text = ${id} AND tenant_id = ${tenantId}
       LIMIT 1
     `
   } catch {
@@ -213,7 +215,7 @@ async function findConversationId(tx: typeof sql, id: string): Promise<{ id: any
     rows = await tx`
       SELECT id
       FROM conversations
-      WHERE id = ${intId}
+      WHERE id = ${intId} AND tenant_id = ${tenantId}
       LIMIT 1
     `
     if (rows?.length) return rows[0]
@@ -241,13 +243,15 @@ export async function DELETE(
     if (role !== "admin" && role !== "supervisor") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       return NextResponse.json({ ok: true, deleted: id, demo: true })
     }
 
     const deletedId = await sql.begin(async (tx) => {
-      const conv = await findConversationId(tx as any, id)
+      const conv = await findConversationId(tx as any, id, tenantId)
       if (!conv) {
         return null
       }

@@ -9,6 +9,8 @@ export async function GET(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { searchParams } = new URL(request.url)
     const search = searchParams.get("search")
@@ -48,7 +50,7 @@ export async function GET(request: Request) {
           contacts.phone_number
         FROM orders o
         LEFT JOIN contacts ON o.contact_id = contacts.id
-        WHERE o.contact_id = ${contactId}
+        WHERE o.contact_id = ${contactId} AND o.tenant_id = ${tenantId}
         ORDER BY o.created_at DESC
       `
     } else if (search) {
@@ -67,15 +69,15 @@ export async function GET(request: Request) {
           contacts.phone_number
         FROM orders o
         LEFT JOIN contacts ON o.contact_id = contacts.id
-        WHERE o.order_number ILIKE ${`%${search}%`}
-          OR contacts.name ILIKE ${`%${search}%`}
+        WHERE o.tenant_id = ${tenantId}
+          AND (o.order_number ILIKE ${`%${search}%`} OR contacts.name ILIKE ${`%${search}%`})
         ORDER BY o.created_at DESC
         LIMIT 20
       `
     } else {
       // Get all recent orders
       orders = await sql`
-        SELECT 
+        SELECT
           o.id,
           o.order_number,
           o.status,
@@ -88,6 +90,7 @@ export async function GET(request: Request) {
           contacts.phone_number
         FROM orders o
         LEFT JOIN contacts ON o.contact_id = contacts.id
+        WHERE o.tenant_id = ${tenantId}
         ORDER BY o.created_at DESC
         LIMIT 20
       `

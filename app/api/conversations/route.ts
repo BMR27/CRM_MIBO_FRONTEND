@@ -101,6 +101,7 @@ export async function GET(request: Request) {
               FROM conversations c
               LEFT JOIN contacts ON c.contact_id = contacts.id
               LEFT JOIN users u ON c.assigned_agent_id = u.id
+              WHERE c.tenant_id = ${user.tenant_id}
               ORDER BY c.last_message_at DESC
               LIMIT 50
             `
@@ -123,6 +124,7 @@ export async function GET(request: Request) {
               FROM conversations c
               LEFT JOIN contacts ON c.contact_id = contacts.id
               LEFT JOIN users u ON c.assigned_agent_id = u.id
+              WHERE c.tenant_id = ${user.tenant_id}
               ORDER BY c.last_message_at DESC
               LIMIT 50
             `
@@ -147,7 +149,7 @@ export async function GET(request: Request) {
               FROM conversations c
               LEFT JOIN contacts ON c.contact_id = contacts.id
               LEFT JOIN users u ON c.assigned_agent_id = u.id
-              WHERE c.status = ${status}
+              WHERE c.tenant_id = ${user.tenant_id} AND c.status = ${status}
               ORDER BY c.last_message_at DESC
               LIMIT 50
             `
@@ -170,7 +172,7 @@ export async function GET(request: Request) {
               FROM conversations c
               LEFT JOIN contacts ON c.contact_id = contacts.id
               LEFT JOIN users u ON c.assigned_agent_id = u.id
-              WHERE c.status = ${status}
+              WHERE c.tenant_id = ${user.tenant_id} AND c.status = ${status}
               ORDER BY c.last_message_at DESC
               LIMIT 50
             `
@@ -197,7 +199,7 @@ export async function GET(request: Request) {
           FROM conversations c
           LEFT JOIN contacts ON c.contact_id = contacts.id
           LEFT JOIN users u ON c.assigned_agent_id = u.id
-          WHERE c.assigned_agent_id = ${user.id}
+          WHERE c.tenant_id = ${user.tenant_id} AND c.assigned_agent_id = ${user.id}
           ORDER BY c.last_message_at DESC
           LIMIT 50
         ` : await sql`
@@ -219,7 +221,7 @@ export async function GET(request: Request) {
           FROM conversations c
           LEFT JOIN contacts ON c.contact_id = contacts.id
           LEFT JOIN users u ON c.assigned_agent_id = u.id
-          WHERE c.assigned_agent_id = ${user.id}
+          WHERE c.tenant_id = ${user.tenant_id} AND c.assigned_agent_id = ${user.id}
           ORDER BY c.last_message_at DESC
           LIMIT 50
         `
@@ -243,7 +245,7 @@ export async function GET(request: Request) {
           FROM conversations c
           LEFT JOIN contacts ON c.contact_id = contacts.id
           LEFT JOIN users u ON c.assigned_agent_id = u.id
-          WHERE c.assigned_agent_id = ${user.id} AND c.status = ${status}
+          WHERE c.tenant_id = ${user.tenant_id} AND c.assigned_agent_id = ${user.id} AND c.status = ${status}
           ORDER BY c.last_message_at DESC
           LIMIT 50
         ` : await sql`
@@ -265,7 +267,7 @@ export async function GET(request: Request) {
           FROM conversations c
           LEFT JOIN contacts ON c.contact_id = contacts.id
           LEFT JOIN users u ON c.assigned_agent_id = u.id
-          WHERE c.assigned_agent_id = ${user.id} AND c.status = ${status}
+          WHERE c.tenant_id = ${user.tenant_id} AND c.assigned_agent_id = ${user.id} AND c.status = ${status}
           ORDER BY c.last_message_at DESC
           LIMIT 50
         `
@@ -292,7 +294,7 @@ export async function GET(request: Request) {
           FROM conversations c
           LEFT JOIN contacts ON c.contact_id = contacts.id
           LEFT JOIN users u ON c.assigned_agent_id = u.id
-          WHERE c.contact_id IN (SELECT id FROM contacts WHERE created_by_user_id = ${user.id})
+          WHERE c.tenant_id = ${user.tenant_id} AND c.contact_id IN (SELECT id FROM contacts WHERE created_by_user_id = ${user.id})
           ORDER BY c.last_message_at DESC
           LIMIT 50
         ` : await sql`
@@ -314,7 +316,7 @@ export async function GET(request: Request) {
           FROM conversations c
           LEFT JOIN contacts ON c.contact_id = contacts.id
           LEFT JOIN users u ON c.assigned_agent_id = u.id
-          WHERE c.contact_id IN (SELECT id FROM contacts WHERE created_by_user_id = ${user.id})
+          WHERE c.tenant_id = ${user.tenant_id} AND c.contact_id IN (SELECT id FROM contacts WHERE created_by_user_id = ${user.id})
           ORDER BY c.last_message_at DESC
           LIMIT 50
         `
@@ -338,7 +340,7 @@ export async function GET(request: Request) {
           FROM conversations c
           LEFT JOIN contacts ON c.contact_id = contacts.id
           LEFT JOIN users u ON c.assigned_agent_id = u.id
-          WHERE c.contact_id IN (SELECT id FROM contacts WHERE created_by_user_id = ${user.id}) AND c.status = ${status}
+          WHERE c.tenant_id = ${user.tenant_id} AND c.contact_id IN (SELECT id FROM contacts WHERE created_by_user_id = ${user.id}) AND c.status = ${status}
           ORDER BY c.last_message_at DESC
           LIMIT 50
         ` : await sql`
@@ -360,7 +362,7 @@ export async function GET(request: Request) {
           FROM conversations c
           LEFT JOIN contacts ON c.contact_id = contacts.id
           LEFT JOIN users u ON c.assigned_agent_id = u.id
-          WHERE c.contact_id IN (SELECT id FROM contacts WHERE created_by_user_id = ${user.id}) AND c.status = ${status}
+          WHERE c.tenant_id = ${user.tenant_id} AND c.contact_id IN (SELECT id FROM contacts WHERE created_by_user_id = ${user.id}) AND c.status = ${status}
           ORDER BY c.last_message_at DESC
           LIMIT 50
         `

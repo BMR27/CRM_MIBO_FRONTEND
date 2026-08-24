@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { getSession } from "@/lib/session"
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getSession()
+    if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
+
     const { id } = await params
     const body = await request.json()
     const { status } = body
@@ -28,18 +34,18 @@ export async function PUT(
     let result: any = []
     try {
       result = await sql!`
-        UPDATE conversations 
+        UPDATE conversations
         SET status = ${status}, updated_at = NOW()
-        WHERE id::text = ${id}
+        WHERE id::text = ${id} AND tenant_id = ${tenantId}
         RETURNING id, status
       `
     } catch (e) {
       // Try as integer
       if (!isNaN(Number(id))) {
         result = await sql!`
-          UPDATE conversations 
+          UPDATE conversations
           SET status = ${status}, updated_at = NOW()
-          WHERE id = ${Number.parseInt(id)}
+          WHERE id = ${Number.parseInt(id)} AND tenant_id = ${tenantId}
           RETURNING id, status
         `
       } else {

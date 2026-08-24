@@ -64,6 +64,8 @@ export async function POST(request: Request) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const body = await request.json().catch(() => ({}))
     const contacts = Array.isArray(body?.contacts) ? body.contacts : []
@@ -100,7 +102,7 @@ export async function POST(request: Request) {
         const existing: any[] = await sql`
           SELECT id
           FROM contacts
-          WHERE phone_number = ${contact.phone_number}
+          WHERE phone_number = ${contact.phone_number} AND tenant_id = ${tenantId}
           LIMIT 1
         `
 
@@ -127,13 +129,13 @@ export async function POST(request: Request) {
 
         const rows = includeChannelCols
           ? await sql`
-              INSERT INTO contacts (name, phone_number, channel, external_user_id, created_at)
-              VALUES (${contact.name}, ${contact.phone_number}, ${contact.channel}, ${contact.external_user_id}, NOW())
+              INSERT INTO contacts (name, phone_number, channel, external_user_id, tenant_id, created_at)
+              VALUES (${contact.name}, ${contact.phone_number}, ${contact.channel}, ${contact.external_user_id}, ${tenantId}, NOW())
               RETURNING id, name, phone_number, channel, external_user_id, created_at
             `
           : await sql`
-              INSERT INTO contacts (name, phone_number, created_at)
-              VALUES (${contact.name}, ${contact.phone_number}, NOW())
+              INSERT INTO contacts (name, phone_number, tenant_id, created_at)
+              VALUES (${contact.name}, ${contact.phone_number}, ${tenantId}, NOW())
               RETURNING id, name, phone_number, NULL::varchar as channel, NULL::varchar as external_user_id, created_at
             `
         imported += 1

@@ -64,6 +64,7 @@ function LoginForm() {
         email: normalizedEmail,
         name: data.user?.name ?? email,
         role: data.user?.role ?? "agent",
+        tenant_id: data.user?.tenant_id ?? undefined,
         status: data.user?.status ?? "available",
         session_key: data.user?.session_key ?? null,
       }

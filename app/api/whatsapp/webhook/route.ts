@@ -6,6 +6,26 @@ export const runtime = "nodejs"
 
 type Db = NonNullable<typeof sql>
 
+// Tenant original (pre-multi-tenant); usamos su config global de WhatsApp
+// (env vars) como fallback cuando el número entrante no matchea ninguna
+// integración por-tenant registrada en whatsapp_integrations.
+const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001"
+
+async function resolveTenantId(phoneNumberId: string): Promise<string> {
+  if (!sql || !phoneNumberId || phoneNumberId === "unknown") return DEFAULT_TENANT_ID
+  try {
+    const rows = await sql`
+      SELECT tenant_id FROM whatsapp_integrations
+      WHERE (cloud_phone_number_id = ${phoneNumberId} OR twilio_whatsapp_number = ${phoneNumberId})
+        AND is_active = true
+      LIMIT 1
+    `
+    return (rows as any[])[0]?.tenant_id || DEFAULT_TENANT_ID
+  } catch {
+    return DEFAULT_TENANT_ID
+  }
+}
+
 async function ensureWebhookLogsTable(db: Db) {
   try {
     await db`
@@ -386,6 +406,7 @@ async function handleIncomingMessage(
   const profileName = contactsByWaId.get(senderId)
   const fallbackName = `whatsapp:+${normalizePhoneNumber(senderId)}`
   const contactName = profileName || fallbackName
+  const tenantId = await resolveTenantId(phoneNumberId)
 
   console.log("[WhatsApp] Processing message:", {
     senderId,
@@ -399,8 +420,9 @@ async function handleIncomingMessage(
     // attach Twilio's sender id instead of creating a duplicate phone record.
     const phoneNumber = `whatsapp:+${normalizePhoneNumber(senderId)}`
     let contact = await sql!`
-      SELECT * FROM contacts 
+      SELECT * FROM contacts
       WHERE channel = 'whatsapp'
+        AND tenant_id = ${tenantId}
         AND (
           external_user_id = ${senderId}
           OR phone_number = ${phoneNumber}
@@ -414,10 +436,11 @@ async function handleIncomingMessage(
     if (contact.length === 0) {
       contact = await sql!`
         INSERT INTO contacts (
-          name, 
-          phone_number, 
-          channel, 
+          name,
+          phone_number,
+          channel,
           external_user_id,
+          tenant_id,
           created_at
         )
         VALUES (
@@ -425,6 +448,7 @@ async function handleIncomingMessage(
           ${phoneNumber},
           'whatsapp',
           ${senderId},
+          ${tenantId},
           NOW()
         )
         RETURNING *
@@ -469,9 +493,10 @@ async function handleIncomingMessage(
 
     // 2. Find or create conversation
     let conversation = await sql!`
-      SELECT * FROM conversations 
-      WHERE contact_id = ${contactId} 
+      SELECT * FROM conversations
+      WHERE contact_id = ${contactId}
         AND channel = 'whatsapp'
+        AND tenant_id = ${tenantId}
         AND status <> 'resolved'
       ORDER BY created_at DESC
       LIMIT 1
@@ -486,6 +511,7 @@ async function handleIncomingMessage(
           channel,
           external_user_id,
           external_conversation_id,
+          tenant_id,
           created_at,
           updated_at
         )
@@ -496,6 +522,7 @@ async function handleIncomingMessage(
           'whatsapp',
           ${senderId},
           ${`${phoneNumberId}_${senderId}`},
+          ${tenantId},
           NOW(),
           NOW()
         )
@@ -516,6 +543,7 @@ async function handleIncomingMessage(
         direction,
         message_type,
         metadata,
+        tenant_id,
         created_at
       )
       VALUES (
@@ -527,6 +555,7 @@ async function handleIncomingMessage(
         'inbound',
         ${parsed.message_type},
         ${parsed.metadata ? JSON.stringify(parsed.metadata) : null}::jsonb,
+        ${tenantId},
         ${new Date(timestamp)}
       )
     `

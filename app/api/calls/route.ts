@@ -55,6 +55,8 @@ export async function GET(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const tenantId = user.tenant_id
+  if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
   try {
     await ensureCallsTable()
@@ -64,14 +66,14 @@ export async function GET(request: NextRequest) {
     let query
     if (conversationId) {
       query = await sql!`
-        SELECT * FROM calls 
-        WHERE conversation_id = ${conversationId}
+        SELECT * FROM calls
+        WHERE conversation_id = ${conversationId} AND tenant_id = ${tenantId}
         ORDER BY scheduled_at DESC
       `
     } else {
       query = await sql!`
-        SELECT * FROM calls 
-        WHERE agent_id = ${user.id}
+        SELECT * FROM calls
+        WHERE agent_id = ${user.id} AND tenant_id = ${tenantId}
         ORDER BY scheduled_at DESC
       `
     }
@@ -88,6 +90,8 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const tenantId = user.tenant_id
+  if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
   try {
     await ensureCallsTable()
@@ -128,6 +132,7 @@ export async function POST(request: NextRequest) {
         meet_link,
         notes,
         status,
+        tenant_id,
         created_at
       ) VALUES (
         ${user.id},
@@ -139,6 +144,7 @@ export async function POST(request: NextRequest) {
         ${meet_link || null},
         ${notes || null},
         ${status || 'pending'},
+        ${tenantId},
         NOW()
       )
       RETURNING *

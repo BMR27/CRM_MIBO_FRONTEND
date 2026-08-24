@@ -8,13 +8,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
 
     await sql`
-      UPDATE macros 
-      SET usage_count = usage_count + 1 
-      WHERE id = ${id}
+      UPDATE macros
+      SET usage_count = usage_count + 1
+      WHERE id = ${id} AND tenant_id = ${tenantId}
     `
 
     return NextResponse.json({ success: true })

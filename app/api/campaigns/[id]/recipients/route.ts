@@ -34,6 +34,8 @@ export async function GET(
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
     if (!id) return NextResponse.json({ error: "Campaign ID required" }, { status: 400 })
@@ -67,6 +69,7 @@ export async function GET(
       LEFT JOIN contacts ON contacts.id = c.contact_id
       WHERE (m.metadata->>'campaignId' = ${id} OR m.metadata->>'campaignCode' = ${id})
         AND COALESCE((m.metadata->>'source'), '') = 'bulk'
+        AND m.tenant_id = ${tenantId}
         AND ${outboundPredicate}
       ORDER BY m.created_at DESC
       LIMIT 500

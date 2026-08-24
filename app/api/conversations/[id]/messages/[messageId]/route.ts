@@ -10,6 +10,8 @@ export async function PUT(
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const tenantId = user.tenant_id
+  if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
   const { id, messageId } = await params
   const { content } = await request.json()
@@ -22,7 +24,7 @@ export async function PUT(
     const result = await sql!`
       UPDATE messages 
       SET content = ${content.trim()}, updated_at = NOW() 
-      WHERE id = ${messageId} AND conversation_id = ${id} 
+      WHERE id = ${messageId} AND conversation_id = ${id} AND tenant_id = ${tenantId}
       RETURNING *
     `
 
@@ -45,13 +47,15 @@ export async function DELETE(
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const tenantId = user.tenant_id
+  if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
   const { id, messageId } = await params
 
   try {
     const result = await sql!`
       DELETE FROM messages 
-      WHERE id = ${messageId} AND conversation_id = ${id} 
+      WHERE id = ${messageId} AND conversation_id = ${id} AND tenant_id = ${tenantId}
       RETURNING id
     `
 

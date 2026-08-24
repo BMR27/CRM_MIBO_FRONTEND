@@ -8,12 +8,14 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     console.log("[Agents Stats] Fetching agent statistics...")
 
     // Get count of conversations per user
     const result = await sql!`
-      SELECT 
+      SELECT
         u.id,
         u.name,
         u.email,
@@ -23,7 +25,8 @@ export async function GET() {
         COUNT(CASE WHEN c.status = 'resolved' THEN 1 END) as resolved_count
       FROM users u
       LEFT JOIN roles r ON u.role_id = r.id
-      LEFT JOIN conversations c ON c.assigned_agent_id = u.id
+      LEFT JOIN conversations c ON c.assigned_agent_id = u.id AND c.tenant_id = ${tenantId}
+      WHERE u.tenant_id = ${tenantId}
       GROUP BY u.id, u.name, u.email, r.name
       ORDER BY u.name
     `

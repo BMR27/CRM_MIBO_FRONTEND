@@ -8,6 +8,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
     const { agentId } = await request.json()
@@ -19,22 +21,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     // Handle both UUID and integer IDs - try UUID cast first, then fallback to integer
     // When assigning, set status to 'active' if not already resolved
     let result = await sql!`
-      UPDATE conversations 
-      SET assigned_agent_id = ${agentId}, 
+      UPDATE conversations
+      SET assigned_agent_id = ${agentId},
           status = CASE WHEN status != 'resolved' THEN 'active' ELSE status END,
           updated_at = NOW()
-      WHERE id::text = ${id}
+      WHERE id::text = ${id} AND tenant_id = ${tenantId}
       RETURNING id, assigned_agent_id, status
     `
 
     // If no rows affected, try as integer
     if (result.length === 0 && !isNaN(Number(id))) {
       result = await sql!`
-        UPDATE conversations 
-        SET assigned_agent_id = ${agentId}, 
+        UPDATE conversations
+        SET assigned_agent_id = ${agentId},
             status = CASE WHEN status != 'resolved' THEN 'active' ELSE status END,
             updated_at = NOW()
-        WHERE id = ${Number.parseInt(id)}
+        WHERE id = ${Number.parseInt(id)} AND tenant_id = ${tenantId}
         RETURNING id, assigned_agent_id, status
       `
     }

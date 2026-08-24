@@ -26,10 +26,12 @@ async function ensureBulkCampaignTables(db: Db) {
         started_at TIMESTAMP NULL,
         completed_at TIMESTAMP NULL,
         created_by INTEGER NULL,
+        tenant_id UUID NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `
+    await db`ALTER TABLE bulk_campaigns ADD COLUMN IF NOT EXISTS tenant_id UUID`
     await db`CREATE INDEX IF NOT EXISTS idx_bulk_campaigns_status ON bulk_campaigns(status)`
     await db`CREATE INDEX IF NOT EXISTS idx_bulk_campaigns_created_at ON bulk_campaigns(created_at)`
   } catch {
@@ -67,9 +69,11 @@ async function ensureWebhookLogsTable(db: Db) {
         payload JSONB,
         processed BOOLEAN DEFAULT FALSE,
         error TEXT,
+        tenant_id UUID NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `
+    await db`ALTER TABLE webhook_logs ADD COLUMN IF NOT EXISTS tenant_id UUID`
     await db`CREATE INDEX IF NOT EXISTS idx_webhook_logs_channel ON webhook_logs(channel)`
     await db`CREATE INDEX IF NOT EXISTS idx_webhook_logs_processed ON webhook_logs(processed)`
   } catch {
@@ -77,7 +81,7 @@ async function ensureWebhookLogsTable(db: Db) {
   }
 }
 
-async function loadCampaignsFromWebhookLogs(db: Db) {
+async function loadCampaignsFromWebhookLogs(db: Db, tenantId: string) {
   await ensureWebhookLogsTable(db)
   try {
     const rows: any[] = await db`
@@ -88,6 +92,7 @@ async function loadCampaignsFromWebhookLogs(db: Db) {
       FROM webhook_logs
       WHERE channel = 'bulk_campaign'
         AND external_id IS NOT NULL
+        AND tenant_id = ${tenantId}
       ORDER BY external_id, created_at DESC
       LIMIT 50
     `
@@ -127,6 +132,8 @@ export async function GET() {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       return NextResponse.json({ campaigns: [] }, { status: 200 })
@@ -145,7 +152,7 @@ export async function GET() {
     const db = sql
     await ensureBulkCampaignTables(db)
 
-    const fromLogs = await loadCampaignsFromWebhookLogs(db)
+    const fromLogs = await loadCampaignsFromWebhookLogs(db, tenantId)
 
     let rows: any[] = []
     try {
@@ -165,6 +172,7 @@ export async function GET() {
           whatsapp_template,
           created_at
         FROM bulk_campaigns
+        WHERE tenant_id = ${tenantId}
         ORDER BY created_at DESC
         LIMIT 50
       `
@@ -194,6 +202,7 @@ export async function GET() {
             FROM messages
             WHERE (metadata->>'campaignId') IS NOT NULL
               AND (metadata->>'source') = 'bulk'
+              AND tenant_id = ${tenantId}
             GROUP BY 1, 2, 3, 4
           )
           SELECT *
@@ -283,6 +292,8 @@ export async function DELETE(request: Request) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       return NextResponse.json({ ok: true, deleted: 1, demo: true })
@@ -310,6 +321,7 @@ export async function DELETE(request: Request) {
         DELETE FROM webhook_logs
         WHERE channel = 'bulk_campaign'
           AND external_id = ${id}
+          AND tenant_id = ${tenantId}
         RETURNING id
       `
       deleted += rows?.length || 0
@@ -321,7 +333,7 @@ export async function DELETE(request: Request) {
       if (/^\d+$/.test(id)) {
         const rows: any[] = await db`
           DELETE FROM bulk_campaigns
-          WHERE id = ${Number(id)}
+          WHERE id = ${Number(id)} AND tenant_id = ${tenantId}
           RETURNING id
         `
         deleted += rows?.length || 0
@@ -342,6 +354,7 @@ export async function DELETE(request: Request) {
           - 'source'
         WHERE metadata IS NOT NULL
           AND metadata->>'campaignId' = ${id}
+          AND tenant_id = ${tenantId}
         RETURNING id
       `
       deleted += rows?.length || 0

@@ -35,6 +35,8 @@ export async function PUT(
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const tenantId = user.tenant_id
+  if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
   const { id } = await params
   const body = await request.json()
@@ -63,8 +65,8 @@ export async function PUT(
         meet_link = CASE WHEN ${hasMeetLink} THEN ${meet_link || null} ELSE meet_link END,
         notes = COALESCE(NULLIF(${notes || ""}, ''), notes),
         status = COALESCE(NULLIF(${status || ""}, ''), status),
-        updated_at = NOW() 
-      WHERE id = ${id}
+        updated_at = NOW()
+      WHERE id = ${id} AND tenant_id = ${tenantId}
       RETURNING *
     `
 
@@ -90,14 +92,16 @@ export async function DELETE(
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+  const tenantId = user.tenant_id
+  if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
   const { id } = await params
 
   try {
     await ensureCallsTable()
     const result = await sql!`
-      DELETE FROM calls 
-      WHERE id = ${id}
+      DELETE FROM calls
+      WHERE id = ${id} AND tenant_id = ${tenantId}
       RETURNING id
     `
 

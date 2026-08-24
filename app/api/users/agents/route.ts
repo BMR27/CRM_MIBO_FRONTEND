@@ -21,11 +21,13 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const userRole = normalizeRole((user as any).role)
 
     const agents = await sql`
-      SELECT 
+      SELECT
         u.id,
         u.name,
         u.email,
@@ -35,6 +37,7 @@ export async function GET() {
       FROM users u
       LEFT JOIN roles r ON u.role_id = r.id
       WHERE u.role_id IS NOT NULL
+        AND u.tenant_id = ${tenantId}
         AND (
           ${userRole} = 'admin'
           OR COALESCE(LOWER(r.name), '') NOT IN ('admin', 'administrador')

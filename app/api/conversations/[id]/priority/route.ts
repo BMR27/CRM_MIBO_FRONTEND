@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { getSession } from "@/lib/session"
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getSession()
+    if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
+
     const { id } = await params
     const body = await request.json()
     const { priority } = body
@@ -25,17 +31,17 @@ export async function PUT(
 
     // Try to update as UUID first, then as integer
     let result: any = await sql!`
-      UPDATE conversations 
+      UPDATE conversations
       SET priority = ${priority}, updated_at = NOW()
-      WHERE id::text = ${id}
+      WHERE id::text = ${id} AND tenant_id = ${tenantId}
       RETURNING id, priority
     `
 
     if (result.length === 0 && !isNaN(Number(id))) {
       result = await sql!`
-        UPDATE conversations 
+        UPDATE conversations
         SET priority = ${priority}, updated_at = NOW()
-        WHERE id = ${Number.parseInt(id)}
+        WHERE id = ${Number.parseInt(id)} AND tenant_id = ${tenantId}
         RETURNING id, priority
       `
     }

@@ -34,6 +34,8 @@ export async function GET() {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     if (isDemoMode) {
       return NextResponse.json(
@@ -51,6 +53,7 @@ export async function GET() {
             COUNT(*) FILTER (WHERE COALESCE(channel, 'whatsapp') = 'whatsapp')::int as whatsapp,
             COUNT(*) FILTER (WHERE channel = 'facebook')::int as facebook
           FROM contacts
+          WHERE tenant_id = ${tenantId}
         `
       : await sql!`
           SELECT
@@ -58,17 +61,20 @@ export async function GET() {
             COUNT(*)::int as whatsapp,
             0::int as facebook
           FROM contacts
+          WHERE tenant_id = ${tenantId}
         `
 
     const rows = includeChannelCols
       ? await sql!`
           SELECT id, name, phone_number, avatar_url, channel, external_user_id, created_at
           FROM contacts
+          WHERE tenant_id = ${tenantId}
           ORDER BY created_at DESC
         `
       : await sql!`
           SELECT id, name, phone_number, avatar_url, NULL::varchar as channel, NULL::varchar as external_user_id, created_at
           FROM contacts
+          WHERE tenant_id = ${tenantId}
           ORDER BY created_at DESC
         `
 
@@ -93,6 +99,8 @@ export async function POST(request: Request) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const body = await request.json().catch(() => ({}))
     const rawName = String(body?.name || "").trim()
@@ -141,7 +149,7 @@ export async function POST(request: Request) {
     // Upsert-ish behavior: if phone exists, update name/channel fields
     let existing: any[] = []
     try {
-      existing = await sql!`SELECT id, name, phone_number FROM contacts WHERE phone_number = ${phone_number} LIMIT 1`
+      existing = await sql!`SELECT id, name, phone_number FROM contacts WHERE phone_number = ${phone_number} AND tenant_id = ${tenantId} LIMIT 1`
     } catch {
       existing = []
     }
@@ -168,13 +176,13 @@ export async function POST(request: Request) {
 
     const inserted = includeChannelCols
       ? await sql!`
-          INSERT INTO contacts (name, phone_number, channel, external_user_id, created_at)
-          VALUES (${name}, ${phone_number}, ${channel}, ${external_user_id}, NOW())
+          INSERT INTO contacts (name, phone_number, channel, external_user_id, tenant_id, created_at)
+          VALUES (${name}, ${phone_number}, ${channel}, ${external_user_id}, ${tenantId}, NOW())
           RETURNING id, name, phone_number, avatar_url, channel, external_user_id, created_at
         `
       : await sql!`
-          INSERT INTO contacts (name, phone_number, created_at)
-          VALUES (${name}, ${phone_number}, NOW())
+          INSERT INTO contacts (name, phone_number, tenant_id, created_at)
+          VALUES (${name}, ${phone_number}, ${tenantId}, NOW())
           RETURNING id, name, phone_number, avatar_url, NULL::varchar as channel, NULL::varchar as external_user_id, created_at
         `
 
@@ -204,6 +212,8 @@ export async function DELETE(request: Request) {
   try {
     const user = await getSession()
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const role = normalizeRole((user as any).role)
     if (role !== "admin" && role !== "supervisor") {
@@ -241,6 +251,7 @@ export async function DELETE(request: Request) {
           SELECT COUNT(*)::int as count
           FROM contacts c
           JOIN selected_ids s ON c.id::text = s.id_text
+          WHERE c.tenant_id = ${tenantId}
         `
         const count = Number(countRows?.[0]?.count || 0)
 
@@ -253,6 +264,7 @@ export async function DELETE(request: Request) {
             SELECT c.id
             FROM contacts c
             JOIN selected_ids s ON c.id::text = s.id_text
+            WHERE c.tenant_id = ${tenantId}
           ),
           target_conversations AS (
             SELECT conv.id
@@ -272,6 +284,7 @@ export async function DELETE(request: Request) {
             SELECT c.id
             FROM contacts c
             JOIN selected_ids s ON c.id::text = s.id_text
+            WHERE c.tenant_id = ${tenantId}
           ),
           target_conversations AS (
             SELECT conv.id
@@ -291,6 +304,7 @@ export async function DELETE(request: Request) {
             SELECT c.id
             FROM contacts c
             JOIN selected_ids s ON c.id::text = s.id_text
+            WHERE c.tenant_id = ${tenantId}
           )
           DELETE FROM messages
           WHERE sender_type IN ('contact', 'customer')
@@ -306,6 +320,7 @@ export async function DELETE(request: Request) {
             SELECT c.id
             FROM contacts c
             JOIN selected_ids s ON c.id::text = s.id_text
+            WHERE c.tenant_id = ${tenantId}
           ),
           target_conversations AS (
             SELECT conv.id
@@ -325,6 +340,7 @@ export async function DELETE(request: Request) {
             SELECT c.id
             FROM contacts c
             JOIN selected_ids s ON c.id::text = s.id_text
+            WHERE c.tenant_id = ${tenantId}
           )
           DELETE FROM conversations
           WHERE contact_id IN (SELECT id FROM target_contacts)
@@ -339,6 +355,7 @@ export async function DELETE(request: Request) {
             SELECT c.id
             FROM contacts c
             JOIN selected_ids s ON c.id::text = s.id_text
+            WHERE c.tenant_id = ${tenantId}
           )
           UPDATE orders
           SET contact_id = NULL
@@ -352,19 +369,23 @@ export async function DELETE(request: Request) {
           )
           DELETE FROM contacts
           WHERE id::text IN (SELECT id_text FROM selected_ids)
+            AND tenant_id = ${tenantId}
         `
 
         return count
       } else {
-        const countRows: any[] = await (tx as any)`SELECT COUNT(*)::int as count FROM contacts`
+        const countRows: any[] = await (tx as any)`SELECT COUNT(*)::int as count FROM contacts WHERE tenant_id = ${tenantId}`
         const count = Number(countRows?.[0]?.count || 0)
 
-        await tryDelete(() => (tx as any)`DELETE FROM conversation_tags`)
-        await tryDelete(() => (tx as any)`DELETE FROM messages`)
-        await tryDelete(() => (tx as any)`DELETE FROM calls`)
-        await tryDelete(() => (tx as any)`DELETE FROM conversations`)
-        await tryDelete(() => (tx as any)`UPDATE orders SET contact_id = NULL`)
-        await (tx as any)`DELETE FROM contacts`
+        await tryDelete(() => (tx as any)`
+          DELETE FROM conversation_tags
+          WHERE conversation_id IN (SELECT id FROM conversations WHERE tenant_id = ${tenantId})
+        `)
+        await tryDelete(() => (tx as any)`DELETE FROM messages WHERE tenant_id = ${tenantId}`)
+        await tryDelete(() => (tx as any)`DELETE FROM calls WHERE tenant_id = ${tenantId}`)
+        await tryDelete(() => (tx as any)`DELETE FROM conversations WHERE tenant_id = ${tenantId}`)
+        await tryDelete(() => (tx as any)`UPDATE orders SET contact_id = NULL WHERE tenant_id = ${tenantId}`)
+        await (tx as any)`DELETE FROM contacts WHERE tenant_id = ${tenantId}`
 
         return count
       }

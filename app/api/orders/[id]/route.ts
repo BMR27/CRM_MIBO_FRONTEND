@@ -8,11 +8,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
+    const tenantId = user.tenant_id
+    if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
 
     const { id } = await params
 
     const [order] = await sql`
-      SELECT 
+      SELECT
         o.id,
         o.order_number,
         o.status,
@@ -26,7 +28,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         contacts.phone_number
       FROM orders o
       LEFT JOIN contacts ON o.contact_id = contacts.id
-      WHERE o.id = ${id}
+      WHERE o.id = ${id} AND o.tenant_id = ${tenantId}
     `
 
     if (!order) {
