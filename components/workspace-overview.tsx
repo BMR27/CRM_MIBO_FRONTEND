@@ -35,6 +35,8 @@ interface TenantInfo {
   name: string
   plan: string
   status: string
+  bulk_messaging_enabled: boolean
+  wa_templates_enabled: boolean
 }
 
 export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewProps) {
@@ -104,9 +106,17 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
             </p>
           </div>
           {tenant && (
-            <Badge variant="outline" className="capitalize">
-              Plan {tenant.plan}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="capitalize">
+                Plan {tenant.plan}
+              </Badge>
+              <Badge variant={tenant.bulk_messaging_enabled ? "default" : "secondary"}>
+                Envío masivo {tenant.bulk_messaging_enabled ? "activado" : "desactivado"}
+              </Badge>
+              <Badge variant={tenant.wa_templates_enabled ? "default" : "secondary"}>
+                Plantillas {tenant.wa_templates_enabled ? "activadas" : "desactivadas"}
+              </Badge>
+            </div>
           )}
         </div>
 

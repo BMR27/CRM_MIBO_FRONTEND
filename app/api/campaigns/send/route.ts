@@ -690,6 +690,14 @@ export async function POST(request: Request) {
       )
     }
 
+    const [tenantRow] = await sql`SELECT bulk_messaging_enabled FROM tenants WHERE id = ${tenantId} LIMIT 1`
+    if (!tenantRow?.bulk_messaging_enabled) {
+      return NextResponse.json(
+        { error: "El envío masivo no está habilitado para este espacio de trabajo" },
+        { status: 403 },
+      )
+    }
+
     const body = await request.json().catch(() => ({}))
     const contactIds = Array.isArray(body?.contactIds) ? body.contactIds.map((x: any) => String(x).trim()).filter(Boolean) : []
     const messageTemplateRaw = String(body?.message || "")
