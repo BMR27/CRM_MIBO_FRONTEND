@@ -67,6 +67,7 @@ function LoginForm() {
         tenant_id: data.user?.tenant_id ?? undefined,
         status: data.user?.status ?? "available",
         session_key: data.user?.session_key ?? null,
+        is_platform_admin: data.user?.is_platform_admin === true,
       }
 
       // Guardar usuario en localStorage
