@@ -340,6 +340,30 @@ function verifyWebhookSignature(rawBody: string, signatureHeader: string | null)
   }
 }
 
+/**
+ * Reenvía un evento al endpoint interno del backend, que firma y despacha el webhook
+ * saliente configurado por el tenant (si lo tiene habilitado). Protegido con un secreto
+ * compartido en vez de JWT, ya que es una llamada servicio-a-servicio sin usuario autenticado.
+ */
+async function dispatchInboundWebhook(tenantId: string, data: Record<string, any>) {
+  const backendUrl = process.env.BACKEND_URL
+  const secret = process.env.INTERNAL_WEBHOOK_SECRET
+  if (!backendUrl || !secret) return
+
+  const res = await fetch(`${backendUrl.replace(/\/$/, "")}/api/internal/webhooks/dispatch`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-internal-secret": secret,
+    },
+    body: JSON.stringify({ tenantId, event: "message.received", data }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`dispatch-inbound-webhook failed: ${res.status} ${await res.text().catch(() => "")}`)
+  }
+}
+
 async function handleTwilioIncomingMessage(payload: Record<string, string>) {
   const from = String(payload.From || "").trim()
   const to = String(payload.To || "").trim()
@@ -533,7 +557,7 @@ async function handleIncomingMessage(
     const conversationId = conversation[0].id
 
     // 3. Insert message
-    await sql!`
+    const insertedMessage = await sql!`
       INSERT INTO messages (
         conversation_id,
         sender_type,
@@ -558,14 +582,28 @@ async function handleIncomingMessage(
         ${tenantId},
         ${new Date(timestamp)}
       )
+      RETURNING id
     `
 
     // 4. Update conversation timestamps
     await sql!`
-      UPDATE conversations 
+      UPDATE conversations
       SET updated_at = NOW(), last_message_at = NOW()
       WHERE id = ${conversationId}
     `
+
+    // 5. Reenviar al webhook saliente del tenant (si lo tiene configurado). No debe
+    // romper el procesamiento del mensaje si falla: es un best-effort fire-and-forget.
+    dispatchInboundWebhook(tenantId, {
+      message_id: insertedMessage[0]?.id || null,
+      conversation_id: conversationId,
+      contact_id: contactId,
+      whatsapp_message_id: messageId,
+      from: phoneNumber,
+      content: parsed.content || "",
+      message_type: parsed.message_type,
+      metadata: parsed.metadata || null,
+    }).catch((e) => console.warn("[WhatsApp] Failed to dispatch inbound webhook:", e))
 
     console.log("[WhatsApp] Message processed successfully")
   } catch (error) {
