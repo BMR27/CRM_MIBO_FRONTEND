@@ -215,6 +215,24 @@ const clientEndpointGroups = [
     "language": "es_MX"
   }'`,
       },
+      {
+        method: "POST",
+        path: "/api/twilio/send-wa-template",
+        summary: "Envía una plantilla de WhatsApp aprobada vía Twilio (Content API).",
+        useCase: "Enviar notificaciones transaccionales (p. ej. confirmación de pedido) fuera de la ventana de 24h. \"from\" es opcional: si no lo mandas, se usa el número de WhatsApp configurado para tu espacio de trabajo.",
+        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/twilio/send-wa-template" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "to": "whatsapp:+5215512345678",
+    "contentSid": "HX36751a5be358338dd5082fa394b515f5",
+    "variables": ["Juan Perez", "2000 MXN", "12345"]
+  }'`,
+        response: `{
+  "success": true,
+  "twilio": { "sid": "SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "status": "queued", "..." : "..." }
+}`,
+      },
     ],
   },
   {
@@ -263,22 +281,123 @@ const clientEndpointGroups = [
   },
   {
     id: "webhooks",
-    title: "Webhooks",
+    title: "Webhooks salientes",
     icon: Webhook,
-    description: "Recepción de eventos externos cuando se habilitan integraciones.",
+    description:
+      "Registra tu propia URL para recibir, en tiempo real, los mensajes de WhatsApp que te respondan y los cambios de estado de los que envíes. Requiere JWT de un usuario con rol admin.",
     endpoints: [
       {
-        method: "POST",
-        path: "/api/whatsapp/webhook",
-        summary: "Recibe eventos entrantes de WhatsApp.",
-        useCase: "Procesar respuestas, estados y mensajes entrantes.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/whatsapp/webhook" \\
+        method: "GET",
+        path: "/api/tenants/me/webhook",
+        summary: "Consulta la configuración actual de tu webhook.",
+        useCase: "Verificar si ya tienes una URL registrada y si está habilitada.",
+        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/tenants/me/webhook" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT"`,
+        response: `{
+  "webhook_url": "https://tuempresa.com/webhooks/mibo",
+  "webhook_events_enabled": true,
+  "has_secret": true
+}`,
+      },
+      {
+        method: "PATCH",
+        path: "/api/tenants/me/webhook",
+        summary: "Registra o actualiza tu URL y habilita/deshabilita el envío.",
+        useCase:
+          "Dar de alta la URL donde quieres recibir los eventos. La primera vez que habilitas (enabled: true) se genera un secreto de firma que se devuelve una sola vez — guárdalo, no se puede volver a consultar.",
+        example: `curl -X PATCH "${RAILWAY_BACKEND_URL}/api/tenants/me/webhook" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "event": "message.received",
-    "from": "+5215512345678",
-    "message": "Hola"
+    "webhook_url": "https://tuempresa.com/webhooks/mibo",
+    "enabled": true
   }'`,
+        response: `{
+  "webhook_url": "https://tuempresa.com/webhooks/mibo",
+  "webhook_events_enabled": true,
+  "has_secret": true,
+  "webhook_secret": "a1b2c3...",
+  "warning": "Guarda este secreto ahora: no volverá a mostrarse completo."
+}`,
+      },
+      {
+        method: "POST",
+        path: "/api/tenants/me/webhook/rotate-secret",
+        summary: "Genera un nuevo secreto de firma, invalidando el anterior.",
+        useCase: "Rotar el secreto si sospechas que se filtró.",
+        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/tenants/me/webhook/rotate-secret" \\
+  -H "Authorization: Bearer TU_TOKEN_JWT"`,
+        response: `{
+  "webhook_secret": "a1b2c3...",
+  "warning": "Guarda este secreto ahora: no volverá a mostrarse completo."
+}`,
+      },
+      {
+        method: "EVENT",
+        path: "message.received",
+        summary: "Te lo enviamos cuando un contacto responde uno de tus mensajes de WhatsApp.",
+        useCase: "Procesar respuestas entrantes sin tener que consultar la API constantemente.",
+        example: `POST https://tuempresa.com/webhooks/mibo
+Content-Type: application/json
+X-Mibo-Event: message.received
+X-Mibo-Signature: sha256=...
+
+{
+  "event": "message.received",
+  "timestamp": "2026-10-08T02:19:58.000Z",
+  "tenant_id": "...",
+  "data": {
+    "message_id": "...",
+    "conversation_id": "...",
+    "contact_id": "...",
+    "whatsapp_message_id": "SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "from": "whatsapp:+5215512345678",
+    "content": "Sí, confirmo mi pedido",
+    "message_type": "text"
+  }
+}`,
+      },
+      {
+        method: "EVENT",
+        path: "message.status_updated",
+        summary: "Te lo enviamos cuando cambia el estado de un mensaje que enviaste (enviado, entregado, leído, fallido).",
+        useCase: "Saber si tu notificación llegó, sin tener que hacer polling.",
+        example: `POST https://tuempresa.com/webhooks/mibo
+Content-Type: application/json
+X-Mibo-Event: message.status_updated
+X-Mibo-Signature: sha256=...
+
+{
+  "event": "message.status_updated",
+  "timestamp": "2026-10-08T02:19:58.000Z",
+  "tenant_id": "...",
+  "data": {
+    "message_id": "...",
+    "conversation_id": "...",
+    "whatsapp_message_id": "SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "status": "delivered",
+    "to": "whatsapp:+5215512345678",
+    "from": "whatsapp:+12602649030",
+    "error_code": null
+  }
+}`,
+      },
+      {
+        method: "INFO",
+        path: "Verificación de firma",
+        summary: "Cada evento llega firmado en el header X-Mibo-Signature (sha256=<hmac>).",
+        useCase:
+          "Calcula HMAC-SHA256 del cuerpo crudo (raw body) de la petición usando tu webhook_secret y compáralo con el valor recibido, para confirmar que el evento viene de nosotros.",
+        example: `// Node.js
+const crypto = require("crypto")
+
+function isValid(rawBody, signatureHeader, secret) {
+  const expected = "sha256=" + crypto
+    .createHmac("sha256", secret)
+    .update(rawBody)
+    .digest("hex")
+  return signatureHeader === expected
+}`,
       },
     ],
   },
