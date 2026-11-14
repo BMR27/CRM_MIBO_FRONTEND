@@ -19,11 +19,31 @@ interface InboxSidebarProps {
   }
 }
 
+const SIDEBAR_COLLAPSED_KEY = "inbox_sidebar_collapsed"
+
 export function InboxSidebar({ user }: InboxSidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [workspaceName, setWorkspaceName] = useState<string | null>(null)
   const router = useRouter()
   const pathname = usePathname()
+
+  // Restaura el estado contraído/expandido guardado, para que no se resetee en cada
+  // navegación con recarga completa (p. ej. al cambiar de espacio como super-admin).
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1")
+    } catch {}
+  }, [])
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0")
+      } catch {}
+      return next
+    })
+  }
 
   useEffect(() => {
     let active = true
@@ -121,7 +141,8 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapsed}
+          title={collapsed ? "Expandir menú" : "Contraer menú"}
           className="text-sidebar-foreground shrink-0"
         >
           {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
