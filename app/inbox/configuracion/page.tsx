@@ -9,6 +9,7 @@ import { Bell, Lock, Save, Settings, Zap } from "lucide-react"
 import { InboxHeader } from "@/components/inbox-header"
 import { ApiKeysSection } from "@/components/api-keys-section"
 import { WorkspaceNameSection } from "@/components/workspace-name-section"
+import { BrandingSection } from "@/components/branding-section"
 import { WhatsappIntegrationSection } from "@/components/whatsapp-integration-section"
 import { FacebookIntegrationSection } from "@/components/facebook-integration-section"
 import { VoiceIntegrationSection } from "@/components/voice-integration-section"
@@ -67,6 +68,12 @@ export default async function ConfiguracionPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <WorkspaceNameSection />
+
+                  <Separator />
+
+                  <BrandingSection />
+
+                  <Separator />
 
                   <div className="space-y-2">
                     <Label htmlFor="timezone">Zona Horaria</Label>

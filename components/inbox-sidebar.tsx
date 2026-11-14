@@ -7,8 +7,8 @@ import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { api } from "@/lib/api"
 import { PlatformAdminSwitcher } from "@/components/platform-admin-switcher"
+import { useTenantBranding } from "@/hooks/use-tenant-branding"
 
 interface InboxSidebarProps {
   user: {
@@ -23,7 +23,8 @@ const SIDEBAR_COLLAPSED_KEY = "inbox_sidebar_collapsed"
 
 export function InboxSidebar({ user }: InboxSidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
-  const [workspaceName, setWorkspaceName] = useState<string | null>(null)
+  const branding = useTenantBranding()
+  const workspaceName = branding.displayName || branding.name
   const router = useRouter()
   const pathname = usePathname()
 
@@ -45,18 +46,6 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
     })
   }
 
-  useEffect(() => {
-    let active = true
-    api
-      .get("/api/tenants/me")
-      .then(({ data }) => {
-        if (active) setWorkspaceName(data?.name || null)
-      })
-      .catch(() => {})
-    return () => {
-      active = false
-    }
-  }, [])
   const normalizedRole = (() => {
     const value = String(user.role || "").trim().toLowerCase()
     const roleMap: Record<string, "admin" | "supervisor" | "agent"> = {
@@ -127,9 +116,21 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && (
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <MessageSquare className="h-4 w-4" />
-            </div>
+            {branding.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={branding.logoUrl}
+                alt={workspaceName || "Logo"}
+                className="h-8 w-8 shrink-0 rounded-lg object-contain bg-sidebar-accent"
+              />
+            ) : (
+              <div
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
+                style={branding.accentColor ? { backgroundColor: branding.accentColor } : undefined}
+              >
+                <MessageSquare className="h-4 w-4" />
+              </div>
+            )}
             <div className="overflow-hidden">
               <p className="truncate text-sm font-semibold leading-tight text-sidebar-foreground">
                 {workspaceName || "Cargando…"}
