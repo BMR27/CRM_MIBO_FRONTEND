@@ -199,7 +199,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           )}
         >
           <Send className="h-5 w-5" />
-          {!collapsed && <span className="ml-3">Envíos masivos</span>}
+          {!collapsed && <span className="ml-3">Campañas</span>}
         </Button>
         
         {/* Citas: solo visible para administrador */}
