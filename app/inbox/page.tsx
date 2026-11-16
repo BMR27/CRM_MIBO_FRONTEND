@@ -5,7 +5,6 @@ import { InboxHeader } from "@/components/inbox-header"
 import { ConversationList } from "@/components/conversation-list"
 import { ChatArea } from "@/components/chat-area"
 import { OrdersPanel } from "@/components/orders-panel"
-import { WorkspaceOverview } from "@/components/workspace-overview"
 import { useSearchParams } from "next/navigation"
 import { useConversations } from "@/hooks/use-conversations"
 import { useAgents } from "@/hooks/use-agents"
@@ -185,26 +184,22 @@ export default function InboxPage() {
         <div className="hidden md:block w-4 flex-shrink-0 bg-muted/40" aria-hidden="true" />
         {/* Chat area - flex grow */}
         <div className="flex flex-1 flex-col min-w-0">
-          {isAdminOrSupervisor && !selectedConversationId ? (
-            <WorkspaceOverview conversations={conversations} agents={agents} />
-          ) : (
-            <ChatArea
-              conversationId={selectedConversationId}
-              contactName={selectedContactName}
-              currentAgentId={currentAgentId}
-              channel={selectedConversationId ? conversations.find(c => String(c.id) === String(selectedConversationId))?.channel : undefined}
-              externalUserId={
-                selectedConversationId
-                  ? (
-                      conversations.find(c => String(c.id) === String(selectedConversationId))?.external_user_id ||
-                      conversations.find(c => String(c.id) === String(selectedConversationId))?.customer_phone
-                    )
-                  : undefined
-              }
-              onUpdate={handleUpdate}
-              onConversationDeleted={handleConversationDeleted}
-            />
-          )}
+          <ChatArea
+            conversationId={selectedConversationId}
+            contactName={selectedContactName}
+            currentAgentId={currentAgentId}
+            channel={selectedConversationId ? conversations.find(c => String(c.id) === String(selectedConversationId))?.channel : undefined}
+            externalUserId={
+              selectedConversationId
+                ? (
+                    conversations.find(c => String(c.id) === String(selectedConversationId))?.external_user_id ||
+                    conversations.find(c => String(c.id) === String(selectedConversationId))?.customer_phone
+                  )
+                : undefined
+            }
+            onUpdate={handleUpdate}
+            onConversationDeleted={handleConversationDeleted}
+          />
         </div>
         {/* Orders/Details panel - responsive */}
         {showOrdersPanel && selectedConversationId && (

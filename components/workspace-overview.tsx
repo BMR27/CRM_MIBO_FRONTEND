@@ -113,7 +113,7 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-background">
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -140,7 +140,7 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {stats.map((stat) => (
             <Card key={stat.label}>
               <CardContent className="pt-6">

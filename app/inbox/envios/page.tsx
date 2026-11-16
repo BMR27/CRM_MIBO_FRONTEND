@@ -706,7 +706,7 @@ function EnviosMasivosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 lg:p-6">
+    <div className="h-full overflow-y-auto bg-background p-4 lg:p-6">
       <div className="mx-auto flex max-w-[1500px] flex-col gap-4">
         <header className="flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
           <div>

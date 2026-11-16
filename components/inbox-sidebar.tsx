@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, MessageSquare, Users, Settings, LogOut, Menu, X, Calendar, User, Send, Inbox } from "lucide-react"
+import { BookOpen, MessageSquare, Users, Settings, LogOut, Menu, X, Calendar, User, Send, Inbox, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
@@ -101,6 +101,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
   }
 
   const isInbox = pathname === "/inbox"
+  const isEstadisticas = pathname.startsWith("/inbox/estadisticas")
   const isContactos = pathname.startsWith("/inbox/contactos")
   const isEnvios = pathname.startsWith("/inbox/envios")
   // const isPlantillasWA = pathname.startsWith("/inbox/plantillas-wa")
@@ -176,6 +177,24 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           <MessageSquare className="h-5 w-5" />
           {!collapsed && <span className="ml-3">{t("nav.conversations")}</span>}
         </Button>
+
+        {/* Estadísticas: visible para admin y supervisor, siempre disponible */}
+        {!isAgent && (
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/inbox/estadisticas")}
+            className={cn(
+              "w-full justify-start transition-colors",
+              collapsed && "justify-center px-2",
+              isEstadisticas
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+                : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
+            )}
+          >
+            <BarChart3 className="h-5 w-5" />
+            {!collapsed && <span className="ml-3">{t("nav.stats")}</span>}
+          </Button>
+        )}
 
         <Button
           variant="ghost"
