@@ -14,9 +14,17 @@ const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001"
 async function resolveTenantId(phoneNumberId: string): Promise<string> {
   if (!sql || !phoneNumberId || phoneNumberId === "unknown") return DEFAULT_TENANT_ID
   try {
+    // twilio_whatsapp_number se guarda con "+" (p. ej. "+13312674660"), pero
+    // phoneNumberId llega como solo dígitos — comparamos contra ambas formas para
+    // no depender de cómo se haya guardado.
     const rows = await sql`
       SELECT tenant_id FROM whatsapp_integrations
-      WHERE (cloud_phone_number_id = ${phoneNumberId} OR twilio_whatsapp_number = ${phoneNumberId})
+      WHERE (
+        cloud_phone_number_id = ${phoneNumberId}
+        OR twilio_whatsapp_number = ${phoneNumberId}
+        OR twilio_whatsapp_number = ${"+" + phoneNumberId}
+        OR regexp_replace(twilio_whatsapp_number, '\\D', '', 'g') = ${phoneNumberId}
+      )
         AND is_active = true
       LIMIT 1
     `

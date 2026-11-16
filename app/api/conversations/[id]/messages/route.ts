@@ -422,6 +422,30 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                 { status: sendResponse.status || 502 },
               )
             }
+
+            // El backend (whatsappService.sendMessage) ya inserta el mensaje en la
+            // tabla messages al resolver/crear su propia conversación por teléfono.
+            // NO insertar de nuevo aquí abajo o el mensaje queda duplicado en el chat.
+            try {
+              await sql`
+                UPDATE conversations
+                SET last_message_at = NOW()
+                WHERE id::text = ${id} AND tenant_id = ${tenantId}
+              `
+            } catch (updateError) {
+              console.error("[POST messages] Update failed (not critical):", updateError)
+            }
+
+            return NextResponse.json({
+              message: {
+                id: sendData?.whatsapp_message_id || null,
+                content,
+                sender_type: "agent",
+                sender_id: user.id,
+                created_at: new Date().toISOString(),
+                sender_name: user.name,
+              },
+            })
           } else {
             return NextResponse.json({ error: "Recipient phone missing" }, { status: 400 })
           }
