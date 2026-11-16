@@ -118,6 +118,18 @@ const waTemplates = [
     },
     paramFallbacks: {} as Record<string, string>,
   },
+  {
+    name: "relivital_descuento20_v1",
+    sid: "HXf28c75519779a906bed40de37c57411d",
+    language: "pl",
+    body: "Pani {{1}}, wybrała już Pani Relivital — więc wie, jak ważna jest regularna pielęgnacja skóry.\nKolagen morski i elastyna działają stopniowo — dlatego warto kontynuować pielęgnację bez dłuższych przerw.\nWłaśnie dla naszych Klientek przygotowaliśmy rabat 20% na kolejne zamówienie Relivital, na dowolną liczbę opakowań.\nZwykle ten rabat obowiązuje tylko miesiąc po zakupie, ale dla Pani przedłużyliśmy go do 12.09.\nWystarczy zadzwonić pod numer +48 12 420 73 49 i podać naszej konsultantce kod KLIENT20.",
+    paramMap: {
+      "1": "CLIENTE",
+    } as Record<string, string>,
+    paramFallbacks: {} as Record<string, string>,
+    // Plantilla exclusiva: solo la ve el tenant Relivital, no el resto de espacios.
+    tenantIds: ["0b50210b-d7d0-47df-8fe1-71ce95b419e6"],
+  },
 ]
 
 const templateBySid = new Map(waTemplates.map((t) => [t.sid, t]))
@@ -243,9 +255,10 @@ function EnviosMasivosPage() {
   const [savedContactsError, setSavedContactsError] = useState("")
   const [excelError, setExcelError] = useState("")
   const [currentAgentName, setCurrentAgentName] = useState("Agente")
+  const [tenantId, setTenantId] = useState("")
   const [sending, setSending] = useState(false)
   const [sendResult, setSendResult] = useState("")
-  const [selectedTemplate, setSelectedTemplate] = useState<string>(waTemplates[0]?.sid || "")
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("")
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [localCampaigns, setLocalCampaigns] = useState<Campaign[]>([])
   const [loadingCampaigns, setLoadingCampaigns] = useState(false)
@@ -271,6 +284,20 @@ function EnviosMasivosPage() {
   const [templateFilter, setTemplateFilter] = useState("all")
   const [dateFrom, setDateFrom] = useState(getMonthStartInputValue())
   const [dateTo, setDateTo] = useState(getTodayInputValue())
+
+  // Si el tenant tiene alguna plantilla exclusiva asignada, solo ve esas; si no,
+  // ve las plantillas por defecto (las que no tienen tenantIds asociados).
+  const visibleTemplates = useMemo(() => {
+    const dedicated = waTemplates.filter((t) => t.tenantIds?.includes(tenantId))
+    return dedicated.length > 0 ? dedicated : waTemplates.filter((t) => !t.tenantIds)
+  }, [tenantId])
+
+  useEffect(() => {
+    if (visibleTemplates.length === 0) return
+    if (!visibleTemplates.some((t) => t.sid === selectedTemplate)) {
+      setSelectedTemplate(visibleTemplates[0].sid)
+    }
+  }, [visibleTemplates, selectedTemplate])
 
   const selectedTemplateData = selectedTemplate ? templateBySid.get(selectedTemplate) : undefined
   const extraTemplateFields = useMemo(() => getExtraTemplateFields(selectedTemplateData), [selectedTemplateData])
@@ -413,6 +440,7 @@ function EnviosMasivosPage() {
       const user = data?.user || {}
       const name = String(user?.name || user?.email || "").trim()
       if (response.ok && name) setCurrentAgentName(name)
+      if (response.ok) setTenantId(String(user?.tenant_id || ""))
     } catch {
       setCurrentAgentName("Agente")
     }
@@ -722,7 +750,7 @@ function EnviosMasivosPage() {
                       <SelectValue placeholder="Selecciona una plantilla" />
                     </SelectTrigger>
                     <SelectContent>
-                      {waTemplates.map((tpl) => (
+                      {visibleTemplates.map((tpl) => (
                         <SelectItem key={tpl.sid} value={tpl.sid}>
                           {tpl.name}
                         </SelectItem>
@@ -910,7 +938,7 @@ function EnviosMasivosPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las plantillas</SelectItem>
-                {waTemplates.map((tpl) => (
+                {visibleTemplates.map((tpl) => (
                   <SelectItem key={tpl.sid} value={tpl.name}>
                     {tpl.name}
                   </SelectItem>

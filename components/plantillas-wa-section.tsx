@@ -123,7 +123,6 @@ export default function PlantillasWASection() {
           const contactPhone = String(contact.phone_number || contact.phone || "")
           await api.post(`/api/twilio/send-wa-template`, {
             to: contactPhone.replace(/\s/g, ""),
-            from: process.env.NEXT_PUBLIC_TWILIO_WHATSAPP_FROM || "whatsapp:+12602649030",
             contentSid: selectedTplObj.sid,
             variables
           })
