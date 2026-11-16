@@ -5,13 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { api } from "@/lib/api"
 import { useTenantBranding } from "@/hooks/use-tenant-branding"
-
-const MODULE_ITEMS = [
-  { key: "module_citas_enabled" as const, label: "Citas", description: "Agenda de citas del espacio" },
-  { key: "module_agentes_enabled" as const, label: "Agentes", description: "Gestión de agentes y supervisores" },
-  { key: "module_leads_enabled" as const, label: "Leads", description: "Captura y seguimiento de leads" },
-  { key: "module_docs_api_enabled" as const, label: "Documentación API", description: "Guía de integración para clientes externos" },
-]
+import { useLanguage } from "@/components/language-provider"
 
 /**
  * Solo para super-admin de plataforma: habilita/deshabilita los módulos opcionales
@@ -19,11 +13,19 @@ const MODULE_ITEMS = [
  * viendo actualmente. Los tenants nuevos arrancan con todo apagado.
  */
 export function TenantModulesSection() {
+  const { t } = useLanguage()
   const branding = useTenantBranding()
   const [flags, setFlags] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [error, setError] = useState("")
+
+  const MODULE_ITEMS = [
+    { key: "module_citas_enabled" as const, label: t("cfg.module.citas"), description: t("cfg.module.citasDesc") },
+    { key: "module_agentes_enabled" as const, label: t("cfg.module.agentes"), description: t("cfg.module.agentesDesc") },
+    { key: "module_leads_enabled" as const, label: t("cfg.module.leads"), description: t("cfg.module.leadsDesc") },
+    { key: "module_docs_api_enabled" as const, label: t("cfg.module.docsApi"), description: t("cfg.module.docsApiDesc") },
+  ]
 
   useEffect(() => {
     let active = true
@@ -38,7 +40,7 @@ export function TenantModulesSection() {
           module_docs_api_enabled: Boolean(data?.module_docs_api_enabled),
         })
       })
-      .catch(() => setError("No se pudieron cargar los módulos"))
+      .catch(() => setError(t("cfg.modulesLoadFail")))
       .finally(() => {
         if (active) setLoading(false)
       })
@@ -56,7 +58,7 @@ export function TenantModulesSection() {
       await api.patch(`/api/tenants/${branding.tenantId}/modules`, { [key]: value })
     } catch (err: any) {
       setFlags((prev) => ({ ...prev, [key]: !value }))
-      setError(err?.response?.data?.message || "No se pudo actualizar el módulo")
+      setError(err?.response?.data?.message || t("cfg.modulesSaveFail"))
     } finally {
       setSavingKey(null)
     }
@@ -65,10 +67,10 @@ export function TenantModulesSection() {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-medium text-foreground">Módulos del espacio</h3>
+        <h3 className="text-sm font-medium text-foreground">{t("cfg.modulesTitle")}</h3>
         <p className="text-sm text-muted-foreground">
-          Solo vos, como super-admin de plataforma, podés habilitar estas secciones para{" "}
-          <span className="font-medium">{branding.displayName || branding.name || "este espacio"}</span>.
+          {t("cfg.modulesDescPrefix")}{" "}
+          <span className="font-medium">{branding.displayName || branding.name || t("cfg.modulesDescFallback")}</span>.
         </p>
       </div>
 

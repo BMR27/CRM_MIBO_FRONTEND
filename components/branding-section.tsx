@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Save, Upload } from "lucide-react"
 import { api } from "@/lib/api"
+import { useLanguage } from "@/components/language-provider"
 
 const DEFAULT_ACCENT_COLOR = "#2563EB"
 const MAX_LOGO_BYTES = 2 * 1024 * 1024
 
 export function BrandingSection() {
+  const { t } = useLanguage()
   const [logoUrl, setLogoUrl] = useState("")
   const [accentColor, setAccentColor] = useState("")
   const [displayName, setDisplayName] = useState("")
@@ -31,7 +33,7 @@ export function BrandingSection() {
         setAccentColor(data?.branding_accent_color || "")
         setDisplayName(data?.branding_display_name || "")
       })
-      .catch(() => setError("No se pudo cargar el branding del espacio"))
+      .catch(() => setError(t("cfg.brandingLoadFail")))
       .finally(() => {
         if (active) setLoading(false)
       })
@@ -45,7 +47,7 @@ export function BrandingSection() {
     e.target.value = ""
     if (!file) return
     if (file.size > MAX_LOGO_BYTES) {
-      setError("El logo no puede pesar más de 2MB")
+      setError(t("cfg.logoTooBig"))
       return
     }
     setUploadingLogo(true)
@@ -59,7 +61,7 @@ export function BrandingSection() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err: any) {
-      setError(err?.response?.data?.message || "No se pudo subir el logo")
+      setError(err?.response?.data?.message || t("cfg.logoUploadFail"))
     } finally {
       setUploadingLogo(false)
     }
@@ -77,7 +79,7 @@ export function BrandingSection() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err: any) {
-      setError(err?.response?.data?.message || "No se pudo guardar el branding")
+      setError(err?.response?.data?.message || t("cfg.brandingSaveFail"))
     } finally {
       setSaving(false)
     }
@@ -86,22 +88,19 @@ export function BrandingSection() {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-medium text-foreground">Branding del espacio</h3>
-        <p className="text-sm text-muted-foreground">
-          Personaliza el logo, color y nombre que ven tus agentes en este espacio. Si dejas un campo vacío, se usa
-          el estilo por defecto del sistema — no afecta a otros espacios.
-        </p>
+        <h3 className="text-sm font-medium text-foreground">{t("cfg.brandingTitle")}</h3>
+        <p className="text-sm text-muted-foreground">{t("cfg.brandingDesc")}</p>
       </div>
 
       <div className="space-y-2">
-        <Label>Logo</Label>
+        <Label>{t("cfg.logo")}</Label>
         <div className="flex items-center gap-3">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt="Logo actual" className="h-12 w-12 rounded-md border object-contain" />
+            <img src={logoUrl} alt={t("cfg.logo")} className="h-12 w-12 rounded-md border object-contain" />
           ) : (
             <div className="flex h-12 w-12 items-center justify-center rounded-md border text-xs text-muted-foreground">
-              Sin logo
+              {t("cfg.noLogo")}
             </div>
           )}
           <input
@@ -120,14 +119,14 @@ export function BrandingSection() {
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="h-4 w-4" />
-            {uploadingLogo ? "Subiendo..." : "Subir logo"}
+            {uploadingLogo ? t("cfg.uploading") : t("cfg.uploadLogo")}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">PNG, JPG, WEBP o SVG, máx. 2MB. Se muestra en el menú lateral y el encabezado.</p>
+        <p className="text-xs text-muted-foreground">{t("cfg.logoHint")}</p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="branding-color">Color de acento</Label>
+        <Label htmlFor="branding-color">{t("cfg.accentColor")}</Label>
         <div className="flex items-center gap-2">
           <Input
             id="branding-color"
@@ -148,25 +147,23 @@ export function BrandingSection() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="branding-display-name">Nombre para mostrar</Label>
+        <Label htmlFor="branding-display-name">{t("cfg.displayName")}</Label>
         <Input
           id="branding-display-name"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           disabled={loading || saving}
-          placeholder="Mi Empresa"
+          placeholder={t("cfg.workspaceNamePlaceholder")}
         />
-        <p className="text-xs text-muted-foreground">
-          Si lo dejas vacío, se usa el nombre del espacio de trabajo.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("cfg.displayNameHint")}</p>
       </div>
 
       <Button variant="outline" className="gap-2" onClick={handleSave} disabled={loading || saving}>
         <Save className="h-4 w-4" />
-        {saving ? "Guardando..." : "Guardar branding"}
+        {saving ? t("cfg.saving") : t("cfg.saveBranding")}
       </Button>
 
-      {saved && <p className="text-xs text-green-600">Branding actualizado.</p>}
+      {saved && <p className="text-xs text-green-600">{t("cfg.brandingSaved")}</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )

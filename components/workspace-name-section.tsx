@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Save } from "lucide-react"
 import { api } from "@/lib/api"
+import { useLanguage } from "@/components/language-provider"
 
 export function WorkspaceNameSection() {
+  const { t } = useLanguage()
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -20,7 +22,7 @@ export function WorkspaceNameSection() {
         const { data } = await api.get("/api/tenants/me")
         setName(data?.name || "")
       } catch (err) {
-        setError("No se pudo cargar el nombre del espacio de trabajo")
+        setError(t("cfg.workspaceNameLoadFail"))
       } finally {
         setLoading(false)
       }
@@ -38,7 +40,7 @@ export function WorkspaceNameSection() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
-      setError("No se pudo guardar el nombre")
+      setError(t("cfg.workspaceNameSaveFail"))
     } finally {
       setSaving(false)
     }
@@ -46,21 +48,21 @@ export function WorkspaceNameSection() {
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="empresa">Nombre de la Empresa</Label>
+      <Label htmlFor="empresa">{t("cfg.workspaceNameLabel")}</Label>
       <div className="flex gap-2">
         <Input
           id="empresa"
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={loading || saving}
-          placeholder="Mi Empresa"
+          placeholder={t("cfg.workspaceNamePlaceholder")}
         />
         <Button variant="outline" className="gap-2 shrink-0" onClick={handleSave} disabled={loading || saving || !name.trim()}>
           <Save className="h-4 w-4" />
-          {saving ? "Guardando..." : "Guardar"}
+          {saving ? t("cfg.saving") : t("cfg.save")}
         </Button>
       </div>
-      {saved && <p className="text-xs text-green-600">Nombre actualizado.</p>}
+      {saved && <p className="text-xs text-green-600">{t("cfg.nameUpdated")}</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )

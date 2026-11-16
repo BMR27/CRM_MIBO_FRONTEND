@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { api } from "@/lib/api"
+import { useLanguage } from "@/components/language-provider"
 
 interface FacebookIntegrationData {
   page_id: string
@@ -14,6 +15,7 @@ interface FacebookIntegrationData {
 }
 
 export function FacebookIntegrationSection() {
+  const { t } = useLanguage()
   const [data, setData] = useState<FacebookIntegrationData | null>(null)
   const [pageId, setPageId] = useState("")
   const [pageAccessToken, setPageAccessToken] = useState("")
@@ -34,7 +36,7 @@ export function FacebookIntegrationSection() {
           setPageId(data.page_id || "")
         }
       } catch (err) {
-        setError("No se pudo cargar la configuración de Facebook")
+        setError(t("cfg.facebookLoadFail"))
       } finally {
         setLoading(false)
       }
@@ -57,28 +59,28 @@ export function FacebookIntegrationSection() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (err) {
-      setError("No se pudo guardar la configuración de Facebook")
+      setError(t("cfg.facebookSaveFail"))
     } finally {
       setSaving(false)
     }
   }
 
-  if (loading) return <p className="text-sm text-muted-foreground">Cargando Facebook...</p>
+  if (loading) return <p className="text-sm text-muted-foreground">{t("cfg.loadingFacebook")}</p>
 
   return (
     <div className="space-y-4">
-      <h3 className="font-medium text-foreground">Facebook Messenger</h3>
+      <h3 className="font-medium text-foreground">{t("cfg.facebookTitle")}</h3>
 
       <div className="space-y-2">
-        <Label htmlFor="fb-page-id">Page ID</Label>
+        <Label htmlFor="fb-page-id">{t("cfg.pageId")}</Label>
         <Input id="fb-page-id" value={pageId} onChange={(e) => setPageId(e.target.value)} placeholder="111222333444" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="fb-token">Page Access Token</Label>
+        <Label htmlFor="fb-token">{t("cfg.pageAccessToken")}</Label>
         <Input
           id="fb-token"
           type="password"
-          placeholder={data?.has_page_access_token ? "•••••••• (ya configurado)" : "EAAxxxxxx..."}
+          placeholder={data?.has_page_access_token ? t("cfg.alreadyConfigured") : "EAAxxxxxx..."}
           value={pageAccessToken}
           onChange={(e) => setPageAccessToken(e.target.value)}
         />
@@ -86,17 +88,17 @@ export function FacebookIntegrationSection() {
 
       {data?.verify_token && (
         <div className="space-y-1 rounded-lg border border-border p-3 text-xs">
-          <p className="font-medium text-foreground">Datos para configurar el webhook en Meta</p>
+          <p className="font-medium text-foreground">{t("cfg.webhookDataTitleFb")}</p>
           <p className="text-muted-foreground break-all">URL: <span className="font-mono">{webhookUrl}</span></p>
-          <p className="text-muted-foreground break-all">Verify token: <span className="font-mono">{data.verify_token}</span></p>
+          <p className="text-muted-foreground break-all">{t("cfg.verifyToken")}: <span className="font-mono">{data.verify_token}</span></p>
         </div>
       )}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {saved && <p className="text-xs text-green-600">Configuración guardada.</p>}
+      {saved && <p className="text-xs text-green-600">{t("cfg.whatsappSaved")}</p>}
 
       <Button variant="outline" onClick={handleSave} disabled={saving || !pageId.trim()}>
-        {saving ? "Guardando..." : "Guardar Facebook"}
+        {saving ? t("cfg.saving") : t("cfg.saveFacebook")}
       </Button>
     </div>
   )
