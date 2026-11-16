@@ -45,6 +45,7 @@ import {
   Send,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import { useLanguage } from "@/components/language-provider"
 
 interface Session {
   id: number
@@ -61,6 +62,8 @@ interface Session {
 
 type CalendarView = "day" | "week" | "month"
 
+const localeMap: Record<string, string> = { es: "es-MX", en: "en-US", pl: "pl-PL", ru: "ru-RU" }
+
 const getStartOfWeek = (date: Date) => {
   const d = new Date(date)
   const day = d.getDay() || 7 // Monday as start
@@ -70,6 +73,17 @@ const getStartOfWeek = (date: Date) => {
 }
 
 export default function AgendaPage() {
+  const { t, language } = useLanguage()
+  const locale = localeMap[language] || "es-MX"
+  const dayShortNames = [
+    t("citas.dayShort.mon"),
+    t("citas.dayShort.tue"),
+    t("citas.dayShort.wed"),
+    t("citas.dayShort.thu"),
+    t("citas.dayShort.fri"),
+    t("citas.dayShort.sat"),
+    t("citas.dayShort.sun"),
+  ]
   const { role, loading: roleLoading } = useUserRole()
   const today = useMemo(() => {
     const now = new Date()
@@ -147,12 +161,12 @@ export default function AgendaPage() {
   const normalizeCallToSession = (call: any): Session => {
     const dateObj = new Date(call.scheduled_at)
     const date = dateObj.toISOString().split("T")[0]
-    const time = dateObj.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false })
+    const time = dateObj.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hour12: false })
 
     return {
       id: Number(call.id),
-      title: call.notes?.trim() || "Llamada programada",
-      clientName: call.contact_name || "Contacto",
+      title: call.notes?.trim() || t("citas.scheduledCall"),
+      clientName: call.contact_name || t("citas.contact"),
       clientPhone: call.phone_number || "",
       date,
       time,
@@ -176,8 +190,8 @@ export default function AgendaPage() {
   const saveSession = async () => {
     if (!formData.title.trim() || !formData.clientName.trim() || !formData.date || !formData.time) {
       toast({
-        title: "Campos incompletos",
-        description: "Captura título, cliente, fecha y hora.",
+        title: t("citas.incompleteFields"),
+        description: t("citas.incompleteFieldsDesc"),
         variant: "destructive",
       })
       return
@@ -203,12 +217,12 @@ export default function AgendaPage() {
 
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(data?.error || "No se pudo guardar la sesión")
+        throw new Error(data?.error || t("citas.couldNotSave"))
       }
 
       toast({
-        title: editingSession ? "Sesión actualizada" : "Sesión guardada",
-        description: "Los cambios quedaron guardados correctamente.",
+        title: editingSession ? t("citas.sessionUpdated") : t("citas.sessionSaved"),
+        description: t("citas.changesSaved"),
       })
       setShowNewSessionDialog(false)
       setEditingSession(null)
@@ -216,8 +230,8 @@ export default function AgendaPage() {
       window.dispatchEvent(new Event("calls-updated"))
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo guardar la sesión",
+        title: t("citas.error"),
+        description: error instanceof Error ? error.message : t("citas.couldNotSave"),
         variant: "destructive",
       })
     } finally {
@@ -230,16 +244,16 @@ export default function AgendaPage() {
     try {
       const response = await fetch(`/api/calls/${session.id}`, { method: "DELETE" })
       const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data?.details || data?.error || "No se pudo eliminar")
+      if (!response.ok) throw new Error(data?.details || data?.error || t("citas.couldNotDelete"))
 
-      toast({ title: "Sesión eliminada", description: "La sesión fue eliminada correctamente." })
+      toast({ title: t("citas.sessionDeleted"), description: t("citas.sessionDeletedDesc") })
       setSessionToDelete(null)
       await fetchSessions()
       window.dispatchEvent(new Event("calls-updated"))
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo eliminar la sesión",
+        title: t("citas.error"),
+        description: error instanceof Error ? error.message : t("citas.couldNotDeleteSession"),
         variant: "destructive",
       })
     } finally {
@@ -256,14 +270,14 @@ export default function AgendaPage() {
         body: JSON.stringify({ status }),
       })
       const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data?.details || data?.error || "No se pudo actualizar")
+      if (!response.ok) throw new Error(data?.details || data?.error || t("citas.couldNotUpdate"))
 
-      toast({ title: "Sesión actualizada", description: "El estado fue actualizado." })
+      toast({ title: t("citas.sessionUpdated"), description: t("citas.statusUpdated") })
       await fetchSessions()
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo actualizar la sesión",
+        title: t("citas.error"),
+        description: error instanceof Error ? error.message : t("citas.couldNotUpdateSession"),
         variant: "destructive",
       })
     } finally {
@@ -274,13 +288,13 @@ export default function AgendaPage() {
   const inviteSession = (session: Session) => {
     const phone = String(session.clientPhone || "").replace(/^whatsapp:/i, "").replace(/\D/g, "")
     const link = session.meetLink || calendarBookingLink
-    const text = `Hola ${session.clientName}, te comparto la invitación para tu sesión "${session.title}" el ${session.date} a las ${session.time}. Link: ${link}`
+    const text = `Hola ${session.clientName}, ${t("citas.invitationText")} "${session.title}" ${t("citas.invitationTextOn")} ${session.date} ${t("citas.invitationTextAt")} ${session.time}. Link: ${link}`
     if (phone) {
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer")
       return
     }
     navigator.clipboard.writeText(text)
-    toast({ title: "Invitación copiada", description: "No hay teléfono válido; copié el texto de invitación." })
+    toast({ title: t("citas.invitationCopied"), description: t("citas.invitationCopiedDesc") })
   }
 
   const fetchSessions = async () => {
@@ -310,22 +324,21 @@ export default function AgendaPage() {
   const getStatusBadge = (status: Session["status"]) => {
     switch (status) {
       case "scheduled":
-        return <Badge className="bg-blue-100 text-blue-700 border-blue-200">Programada</Badge>
+        return <Badge className="bg-blue-100 text-blue-700 border-blue-200">{t("citas.statusScheduled")}</Badge>
       case "completed":
-        return <Badge className="bg-green-100 text-green-700 border-green-200">Completada</Badge>
+        return <Badge className="bg-green-100 text-green-700 border-green-200">{t("citas.statusCompleted")}</Badge>
       case "cancelled":
-        return <Badge className="bg-red-100 text-red-700 border-red-200">Cancelada</Badge>
+        return <Badge className="bg-red-100 text-red-700 border-red-200">{t("citas.statusCancelled")}</Badge>
     }
   }
 
   const getDaysOfWeek = () => {
     const days = []
-    const dayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
     for (let i = 0; i < 7; i++) {
       const date = new Date(currentWeekStart)
       date.setDate(date.getDate() + i)
       days.push({
-        name: dayNames[i],
+        name: dayShortNames[i],
         date: date.getDate(),
         fullDate: date.toISOString().split("T")[0],
         isToday: date.toDateString() === today.toDateString(),
@@ -419,16 +432,16 @@ export default function AgendaPage() {
 
   const getCalendarTitle = () => {
     if (calendarView === "day") {
-      return currentDate.toLocaleDateString("es-MX", {
+      return currentDate.toLocaleDateString(locale, {
         weekday: "long",
         day: "numeric",
         month: "long",
         year: "numeric",
       })
     } else if (calendarView === "week") {
-      return currentWeekStart.toLocaleDateString("es-MX", { month: "long", year: "numeric" })
+      return currentWeekStart.toLocaleDateString(locale, { month: "long", year: "numeric" })
     } else {
-      return currentDate.toLocaleDateString("es-MX", { month: "long", year: "numeric" })
+      return currentDate.toLocaleDateString(locale, { month: "long", year: "numeric" })
     }
   }
 
@@ -443,7 +456,7 @@ export default function AgendaPage() {
         <InboxHeader />
         <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/30">
           <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
-            Validando permisos...
+            {t("citas.validatingPermissions")}
           </div>
         </div>
       </div>
@@ -457,13 +470,13 @@ export default function AgendaPage() {
         <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/30">
           <Card className="mx-auto mt-6 max-w-xl border-red-200">
             <CardHeader>
-              <CardTitle className="text-red-600">Acceso denegado</CardTitle>
+              <CardTitle className="text-red-600">{t("citas.accessDenied")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                La sección de Citas solo está disponible para el rol Administrador.
+                {t("citas.accessDeniedDesc")}
               </p>
-              <Button onClick={() => window.location.assign("/inbox")}>Volver a Conversaciones</Button>
+              <Button onClick={() => window.location.assign("/inbox")}>{t("citas.backToConversations")}</Button>
             </CardContent>
           </Card>
         </div>
@@ -478,7 +491,7 @@ export default function AgendaPage() {
       <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/30">
         {loading ? (
           <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
-            Cargando sesiones...
+            {t("citas.loadingSessions")}
           </div>
         ) : (
           <>
@@ -488,7 +501,7 @@ export default function AgendaPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Sesiones Hoy</p>
+                  <p className="text-xs text-muted-foreground">{t("citas.statSessionsToday")}</p>
                   <p className="text-2xl font-bold text-foreground">{todaySessions.length}</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -501,7 +514,7 @@ export default function AgendaPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Próximas</p>
+                  <p className="text-xs text-muted-foreground">{t("citas.statUpcoming")}</p>
                   <p className="text-2xl font-bold text-foreground">{upcomingSessions}</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
@@ -514,7 +527,7 @@ export default function AgendaPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Completadas</p>
+                  <p className="text-xs text-muted-foreground">{t("citas.statCompleted")}</p>
                   <p className="text-2xl font-bold text-foreground">{completedSessions}</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
@@ -526,7 +539,7 @@ export default function AgendaPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex flex-col gap-2">
-                <p className="text-xs text-muted-foreground">Link de reserva</p>
+                <p className="text-xs text-muted-foreground">{t("citas.bookingLink")}</p>
                 <div className="flex items-center gap-1">
                   <Input value={calendarBookingLink} readOnly className="h-8 text-xs truncate" />
                   <Button variant="outline" size="sm" className="h-8 px-2 bg-transparent" onClick={handleCopyLink}>
@@ -543,7 +556,7 @@ export default function AgendaPage() {
           <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Calendario</CardTitle>
+                <CardTitle className="text-lg">{t("citas.calendarTitle")}</CardTitle>
                 <div className="flex items-center gap-2">
                   <div className="flex border rounded-md overflow-hidden mr-2">
                     <Button
@@ -552,7 +565,7 @@ export default function AgendaPage() {
                       className="h-7 rounded-none text-xs px-2"
                       onClick={() => setCalendarView("day")}
                     >
-                      Día
+                      {t("citas.viewDay")}
                     </Button>
                     <Button
                       variant={calendarView === "week" ? "default" : "ghost"}
@@ -560,7 +573,7 @@ export default function AgendaPage() {
                       className="h-7 rounded-none text-xs px-2 border-x"
                       onClick={() => setCalendarView("week")}
                     >
-                      Semana
+                      {t("citas.viewWeek")}
                     </Button>
                     <Button
                       variant={calendarView === "month" ? "default" : "ghost"}
@@ -568,7 +581,7 @@ export default function AgendaPage() {
                       className="h-7 rounded-none text-xs px-2"
                       onClick={() => setCalendarView("month")}
                     >
-                      Mes
+                      {t("citas.viewMonth")}
                     </Button>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => navigate("prev")}>
@@ -653,7 +666,7 @@ export default function AgendaPage() {
               {calendarView === "month" && (
                 <div>
                   <div className="grid grid-cols-7 gap-1 mb-1">
-                    {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((day) => (
+                    {dayShortNames.map((day) => (
                       <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
                         {day}
                       </div>
@@ -699,7 +712,7 @@ export default function AgendaPage() {
                             ))}
                             {daySessions.length > 2 && (
                               <div className="text-[10px] text-muted-foreground text-center">
-                                +{daySessions.length - 2} más
+                                +{daySessions.length - 2} {t("citas.more")}
                               </div>
                             )}
                           </div>
@@ -716,41 +729,41 @@ export default function AgendaPage() {
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between mb-3">
-                <CardTitle className="text-lg">Sesiones</CardTitle>
+                <CardTitle className="text-lg">{t("citas.sessionsTitle")}</CardTitle>
                 <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
                   <Button size="sm" className="h-8" onClick={openCreateDialog}>
                     <Plus className="h-3 w-3 mr-1" />
-                    Nueva
+                    {t("citas.new")}
                   </Button>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>{editingSession ? "Actualizar sesión" : "Agendar nueva sesión"}</DialogTitle>
+                      <DialogTitle>{editingSession ? t("citas.updateSession") : t("citas.scheduleNewSession")}</DialogTitle>
                       <DialogDescription>
-                        {editingSession ? "Edita los datos de la sesión seleccionada." : "Crea una nueva sesión con un cliente."}
+                        {editingSession ? t("citas.editSessionDesc") : t("citas.newSessionDesc")}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="title">Título</Label>
+                        <Label htmlFor="title">{t("citas.titleLabel")}</Label>
                         <Input
                           id="title"
                           value={formData.title}
                           onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                          placeholder="Ej: Seguimiento pedido"
+                          placeholder={t("citas.titlePlaceholder")}
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="client">Cliente</Label>
+                          <Label htmlFor="client">{t("citas.client")}</Label>
                           <Input
                             id="client"
                             value={formData.clientName}
                             onChange={(e) => setFormData((prev) => ({ ...prev, clientName: e.target.value }))}
-                            placeholder="Nombre del cliente"
+                            placeholder={t("citas.clientPlaceholder")}
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="phone">Teléfono</Label>
+                          <Label htmlFor="phone">{t("citas.phone")}</Label>
                           <Input
                             id="phone"
                             value={formData.clientPhone}
@@ -761,7 +774,7 @@ export default function AgendaPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="date">Fecha</Label>
+                          <Label htmlFor="date">{t("citas.date")}</Label>
                           <Input
                             id="date"
                             type="date"
@@ -770,7 +783,7 @@ export default function AgendaPage() {
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="time">Hora</Label>
+                          <Label htmlFor="time">{t("citas.time")}</Label>
                           <Input
                             id="time"
                             type="time"
@@ -780,7 +793,7 @@ export default function AgendaPage() {
                         </div>
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="type">Tipo</Label>
+                        <Label htmlFor="type">{t("citas.type")}</Label>
                         <Select
                           value={formData.type}
                           onValueChange={(value) => setFormData((prev) => ({ ...prev, type: value as Session["type"] }))}
@@ -792,20 +805,20 @@ export default function AgendaPage() {
                             <SelectItem value="video">
                               <div className="flex items-center gap-2">
                                 <Video className="h-3 w-3" />
-                                Videollamada
+                                {t("citas.videoCall")}
                               </div>
                             </SelectItem>
                             <SelectItem value="phone">
                               <div className="flex items-center gap-2">
                                 <Phone className="h-3 w-3" />
-                                Llamada telefónica
+                                {t("citas.phoneCall")}
                               </div>
                             </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="status">Estatus</Label>
+                        <Label htmlFor="status">{t("citas.status")}</Label>
                         <Select
                           value={formData.status}
                           onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value as Session["status"] }))}
@@ -814,14 +827,14 @@ export default function AgendaPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="scheduled">Programada</SelectItem>
-                            <SelectItem value="completed">Completada</SelectItem>
-                            <SelectItem value="cancelled">Cancelada</SelectItem>
+                            <SelectItem value="scheduled">{t("citas.statusScheduled")}</SelectItem>
+                            <SelectItem value="completed">{t("citas.statusCompleted")}</SelectItem>
+                            <SelectItem value="cancelled">{t("citas.statusCancelled")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="meetLink">Link de reunión (opcional)</Label>
+                        <Label htmlFor="meetLink">{t("citas.meetLinkLabel")}</Label>
                         <Input
                           id="meetLink"
                           value={formData.meetLink}
@@ -832,10 +845,10 @@ export default function AgendaPage() {
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setShowNewSessionDialog(false)} disabled={savingSession}>
-                        Cancelar
+                        {t("citas.cancel")}
                       </Button>
                       <Button onClick={() => void saveSession()} disabled={savingSession}>
-                        {savingSession ? "Guardando..." : editingSession ? "Actualizar" : "Guardar sesión"}
+                        {savingSession ? t("citas.saving") : editingSession ? t("citas.update") : t("citas.saveSession")}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -850,7 +863,13 @@ export default function AgendaPage() {
                     className="h-6 text-xs px-2"
                     onClick={() => setFilter(f)}
                   >
-                    {f === "all" ? "Todas" : f === "scheduled" ? "Prog." : f === "completed" ? "Compl." : "Cancel."}
+                    {f === "all"
+                      ? t("citas.filterAll")
+                      : f === "scheduled"
+                        ? t("citas.filterScheduled")
+                        : f === "completed"
+                          ? t("citas.filterCompleted")
+                          : t("citas.filterCancelled")}
                   </Button>
                 ))}
               </div>
@@ -891,7 +910,7 @@ export default function AgendaPage() {
                             href={`/inbox/conversaciones?id=${session.conversationId}`}
                             className="text-primary hover:underline"
                           >
-                            Ver conversación
+                            {t("citas.viewConversation")}
                           </a>
                         </div>
                       )}
@@ -904,7 +923,7 @@ export default function AgendaPage() {
                             className="flex items-center gap-1 text-primary hover:underline"
                           >
                             <ExternalLink className="h-3 w-3" />
-                            Unirse a la reunión
+                            {t("citas.joinMeeting")}
                           </a>
                         </div>
                       )}
@@ -918,7 +937,7 @@ export default function AgendaPage() {
                         disabled={busySessionId === session.id}
                       >
                         <Send className="mr-1 h-3 w-3" />
-                        Invitar
+                        {t("citas.invite")}
                       </Button>
                       <Button
                         variant="outline"
@@ -928,7 +947,7 @@ export default function AgendaPage() {
                         disabled={busySessionId === session.id}
                       >
                         <Edit2 className="mr-1 h-3 w-3" />
-                        Editar
+                        {t("citas.edit")}
                       </Button>
                       {session.status === "scheduled" ? (
                         <Button
@@ -939,7 +958,7 @@ export default function AgendaPage() {
                           disabled={busySessionId === session.id}
                         >
                           <Check className="mr-1 h-3 w-3" />
-                          Completar
+                          {t("citas.complete")}
                         </Button>
                       ) : (
                         <Button
@@ -950,7 +969,7 @@ export default function AgendaPage() {
                           disabled={busySessionId === session.id}
                         >
                           <Calendar className="mr-1 h-3 w-3" />
-                          Programar
+                          {t("citas.schedule")}
                         </Button>
                       )}
                       {session.status !== "cancelled" && (
@@ -961,7 +980,7 @@ export default function AgendaPage() {
                           onClick={() => void updateSessionStatus(session, "cancelled")}
                           disabled={busySessionId === session.id}
                         >
-                          Cancelar
+                          {t("citas.cancel")}
                         </Button>
                       )}
                       <Button
@@ -970,7 +989,7 @@ export default function AgendaPage() {
                         className="h-7 w-7 text-red-500 hover:bg-red-50 hover:text-red-600"
                         onClick={() => setSessionToDelete(session)}
                         disabled={busySessionId === session.id}
-                        aria-label="Eliminar sesión"
+                        aria-label={t("citas.deleteSessionAriaLabel")}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -984,13 +1003,13 @@ export default function AgendaPage() {
         <AlertDialog open={!!sessionToDelete} onOpenChange={(open) => !open && setSessionToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Eliminar sesión</AlertDialogTitle>
+              <AlertDialogTitle>{t("citas.deleteSession")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Vas a eliminar la sesión "{sessionToDelete?.title}". Esta acción no se puede deshacer.
+                {t("citas.deleteSessionConfirm1")} "{sessionToDelete?.title}". {t("citas.deleteSessionConfirm2")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={busySessionId === sessionToDelete?.id}>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel disabled={busySessionId === sessionToDelete?.id}>{t("citas.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-red-600 text-white hover:bg-red-700"
                 disabled={!sessionToDelete || busySessionId === sessionToDelete?.id}
@@ -999,7 +1018,7 @@ export default function AgendaPage() {
                   if (sessionToDelete) void deleteSession(sessionToDelete)
                 }}
               >
-                {busySessionId === sessionToDelete?.id ? "Eliminando..." : "Eliminar"}
+                {busySessionId === sessionToDelete?.id ? t("citas.deleting") : t("citas.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
