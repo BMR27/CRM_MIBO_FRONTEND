@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { UserPlus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useAgents } from "@/hooks/use-agents"
+import { useLanguage } from "@/components/language-provider"
 
 interface Agent {
   id: string
@@ -31,6 +32,7 @@ interface AssignAgentDialogProps {
 }
 
 export function AssignAgentDialog({ conversationId, currentAgentId, onAssign }: AssignAgentDialogProps) {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { agents, loading: loadingAgents } = useAgents()
@@ -57,11 +59,11 @@ export function AssignAgentDialog({ conversationId, currentAgentId, onAssign }: 
       } else {
         const error = await response.json()
         console.error("[AssignAgentDialog] Assignment failed:", error)
-        alert(`Error al asignar: ${error.error || 'Error desconocido'}`)
+        alert(`${t("assignAgent.assignFail")} ${error.error || t("assignAgent.unknownError")}`)
       }
     } catch (error) {
       console.error("[AssignAgentDialog] Network error:", error)
-      alert("Error de red al asignar agente")
+      alert(t("assignAgent.networkError"))
     } finally {
       setLoading(false)
     }
@@ -91,9 +93,9 @@ export function AssignAgentDialog({ conversationId, currentAgentId, onAssign }: 
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      available: "Disponible",
-      busy: "Ocupado",
-      offline: "Desconectado",
+      available: t("assignAgent.available"),
+      busy: t("assignAgent.busy"),
+      offline: t("assignAgent.offline"),
     }
     return labels[status] || status
   }
@@ -103,22 +105,22 @@ export function AssignAgentDialog({ conversationId, currentAgentId, onAssign }: 
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <UserPlus className="mr-2 h-4 w-4" />
-          Asignar
+          {t("assignAgent.assign")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Asignar Agente</DialogTitle>
-          <DialogDescription>Selecciona un agente para asignar esta conversación</DialogDescription>
+          <DialogTitle>{t("assignAgent.title")}</DialogTitle>
+          <DialogDescription>{t("assignAgent.desc")}</DialogDescription>
         </DialogHeader>
 
         {loadingAgents ? (
           <div className="flex items-center justify-center py-8">
-            <p className="text-sm text-muted-foreground">Cargando agentes...</p>
+            <p className="text-sm text-muted-foreground">{t("assignAgent.loading")}</p>
           </div>
         ) : agents.length === 0 ? (
           <div className="flex items-center justify-center py-8">
-            <p className="text-sm text-muted-foreground">No hay agentes disponibles</p>
+            <p className="text-sm text-muted-foreground">{t("assignAgent.noAgents")}</p>
           </div>
         ) : (
           <ScrollArea className="h-96">
@@ -146,7 +148,7 @@ export function AssignAgentDialog({ conversationId, currentAgentId, onAssign }: 
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-sm">{agent.name}</h3>
-                        {agent.id === currentAgentId && <Badge variant="secondary">Asignado</Badge>}
+                        {agent.id === currentAgentId && <Badge variant="secondary">{t("assignAgent.assigned")}</Badge>}
                       </div>
                       <p className="text-muted-foreground text-xs">{agent.email}</p>
                       {agent.status && (

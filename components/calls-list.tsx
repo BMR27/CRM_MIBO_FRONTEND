@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Phone, Video, Trash2, CheckCircle, Clock } from "lucide-react"
 import { format } from "date-fns"
-import { es } from "date-fns/locale"
+import { es, enUS, pl, ru } from "date-fns/locale"
+import { useLanguage } from "@/components/language-provider"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +32,11 @@ interface CallsListProps {
   conversationId?: string | number
 }
 
+const dateFnsLocales = { es, en: enUS, pl, ru }
+
 export function CallsList({ conversationId }: CallsListProps) {
+  const { t, language } = useLanguage()
+  const dateLocale = dateFnsLocales[language] || es
   const [calls, setCalls] = useState<ScheduledCall[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -91,13 +96,13 @@ export function CallsList({ conversationId }: CallsListProps) {
   }
 
   if (loading) {
-    return <div className="text-center py-4 text-muted-foreground">Cargando llamadas...</div>
+    return <div className="text-center py-4 text-muted-foreground">{t("callsList.loading")}</div>
   }
 
   if (calls.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">No hay llamadas agendadas</p>
+        <p className="text-muted-foreground">{t("callsList.noScheduled")}</p>
       </div>
     )
   }
@@ -112,7 +117,7 @@ export function CallsList({ conversationId }: CallsListProps) {
         <div className="space-y-3">
           <h3 className="font-semibold text-sm flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            Llamadas Próximas
+            {t("callsList.upcoming")}
           </h3>
           <div className="space-y-2">
             {upcomingCalls.map((call) => (
@@ -134,7 +139,7 @@ export function CallsList({ conversationId }: CallsListProps) {
                     </div>
                     <Badge variant="outline" className="flex-shrink-0">
                       {format(new Date(call.scheduled_at), "dd MMM HH:mm", {
-                        locale: es,
+                        locale: dateLocale,
                       })}
                     </Badge>
                   </div>
@@ -153,7 +158,7 @@ export function CallsList({ conversationId }: CallsListProps) {
                       className="flex-1 h-8 text-xs"
                     >
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      Completada
+                      {t("callsList.complete")}
                     </Button>
                     <Button
                       size="sm"
@@ -176,7 +181,7 @@ export function CallsList({ conversationId }: CallsListProps) {
         <div className="space-y-3">
           <h3 className="font-semibold text-sm flex items-center gap-2">
             <CheckCircle className="h-4 w-4" />
-            Llamadas Completadas
+            {t("callsList.completedTitle")}
           </h3>
           <div className="space-y-2">
             {completedCalls.map((call) => (
@@ -198,7 +203,7 @@ export function CallsList({ conversationId }: CallsListProps) {
                     </div>
                     <Badge variant="secondary" className="flex-shrink-0 text-xs">
                       {format(new Date(call.scheduled_at), "dd MMM HH:mm", {
-                        locale: es,
+                        locale: dateLocale,
                       })}
                     </Badge>
                   </div>
@@ -213,18 +218,18 @@ export function CallsList({ conversationId }: CallsListProps) {
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar llamada</AlertDialogTitle>
+            <AlertDialogTitle>{t("callsList.deleteCall")}</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de que deseas eliminar esta llamada agendada?
+              {t("callsList.deleteConfirm")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3">
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("callsList.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && handleDeleteCall(deleteId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Eliminar
+              {t("callsList.delete")}
             </AlertDialogAction>
           </div>
         </AlertDialogContent>

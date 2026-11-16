@@ -9,6 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { useLanguage } from "@/components/language-provider"
 
 interface EmojiPickerDialogProps {
   onEmojiSelect: (emoji: string) => void
@@ -16,6 +17,7 @@ interface EmojiPickerDialogProps {
 }
 
 export function EmojiPickerDialog({ onEmojiSelect, disabled = false }: EmojiPickerDialogProps) {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
 
   return (
@@ -27,7 +29,7 @@ export function EmojiPickerDialog({ onEmojiSelect, disabled = false }: EmojiPick
           size="icon"
           disabled={disabled}
           className="shrink-0"
-          title="Agregar emoji"
+          title={t("emoji.addEmoji")}
         >
           <Smile className="h-4 w-4" />
         </Button>

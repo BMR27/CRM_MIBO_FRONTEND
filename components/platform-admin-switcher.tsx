@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { api, frontendApi } from "@/lib/api"
+import { useLanguage } from "@/components/language-provider"
 
 const HOME_TENANT_KEY = "platform_admin_home_tenant_id"
 
@@ -14,6 +15,7 @@ interface TenantOption {
 }
 
 export function PlatformAdminSwitcher() {
+  const { t } = useLanguage()
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
   const [currentTenantId, setCurrentTenantId] = useState<string>("")
   const [currentTenantName, setCurrentTenantName] = useState<string>("")
@@ -79,14 +81,14 @@ export function PlatformAdminSwitcher() {
   return (
     <div className="flex flex-col gap-1.5 px-1">
       <div className="flex flex-wrap items-center gap-1">
-        <Badge variant="secondary" className="text-[10px]">Super-admin</Badge>
+        <Badge variant="secondary" className="text-[10px]">{t("platformSwitcher.superAdmin")}</Badge>
         {isImpersonating && (
-          <Badge variant="outline" className="text-[10px]">Viendo: {currentTenantName || "..."}</Badge>
+          <Badge variant="outline" className="text-[10px]">{t("platformSwitcher.viewing")} {currentTenantName || "..."}</Badge>
         )}
       </div>
       <Select value={currentTenantId} onValueChange={switchToTenant} disabled={switching}>
         <SelectTrigger className="h-8 w-full text-xs">
-          <SelectValue placeholder="Cambiar de espacio" />
+          <SelectValue placeholder={t("platformSwitcher.changeWorkspace")} />
         </SelectTrigger>
         <SelectContent>
           {tenants.map((t) => (
@@ -98,7 +100,7 @@ export function PlatformAdminSwitcher() {
       </Select>
       {isImpersonating && homeTenantId && (
         <Button type="button" size="sm" variant="outline" className="h-7 w-full text-xs" onClick={() => switchToTenant(homeTenantId)} disabled={switching}>
-          Volver a mi espacio
+          {t("platformSwitcher.backToMyWorkspace")}
         </Button>
       )}
     </div>

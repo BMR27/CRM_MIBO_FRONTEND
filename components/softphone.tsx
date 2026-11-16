@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Phone, PhoneOff, PhoneIncoming, Mic, MicOff, X } from "lucide-react"
 import { api } from "@/lib/api"
+import { useLanguage } from "@/components/language-provider"
 
 type CallStatus = "idle" | "connecting" | "in-call" | "incoming"
 
 export function Softphone() {
+  const { t } = useLanguage()
   const [available, setAvailable] = useState(false)
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<CallStatus>("idle")
@@ -100,7 +102,7 @@ export function Softphone() {
       call.on("cancel", () => resetCall())
       call.on("reject", () => resetCall())
     } catch (err) {
-      setError("No se pudo iniciar la llamada")
+      setError(t("softphone.couldNotCall"))
       setStatus("idle")
     }
   }
@@ -135,16 +137,16 @@ export function Softphone() {
         <div className="mb-2 w-72 rounded-lg border border-border bg-card p-4 shadow-lg">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <PhoneIncoming className="h-4 w-4 animate-pulse" />
-            Llamada entrante
+            {t("softphone.incomingCall")}
           </div>
           <div className="mt-3 flex gap-2">
             <Button size="sm" className="flex-1 gap-2" onClick={handleAccept}>
               <Phone className="h-4 w-4" />
-              Contestar
+              {t("softphone.answer")}
             </Button>
             <Button size="sm" variant="destructive" className="flex-1 gap-2" onClick={handleReject}>
               <PhoneOff className="h-4 w-4" />
-              Rechazar
+              {t("softphone.reject")}
             </Button>
           </div>
         </div>
@@ -153,7 +155,7 @@ export function Softphone() {
       {open && status !== "incoming" && (
         <div className="mb-2 w-72 rounded-lg border border-border bg-card p-4 shadow-lg space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-foreground">Llamadas</p>
+            <p className="text-sm font-medium text-foreground">{t("softphone.calls")}</p>
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
               <X className="h-4 w-4" />
             </Button>
@@ -168,12 +170,12 @@ export function Softphone() {
               />
               <Button className="w-full gap-2" onClick={handleCall} disabled={!number.trim()}>
                 <Phone className="h-4 w-4" />
-                Llamar
+                {t("softphone.call")}
               </Button>
             </>
           )}
 
-          {status === "connecting" && <p className="text-sm text-muted-foreground">Conectando...</p>}
+          {status === "connecting" && <p className="text-sm text-muted-foreground">{t("softphone.connecting")}</p>}
 
           {status === "in-call" && (
             <>
@@ -181,11 +183,11 @@ export function Softphone() {
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 gap-2" onClick={toggleMute}>
                   {muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                  {muted ? "Activar mic" : "Silenciar"}
+                  {muted ? t("softphone.unmute") : t("softphone.mute")}
                 </Button>
                 <Button variant="destructive" className="flex-1 gap-2" onClick={handleHangup}>
                   <PhoneOff className="h-4 w-4" />
-                  Colgar
+                  {t("softphone.hangup")}
                 </Button>
               </div>
             </>

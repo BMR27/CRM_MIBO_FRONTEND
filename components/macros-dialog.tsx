@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { MessageSquare, Plus, Search } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useLanguage } from "@/components/language-provider"
 
 interface Macro {
   id: number
@@ -31,6 +32,7 @@ interface MacrosDialogProps {
 }
 
 export function MacrosDialog({ onSelectMacro }: MacrosDialogProps) {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [macros, setMacros] = useState<Macro[]>([])
   const [search, setSearch] = useState("")
@@ -97,8 +99,8 @@ export function MacrosDialog({ onSelectMacro }: MacrosDialogProps) {
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Macros de Respuesta Rápida</DialogTitle>
-          <DialogDescription>Selecciona un macro para insertar en el mensaje</DialogDescription>
+          <DialogTitle>{t("macros.title")}</DialogTitle>
+          <DialogDescription>{t("macros.desc")}</DialogDescription>
         </DialogHeader>
 
         {!showCreate ? (
@@ -107,7 +109,7 @@ export function MacrosDialog({ onSelectMacro }: MacrosDialogProps) {
               <div className="relative flex-1">
                 <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar macros..."
+                  placeholder={t("macros.search")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -115,14 +117,14 @@ export function MacrosDialog({ onSelectMacro }: MacrosDialogProps) {
               </div>
               <Button onClick={() => setShowCreate(true)} size="sm">
                 <Plus className="mr-2 h-4 w-4" />
-                Nuevo
+                {t("macros.new")}
               </Button>
             </div>
 
             <ScrollArea className="h-96">
               <div className="space-y-2">
                 {filteredMacros.length === 0 ? (
-                  <p className="py-8 text-center text-muted-foreground text-sm">No se encontraron macros</p>
+                  <p className="py-8 text-center text-muted-foreground text-sm">{t("macros.notFound")}</p>
                 ) : (
                   filteredMacros.map((macro) => (
                     <button
@@ -139,7 +141,7 @@ export function MacrosDialog({ onSelectMacro }: MacrosDialogProps) {
                             </Badge>
                           )}
                           <Badge variant="secondary" className="text-xs">
-                            {macro.usage_count} usos
+                            {macro.usage_count} {t("macros.usesSuffix")}
                           </Badge>
                         </div>
                       </div>
@@ -153,39 +155,39 @@ export function MacrosDialog({ onSelectMacro }: MacrosDialogProps) {
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Título</Label>
+              <Label htmlFor="title">{t("macros.titleLabel")}</Label>
               <Input
                 id="title"
-                placeholder="Ej: Saludo inicial"
+                placeholder={t("macros.titlePlaceholder")}
                 value={newMacro.title}
                 onChange={(e) => setNewMacro({ ...newMacro, title: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="content">Contenido</Label>
+              <Label htmlFor="content">{t("macros.contentLabel")}</Label>
               <Textarea
                 id="content"
-                placeholder="Escribe el contenido del macro..."
+                placeholder={t("macros.contentPlaceholder")}
                 value={newMacro.content}
                 onChange={(e) => setNewMacro({ ...newMacro, content: e.target.value })}
                 rows={4}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="shortcut">Atajo (opcional)</Label>
+              <Label htmlFor="shortcut">{t("macros.shortcutLabel")}</Label>
               <Input
                 id="shortcut"
-                placeholder="Ej: /hola"
+                placeholder={t("macros.shortcutPlaceholder")}
                 value={newMacro.shortcut}
                 onChange={(e) => setNewMacro({ ...newMacro, shortcut: e.target.value })}
               />
             </div>
             <div className="flex gap-2">
               <Button onClick={handleCreateMacro} disabled={!newMacro.title || !newMacro.content}>
-                Crear Macro
+                {t("macros.create")}
               </Button>
               <Button variant="outline" onClick={() => setShowCreate(false)}>
-                Cancelar
+                {t("macros.cancel")}
               </Button>
             </div>
           </div>

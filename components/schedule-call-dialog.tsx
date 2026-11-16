@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar, Clock, Phone } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useLanguage } from "@/components/language-provider"
 
 interface ScheduleCallDialogProps {
   open: boolean
@@ -24,6 +25,7 @@ export function ScheduleCallDialog({
   phoneNumber,
   conversationId,
 }: ScheduleCallDialogProps) {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [callDate, setCallDate] = useState("")
   const [callTime, setCallTime] = useState("")
@@ -32,7 +34,7 @@ export function ScheduleCallDialog({
 
   const handleScheduleCall = async () => {
     if (!callDate || !callTime) {
-      alert("Por favor completa la fecha y hora")
+      alert(t("schedCall.fillDateTime"))
       return
     }
 
@@ -59,7 +61,7 @@ export function ScheduleCallDialog({
       console.log("[ScheduleCallDialog] Response:", data)
 
       if (response.ok) {
-        alert("✅ Llamada agendada correctamente")
+        alert(t("schedCall.scheduledOk"))
         window.dispatchEvent(new Event("calls-updated"))
         onOpenChange(false)
         setCallDate("")
@@ -67,12 +69,12 @@ export function ScheduleCallDialog({
         setCallType("phone")
         setNotes("")
       } else {
-        alert(`❌ Error: ${data.error || "No se pudo agendar"}`)
+        alert(`❌ Error: ${data.error || t("schedCall.couldNotSchedule")}`)
         console.error("[ScheduleCallDialog] Error details:", data)
       }
     } catch (error) {
       console.error("[ScheduleCallDialog] Error scheduling call:", error)
-      alert("❌ Error de conexión al agendar la llamada")
+      alert(t("schedCall.connectionError"))
     } finally {
       setLoading(false)
     }
@@ -84,10 +86,10 @@ export function ScheduleCallDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Phone className="h-5 w-5" />
-            Agendar Llamada
+            {t("schedCall.title")}
           </DialogTitle>
           <DialogDescription>
-            Agenda una llamada con {contactName || "el contacto"}
+            {t("schedCall.descPrefix")} {contactName || t("schedCall.theContact")}
           </DialogDescription>
         </DialogHeader>
 
@@ -95,24 +97,24 @@ export function ScheduleCallDialog({
           {/* Contact Info */}
           {phoneNumber && (
             <div className="rounded-lg bg-muted p-3">
-              <p className="text-sm text-muted-foreground">Teléfono:</p>
+              <p className="text-sm text-muted-foreground">{t("schedCall.phone")}</p>
               <p className="font-semibold text-foreground">{phoneNumber}</p>
             </div>
           )}
 
           {/* Call Type */}
           <div className="space-y-2">
-            <Label htmlFor="call-type">Tipo de Llamada</Label>
+            <Label htmlFor="call-type">{t("schedCall.callType")}</Label>
             <Select value={callType} onValueChange={setCallType}>
               <SelectTrigger id="call-type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="phone">
-                  <span className="flex items-center gap-2">📞 Telefónica</span>
+                  <span className="flex items-center gap-2">📞 {t("schedCall.phoneType")}</span>
                 </SelectItem>
                 <SelectItem value="video">
-                  <span className="flex items-center gap-2">📹 Videollamada</span>
+                  <span className="flex items-center gap-2">📹 {t("schedCall.videoType")}</span>
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -122,7 +124,7 @@ export function ScheduleCallDialog({
           <div className="space-y-2">
             <Label htmlFor="call-date" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Fecha
+              {t("schedCall.date")}
             </Label>
             <Input
               id="call-date"
@@ -137,7 +139,7 @@ export function ScheduleCallDialog({
           <div className="space-y-2">
             <Label htmlFor="call-time" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              Hora
+              {t("schedCall.time")}
             </Label>
             <Input
               id="call-time"
@@ -150,10 +152,10 @@ export function ScheduleCallDialog({
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Notas (opcional)</Label>
+            <Label htmlFor="notes">{t("schedCall.notes")}</Label>
             <Textarea
               id="notes"
-              placeholder="Añade notas sobre el propósito de la llamada..."
+              placeholder={t("schedCall.notesPlaceholder")}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={loading}
@@ -169,10 +171,10 @@ export function ScheduleCallDialog({
               disabled={loading}
               className="flex-1"
             >
-              Cancelar
+              {t("schedCall.cancel")}
             </Button>
             <Button onClick={handleScheduleCall} disabled={loading} className="flex-1">
-              {loading ? "Agendando..." : "Agendar"}
+              {loading ? t("schedCall.scheduling") : t("schedCall.schedule")}
             </Button>
           </div>
         </div>
