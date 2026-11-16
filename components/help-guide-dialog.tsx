@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -77,6 +77,20 @@ export function HelpGuideDialog({ collapsed, isAdmin, isAgent, modules }: HelpGu
     setOpen(true)
   }
 
+  // Abre la guía automáticamente la primera vez que el usuario entra al CRM en este
+  // navegador (se recuerda con localStorage para no volver a interrumpir después).
+  useEffect(() => {
+    if (visibleModules.length === 0) return
+    try {
+      const seen = localStorage.getItem("help_guide_seen")
+      if (!seen) {
+        handleOpen()
+        localStorage.setItem("help_guide_seen", "1")
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleModules.length > 0])
+
   const selectModule = (id: string) => {
     setActiveModuleId(id)
     setStepIndex(0)
@@ -126,7 +140,7 @@ export function HelpGuideDialog({ collapsed, isAdmin, isAgent, modules }: HelpGu
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
+        <DialogContent className="w-[92vw] sm:w-full sm:max-w-3xl p-0 gap-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Sparkles className="h-5 w-5 text-primary" />
@@ -135,9 +149,9 @@ export function HelpGuideDialog({ collapsed, isAdmin, isAgent, modules }: HelpGu
             <DialogDescription>{t("help.subtitle")}</DialogDescription>
           </DialogHeader>
 
-          <div className="flex h-[520px] max-h-[70vh]">
+          <div className="flex h-[70vh] max-h-[520px] min-h-[380px]">
             {/* Module list */}
-            <div className="w-56 shrink-0 border-r border-border overflow-y-auto py-2 bg-muted/20">
+            <div className="w-40 sm:w-56 shrink-0 border-r border-border overflow-y-auto py-2 bg-muted/20">
               {visibleModules.map((m) => {
                 const Icon = MODULE_ICONS[m.id] || MessageSquare
                 const isActive = m.id === activeModule?.id
