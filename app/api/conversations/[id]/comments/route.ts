@@ -8,6 +8,17 @@ interface Comment {
   created_at: string
 }
 
+let commentsColumnEnsured = false
+async function ensureCommentsColumn() {
+  if (commentsColumnEnsured) return
+  try {
+    await sql!`ALTER TABLE conversations ADD COLUMN IF NOT EXISTS comments TEXT`
+    commentsColumnEnsured = true
+  } catch {
+    // ignore; el UPDATE/SELECT de abajo fallará con un error más específico si persiste
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -17,6 +28,7 @@ export async function POST(
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     const tenantId = user.tenant_id
     if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
+    await ensureCommentsColumn()
 
     const { id } = await params
     const body = await request.json()
@@ -119,6 +131,7 @@ export async function PUT(
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     const tenantId = user.tenant_id
     if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
+    await ensureCommentsColumn()
 
     const { id } = await params
     const body = await request.json()
@@ -227,6 +240,7 @@ export async function DELETE(
     if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     const tenantId = user.tenant_id
     if (!tenantId) return NextResponse.json({ error: "Missing tenant" }, { status: 401 })
+    await ensureCommentsColumn()
 
     const { id } = await params
     const body = await request.json()
