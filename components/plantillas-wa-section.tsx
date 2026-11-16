@@ -1,6 +1,4 @@
-
 "use client"
-
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -13,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { api, frontendApi } from "@/lib/api"
+import { useLanguage } from "@/components/language-provider"
 
 // Configuración para Railway/producción
 const BACKEND_URL = "https://crmmibobackend-production.up.railway.app";
@@ -33,6 +32,7 @@ function getInitials(name: string) {
 
 
 export default function PlantillasWASection() {
+  const { t } = useLanguage()
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
   const [searchContact, setSearchContact] = useState("")
@@ -144,14 +144,14 @@ export default function PlantillasWASection() {
           } catch {
             // Ignorado: esperado si el cliente aún no respondió a la plantilla.
           }
-          return `Plantilla enviada a ${contact.name}`
+          return `${t("plantWa.templateSentTo")} ${contact.name}`
         } catch (err: any) {
-          throw new Error(`Error enviando a ${contact.name}: ${err?.response?.data?.error || err.message}`)
+          throw new Error(`${t("plantWa.errorSendingTo")} ${contact.name}: ${err?.response?.data?.error || err.message}`)
         }
       }))
       setSendResult(results.join("\n"))
     } catch (err: any) {
-      setSendResult(err.message || "Error enviando mensajes")
+      setSendResult(err.message || t("plantWa.errorSendingMessages"))
     } finally {
       setSending(false)
     }
@@ -163,10 +163,10 @@ export default function PlantillasWASection() {
     try {
       const { data } = await frontendApi.post("/api/conversations/ensure", { contact_id: String(contact.id) });
       const conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
-      if (!conversationId) throw new Error("No se pudo abrir la conversación");
+      if (!conversationId) throw new Error(t("plantWa.couldNotOpenConversation"));
       router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`)
     } catch (e: any) {
-      setSendResult(e.message || "Error abriendo chat")
+      setSendResult(e.message || t("plantWa.errorOpeningChat"))
     }
   }
 
@@ -203,7 +203,7 @@ export default function PlantillasWASection() {
   if (loadingTenant) {
     return (
       <div className="flex flex-col h-full w-full items-center justify-center">
-        <div className="text-sm text-muted-foreground">Cargando espacio de trabajo...</div>
+        <div className="text-sm text-muted-foreground">{t("plantWa.loadingWorkspace")}</div>
       </div>
     )
   }
@@ -212,9 +212,9 @@ export default function PlantillasWASection() {
     return (
       <div className="flex flex-col h-full w-full items-center justify-center">
         <Card className="w-full max-w-lg mx-auto p-6 text-center">
-          <p className="font-semibold mb-1">Plantillas de WhatsApp no habilitadas</p>
+          <p className="font-semibold mb-1">{t("plantWa.notEnabledTitle")}</p>
           <p className="text-sm text-muted-foreground">
-            El envío de plantillas de WhatsApp no está habilitado para tu espacio de trabajo. Contacta a soporte para activarlo.
+            {t("plantWa.notEnabledDesc")}
           </p>
         </Card>
       </div>
@@ -226,11 +226,11 @@ export default function PlantillasWASection() {
       <div className="w-full max-w-lg mx-auto space-y-4">
         <Card className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-sm">Plantilla a enviar</span>
-            {loadingTemplates && <span className="text-xs text-muted-foreground">Cargando plantillas...</span>}
+            <span className="font-semibold text-sm">{t("plantWa.templateToSend")}</span>
+            {loadingTemplates && <span className="text-xs text-muted-foreground">{t("plantWa.loadingTemplates")}</span>}
           </div>
           {waTemplates.length === 0 ? (
-            <div className="text-xs text-muted-foreground">No hay plantillas aprobadas disponibles.</div>
+            <div className="text-xs text-muted-foreground">{t("plantWa.noTemplates")}</div>
           ) : (
             <div className="flex flex-col gap-2">
               {waTemplates.map((tpl) => (
@@ -256,14 +256,14 @@ export default function PlantillasWASection() {
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-lg">Contactos</span>
+            <span className="font-semibold text-lg">{t("plantWa.contacts")}</span>
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
               <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
-              Seleccionar todos
+              {t("plantWa.selectAll")}
             </label>
           </div>
           <Input
-            placeholder="Buscar contacto..."
+            placeholder={t("plantWa.searchContact")}
             value={searchContact}
             onChange={(e) => setSearchContact(e.target.value)}
             className="mb-2"
@@ -271,9 +271,9 @@ export default function PlantillasWASection() {
           <ScrollArea className="h-96 rounded-md border">
             <div className="flex flex-col gap-2 p-2">
               {loadingContacts ? (
-                <div className="text-xs text-muted-foreground p-4">Cargando contactos...</div>
+                <div className="text-xs text-muted-foreground p-4">{t("plantWa.loadingContacts")}</div>
               ) : filteredContacts.length === 0 ? (
-                <div className="text-xs text-muted-foreground p-4">No hay contactos disponibles.</div>
+                <div className="text-xs text-muted-foreground p-4">{t("plantWa.noContacts")}</div>
               ) : filteredContacts.map((contact) => (
                 <div key={contact.id} className="flex items-center gap-2">
                   <Checkbox
@@ -288,7 +288,7 @@ export default function PlantillasWASection() {
                     <div className="text-xs text-muted-foreground">{contact.phone_number || contact.phone}</div>
                   </div>
                   <Button size="sm" variant="secondary" onClick={() => handleChat(contact)}>
-                    Chatear
+                    {t("plantWa.chat")}
                   </Button>
                 </div>
               ))}
@@ -302,10 +302,10 @@ export default function PlantillasWASection() {
             disabled={sending || !selectedTplObj || selectedContactsObj.length === 0}
             onClick={handleSendTemplate}
           >
-            {sending ? "Enviando..." : `Enviar plantilla a ${selectedContactsObj.length} contacto(s)`}
+            {sending ? t("plantWa.sending") : `${t("plantWa.sendTemplateTo")} ${selectedContactsObj.length} ${t("plantWa.contactsSuffix")}`}
           </Button>
           {selectedContactsObj.length > 0 && (
-            <Badge variant="outline">{selectedContactsObj.length} seleccionados</Badge>
+            <Badge variant="outline">{selectedContactsObj.length} {t("plantWa.selected")}</Badge>
           )}
         </div>
 
