@@ -1,39 +1,23 @@
 "use client"
 import { useState, useEffect } from "react"
-import { useUserRole } from "../hooks/use-user-role"
 import { useToast } from "../hooks/use-toast"
-import { api, frontendApi } from "../lib/api"
+import { frontendApi } from "../lib/api"
 import {
   Info,
-  FileText,
   Zap,
   User,
-  FolderOpen,
-  Calendar,
-  Video,
-  Link,
-  ExternalLink,
-  Plus,
   MessageSquare,
-  Check,
-  Copy,
-  Phone,
-  Trash2,
   Edit2,
+  Trash2,
+  Send,
 } from "lucide-react"
 import { Button } from "../components/ui/button"
+import { Badge } from "../components/ui/badge"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select"
 import { Textarea } from "../components/ui/textarea"
 import { useLanguage } from "@/components/language-provider"
-   
 
-interface Meeting {
-  id: number
-  title: string
-  date: string
-  time: string
-  type: "video" | "phone"
-}
+const localeMap: Record<string, string> = { es: "es-MX", en: "en-US", pl: "pl-PL", ru: "ru-RU" }
 
 interface Comment {
   id: string
@@ -42,7 +26,7 @@ interface Comment {
 }
 
 interface DetailsPanelProps {
-    lastMessage?: { created_at: string }
+  lastMessage?: { created_at: string }
   contactName?: string
   contactPhone?: string
   status?: string
@@ -56,13 +40,22 @@ interface DetailsPanelProps {
   externalUserId?: string
 }
 
+function getInitials(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
+
 export function ConversationDetails({
   contactName,
   contactPhone = "whatsapp:+5215548780484",
   status = "active",
   priority = "low",
   agentName = "Juan Perez",
-  lastActivity = "16 ene",
   onStatusChange,
   onPriorityChange,
   conversationId,
@@ -71,38 +64,18 @@ export function ConversationDetails({
   lastMessage,
   ...props
 }: DetailsPanelProps) {
-  const { t } = useLanguage();
-  const { isAgent, isSupervisor } = useUserRole();
-  const showSchedulingSections = !isAgent && !isSupervisor
-  // LOG: Validar externalUserId
-  useEffect(() => {
-    // Suponiendo que externalUserId viene de props, de contexto, o de algún fetch/conversación
-    // Si existe en el scope, loguearlo
-    if (typeof externalUserId !== 'undefined') {
-      console.log('[ConversationDetails] externalUserId:', externalUserId);
-    } else {
-      console.log('[ConversationDetails] externalUserId is undefined');
-    }
-  }, [typeof externalUserId !== 'undefined' ? externalUserId : null]);
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
+  const { t, language } = useLanguage()
+  const locale = localeMap[language] || "es-MX"
   const [currentStatus, setCurrentStatus] = useState(status)
   const [currentPriority, setCurrentPriority] = useState(priority)
   const [currentAgent, setCurrentAgent] = useState<string | undefined>(undefined)
-  const [meetings, setMeetings] = useState<Meeting[]>([])
-  const [scheduledSession, setScheduledSession] = useState<{
-    title: string
-    date: string
-    time: string
-    link?: string
-  } | null>(null)
-  const [copied, setCopied] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState("")
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState("")
   const [loading, setLoading] = useState(false)
   const [commentsLoading, setCommentsLoading] = useState(false)
-  const { agents, loading: agentsLoading } = require("../hooks/use-agents").useAgents();
+  const { agents, loading: agentsLoading } = require("../hooks/use-agents").useAgents()
 
   useEffect(() => {
     setCurrentStatus(status || "active")
@@ -124,9 +97,7 @@ export function ConversationDetails({
     }
   }, [props, agentName, agents])
 
-  const calendarBookingLink = "https://calendly.com/logimarket/sesion-cliente"
-
-  const { toast } = useToast();
+  const { toast } = useToast()
   // Cargar comentarios
   useEffect(() => {
     if (!conversationId) return
@@ -156,22 +127,22 @@ export function ConversationDetails({
           setComments([])
         }
       } catch (error: any) {
-          // Axios error: error.response, fetch error: error.status
-          const status = error?.response?.status || error?.status;
-          if (status === 404) {
-            toast({
-              title: t("details.toast.convNotFoundTitle"),
-              description: t("details.toast.convNotFoundDesc"),
-              variant: "destructive",
-            });
-            setComments([]);
-          } else {
-            console.warn("No se pudieron cargar los comentarios de la conversación", {
-              status,
-              message: error?.response?.data?.error || error?.message || "Error desconocido",
-            });
-            setComments([]);
-          }
+        // Axios error: error.response, fetch error: error.status
+        const status = error?.response?.status || error?.status
+        if (status === 404) {
+          toast({
+            title: t("details.toast.convNotFoundTitle"),
+            description: t("details.toast.convNotFoundDesc"),
+            variant: "destructive",
+          })
+          setComments([])
+        } else {
+          console.warn("No se pudieron cargar los comentarios de la conversación", {
+            status,
+            message: error?.response?.data?.error || error?.message || "Error desconocido",
+          })
+          setComments([])
+        }
       } finally {
         setCommentsLoading(false)
       }
@@ -179,54 +150,6 @@ export function ConversationDetails({
 
     loadComments()
   }, [conversationId])
-
-  useEffect(() => {
-    if (!conversationId) return
-
-    const loadCalls = async () => {
-      try {
-        const { data } = await frontendApi.get(`/api/calls?conversation_id=${conversationId}`)
-        const mapped: Meeting[] = (data.calls || []).map((call: any) => {
-          const d = new Date(call.scheduled_at)
-          return {
-            id: Number(call.id),
-            title: call.notes?.trim() || t("details.scheduledCall"),
-            date: d.toLocaleDateString("es-MX", { day: "2-digit", month: "short" }),
-            time: d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }),
-            type: call.call_type === "video" ? "video" : "phone",
-          }
-        })
-        setMeetings(mapped)
-        const nextPending = (data.calls || [])
-          .filter((call: any) => call.status !== "completed" && call.status !== "cancelled")
-          .sort((a: any, b: any) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0]
-        if (nextPending) {
-          const d = new Date(nextPending.scheduled_at)
-          setScheduledSession({
-            title: nextPending.notes?.trim() || t("details.scheduledCall"),
-            date: d.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" }),
-            time: d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }),
-            link: nextPending.meet_link,
-          })
-        } else {
-          setScheduledSession(null)
-        }
-      } catch (error) {
-        console.error("Error loading calls for conversation:", error)
-      }
-    }
-
-    loadCalls()
-    const handler = () => loadCalls()
-    window.addEventListener("calls-updated", handler)
-    return () => window.removeEventListener("calls-updated", handler)
-  }, [conversationId])
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(calendarBookingLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   const handleStatusChange = async (value: string) => {
     const previousStatus = currentStatus
@@ -325,138 +248,90 @@ export function ConversationDetails({
     }
   }
 
-  const cleanPhoneNumber = (phone: string) => {
-    return phone.replace("whatsapp:", "").replace("+", "")
-  }
+  const displayName = contactName?.trim() || contactPhone
+  const waNumber = contactPhone.replace("whatsapp:", "").replace("+", "")
+
+  const statusOptions = [
+    { value: "active", label: t("details.status.active"), dot: "bg-blue-500" },
+    { value: "resolved", label: t("details.status.resolved"), dot: "bg-emerald-500" },
+  ]
+  const priorityOptions = [
+    { value: "high", label: t("conv.priority.high"), dot: "bg-red-500" },
+    { value: "medium", label: t("conv.priority.medium"), dot: "bg-amber-500" },
+    { value: "low", label: t("conv.priority.low"), dot: "bg-sky-500" },
+  ]
 
   return (
-      <div className="flex flex-col h-full bg-card rounded-xl border border-border">
-        {/* Header */}
-        <div className="flex items-center gap-2 p-2 border-b border-border">
-          <div className="flex items-center justify-center w-4 h-4 rounded-full bg-blue-100">
-            <Info className="h-2.5 w-2.5 text-blue-500" />
-          </div>
-          <span className="font-semibold text-xs text-foreground">{t("details.title")}</span>
+    <div className="flex flex-col h-full bg-background">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
+        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <Info className="h-3.5 w-3.5" />
         </div>
+        <span className="font-semibold text-sm text-foreground">{t("details.title")}</span>
+      </div>
 
-        <div className="flex-1 overflow-y-auto space-y-4">
-        <div className="flex border-b border-border">
-          <div className="w-1 bg-blue-500 shrink-0" />
-          <div className="flex-1 p-2">
-            <div className="flex items-center gap-1.5">
-              <FileText className="h-3 w-3 text-blue-500" />
-              <span className="text-xs font-medium text-foreground truncate">
-                {contactName?.trim() || contactPhone}
-              </span>
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {/* Contacto */}
+        <div className="rounded-xl border border-border bg-card p-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+              {getInitials(displayName)}
             </div>
-            <a
-              href={`https://wa.me/${contactPhone.replace("whatsapp:", "").replace("+", "")}`}
-              className="text-xs text-primary hover:underline ml-4.5 block truncate"
-            >
-              {contactPhone}
-            </a>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+              <a
+                href={`https://wa.me/${waNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-muted-foreground hover:text-primary hover:underline truncate block"
+              >
+                {contactPhone}
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="flex border-b border-border">
-          <div className="w-1 bg-blue-400 shrink-0" />
-          <div className="flex-1 p-2">
-            <div className="flex items-center mb-1">
-              <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                <span className="text-xs text-foreground">{t("details.status")}</span>
-              </div>
+        {/* Estado + Prioridad */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span className={`h-1.5 w-1.5 rounded-full ${statusOptions.find((o) => o.value === currentStatus)?.dot || "bg-blue-500"}`} />
+              {t("details.status")}
             </div>
             <Select value={currentStatus} onValueChange={handleStatusChange}>
-              <SelectTrigger className="h-7 text-xs bg-background">
+              <SelectTrigger className="h-8 text-xs bg-background">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                    {t("details.status.active")}
-                  </div>
-                </SelectItem>
-                <SelectItem value="resolved">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                    {t("details.status.resolved")}
-                  </div>
-                </SelectItem>
+                {statusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className="flex items-center gap-1.5">
+                      <div className={`h-1.5 w-1.5 rounded-full ${opt.dot}`} />
+                      {opt.label}
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        <div className="flex border-b border-border">
-          <div className="w-1 bg-blue-300 shrink-0" />
-          <div className="flex-1 p-2">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Zap className="h-3 w-3 text-blue-500" />
-              <span className="text-xs text-foreground">{t("details.priority")}</span>
+          <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <Zap className="h-3 w-3" />
+              {t("details.priority")}
             </div>
             <Select value={currentPriority} onValueChange={handlePriorityChange}>
-              <SelectTrigger className="h-7 text-xs bg-background">
+              <SelectTrigger className="h-8 text-xs bg-background">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="high">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                    {t("conv.priority.high")}
-                  </div>
-                </SelectItem>
-                <SelectItem value="medium">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
-                    {t("conv.priority.medium")}
-                  </div>
-                </SelectItem>
-                <SelectItem value="low">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                    {t("conv.priority.low")}
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="flex border-b border-border">
-          <div className="w-1 bg-blue-400 shrink-0" />
-          <div className="flex-1 p-2">
-            <div className="flex items-center gap-1.5 mb-1">
-              <User className="h-3 w-3 text-blue-500" />
-              <span className="text-xs text-foreground">{t("details.agent")}</span>
-            </div>
-            <Select
-              value={currentAgent}
-              onValueChange={async (value) => {
-                setCurrentAgent(value);
-                if (value && value !== (props as any).assigned_agent_id) {
-                  setLoading(true);
-                  try {
-                    await frontendApi.post(`/api/conversations/${conversationId}/assign`, { agentId: value });
-                    toast({ title: t("details.toast.transferredTitle"), description: t("details.toast.transferredDesc") });
-                    onUpdate?.();
-                  } catch (err) {
-                    toast({ title: t("details.toast.transferErrorTitle"), description: t("details.toast.transferErrorDesc") });
-                  } finally {
-                    setLoading(false);
-                  }
-                }
-              }}
-              disabled={agentsLoading || loading}
-            >
-              <SelectTrigger className="h-7 text-xs bg-background min-w-[120px]">
-                <SelectValue placeholder={t("details.selectAgent")} />
-              </SelectTrigger>
-              <SelectContent>
-                {agents.map((agent: any) => (
-                  <SelectItem key={agent.id} value={agent.id}>
-                    <span className="text-blue-500">{agent.name}</span>
+                {priorityOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className="flex items-center gap-1.5">
+                      <div className={`h-1.5 w-1.5 rounded-full ${opt.dot}`} />
+                      {opt.label}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -464,134 +339,72 @@ export function ConversationDetails({
           </div>
         </div>
 
-
-        {showSchedulingSections && (
-          <div className="flex border-b border-border">
-            <div className="w-1 bg-blue-400 shrink-0" />
-            <div className="flex-1 p-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-3 w-3 text-blue-500" />
-                  <span className="text-xs text-foreground">{t("details.meetings")}</span>
-                </div>
-                <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-muted">
-                  <Plus className="h-3 w-3 text-muted-foreground" />
-                </Button>
-              </div>
-
-              {/* Meetings List */}
-              {meetings.length > 0 ? (
-                <div className="space-y-1.5">
-                  {meetings.map((meeting) => (
-                    <div key={meeting.id} className="bg-blue-50 border border-blue-200 rounded p-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <Video className="h-3 w-3 text-blue-600" />
-                        <span className="text-xs font-medium text-blue-800 truncate">{meeting.title}</span>
-                      </div>
-                      <div className="flex items-center justify-between mt-0.5 ml-4.5">
-                        <span className="text-xs text-blue-600">{meeting.date}</span>
-                        <span className="text-xs text-blue-600">{meeting.time}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-xs text-muted-foreground text-center py-2">{t("details.noMeetings")}</div>
-              )}
-            </div>
+        {/* Agente */}
+        <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <User className="h-3 w-3" />
+            {t("details.agent")}
           </div>
-        )}
+          <Select
+            value={currentAgent}
+            onValueChange={async (value) => {
+              setCurrentAgent(value)
+              if (value && value !== (props as any).assigned_agent_id) {
+                setLoading(true)
+                try {
+                  await frontendApi.post(`/api/conversations/${conversationId}/assign`, { agentId: value })
+                  toast({ title: t("details.toast.transferredTitle"), description: t("details.toast.transferredDesc") })
+                  onUpdate?.()
+                } catch (err) {
+                  toast({ title: t("details.toast.transferErrorTitle"), description: t("details.toast.transferErrorDesc") })
+                } finally {
+                  setLoading(false)
+                }
+              }
+            }}
+            disabled={agentsLoading || loading}
+          >
+            <SelectTrigger className="h-8 text-xs bg-background">
+              <SelectValue placeholder={t("details.selectAgent")} />
+            </SelectTrigger>
+            <SelectContent>
+              {agents.map((agent: any) => (
+                <SelectItem key={agent.id} value={agent.id}>
+                  {agent.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        {showSchedulingSections && (
-          <div className="flex">
-            <div className="w-1 bg-blue-500 shrink-0" />
-            <div className="flex-1 p-2">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Link className="h-3 w-3 text-blue-500" />
-                <span className="text-xs text-foreground">{t("details.schedule")}</span>
-              </div>
-
-              {/* Booking Link */}
-              <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-2">
-                <p className="text-xs text-blue-800 mb-1.5">{t("details.bookingLinkLabel")}</p>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={calendarBookingLink}
-                    readOnly
-                    className="flex-1 text-xs bg-white border border-blue-200 rounded px-2 py-1 text-blue-700 truncate"
-                  />
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-blue-100" onClick={handleCopyLink}>
-                    {copied ? <Check className="h-3 w-3 text-blue-600" /> : <Copy className="h-3 w-3 text-blue-600" />}
-                  </Button>
-                  <a
-                    href={calendarBookingLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-6 w-6 p-0 flex items-center justify-center hover:bg-blue-100 rounded"
-                  >
-                    <ExternalLink className="h-3 w-3 text-blue-600" />
-                  </a>
-                </div>
-              </div>
-
-              {/* Scheduled Session */}
-              {scheduledSession ? (
-                <div className="bg-blue-50 border border-blue-200 rounded p-2">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Video className="h-3 w-3 text-blue-600" />
-                    <span className="text-xs font-medium text-blue-800">{t("details.sessionScheduled")}</span>
-                  </div>
-                  <p className="text-xs text-blue-700 font-medium">{scheduledSession.title}</p>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs text-blue-600">{scheduledSession.date}</span>
-                    <span className="text-xs text-blue-600">{scheduledSession.time}</span>
-                  </div>
-                  <a
-                    href={scheduledSession.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
-                  >
-                    <Video className="h-2.5 w-2.5" />
-                    {t("details.joinSession")}
-                  </a>
-                </div>
-              ) : (
-                <div className="text-center py-2 border border-dashed border-blue-200 rounded">
-                  <p className="text-xs text-muted-foreground mb-1">{t("details.noSessionScheduled")}</p>
-                  <p className="text-xs text-muted-foreground">{t("details.shareLinkWithClient")}</p>
-                </div>
-              )}
+        {/* Comentarios */}
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border bg-muted/40">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-violet-500/10 text-violet-600">
+              <MessageSquare className="h-3.5 w-3.5" />
             </div>
+            <span className="text-sm font-semibold text-foreground">{t("details.comments")}</span>
+            {comments.length > 0 && (
+              <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-[10px]">
+                {comments.length}
+              </Badge>
+            )}
           </div>
-        )}
 
-        {/* Comments */}
-        <div className="flex">
-          <div className="w-1 bg-[#6C5DD3] shrink-0" />
-          <div className="flex-1 p-2">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5">
-                <MessageSquare className="h-4 w-4 text-[#6C5DD3]" />
-                <span className="text-sm font-semibold text-[#6C5DD3]">{t("details.comments")}</span>
-              </div>
-            </div>
-
-            {/* Comments List */}
+          <div className="p-3 space-y-3">
             {comments && comments.length > 0 ? (
-              <div className="space-y-1 max-h-40 overflow-y-auto rounded-md border border-border p-1.5 bg-muted/50 mb-2">
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-0.5">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="bg-background p-1.5 rounded border border-border text-xs space-y-0.5">
+                  <div key={comment.id} className="group rounded-lg border border-border bg-muted/30 p-2.5 text-xs">
                     {editingCommentId === comment.id ? (
                       <>
                         <Textarea
                           value={editingText}
                           onChange={(e) => setEditingText(e.target.value)}
-                          className="resize-none h-12 text-xs"
+                          className="resize-none h-16 text-xs bg-background"
                           disabled={loading}
                         />
-                        <div className="flex gap-1 justify-end">
+                        <div className="flex gap-1.5 justify-end mt-1.5">
                           <Button
                             size="sm"
                             variant="outline"
@@ -604,24 +417,19 @@ export function ConversationDetails({
                           >
                             {t("chat.cancel")}
                           </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleEditComment(comment.id)}
-                            disabled={!editingText.trim() || loading}
-                            className="h-6 text-xs"
-                          >
+                          <Button size="sm" onClick={() => handleEditComment(comment.id)} disabled={!editingText.trim() || loading} className="h-6 text-xs">
                             {t("chat.save")}
                           </Button>
                         </div>
                       </>
                     ) : (
                       <>
-                        <p className="text-foreground break-words text-xs">{comment.text}</p>
-                        <div className="flex items-center justify-between gap-2 pt-0.5">
-                          <span className="text-muted-foreground text-xs">
-                            {new Date(comment.created_at).toLocaleDateString()}
+                        <p className="text-foreground break-words leading-relaxed">{comment.text}</p>
+                        <div className="flex items-center justify-between gap-2 mt-1.5">
+                          <span className="text-muted-foreground text-[11px]">
+                            {new Date(comment.created_at).toLocaleDateString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                           </span>
-                          <div className="flex gap-0.5">
+                          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                               size="sm"
                               variant="ghost"
@@ -651,25 +459,29 @@ export function ConversationDetails({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground py-1 mb-2">{t("details.noComments")}</p>
+              <div className="rounded-lg border border-dashed border-border py-4 text-center">
+                <p className="text-xs text-muted-foreground">{t("details.noComments")}</p>
+              </div>
             )}
 
-            <Textarea
-              placeholder={t("details.addCommentPlaceholder")}
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="resize-none h-16 text-xs mb-1.5"
-              disabled={loading || commentsLoading || editingCommentId !== null}
-            />
-
-            <Button
-              onClick={handleAddComment}
-              disabled={!newComment.trim() || loading || commentsLoading || editingCommentId !== null}
-              size="sm"
-              className="w-full gap-1 text-xs h-7"
-            >
-              {loading || commentsLoading ? t("details.saving") : t("details.saveComment")}
-            </Button>
+            <div className="space-y-1.5">
+              <Textarea
+                placeholder={t("details.addCommentPlaceholder")}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="resize-none h-16 text-xs bg-background"
+                disabled={loading || commentsLoading || editingCommentId !== null}
+              />
+              <Button
+                onClick={handleAddComment}
+                disabled={!newComment.trim() || loading || commentsLoading || editingCommentId !== null}
+                size="sm"
+                className="w-full gap-1.5 text-xs h-8"
+              >
+                <Send className="h-3 w-3" />
+                {loading || commentsLoading ? t("details.saving") : t("details.saveComment")}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

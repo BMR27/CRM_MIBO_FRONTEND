@@ -644,6 +644,7 @@ function EnviosMasivosPage() {
               templateLanguage: tpl.language,
               templateParamMap: tpl.paramMap,
               templateParamFallbacks: { ...tpl.paramFallbacks, "2": currentAgentName },
+              templateBody: tpl.body,
             }),
           })
       const data = await res.json().catch(() => ({}))
