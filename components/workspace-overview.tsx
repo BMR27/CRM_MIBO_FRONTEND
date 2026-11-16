@@ -16,7 +16,6 @@ import {
   Send,
   MessageCircleReply,
   Eye,
-  DollarSign,
 } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
 
@@ -109,14 +108,6 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
       value: messagingStats ? messagingStats.messagesRead.toLocaleString(locale) : "—",
       icon: Eye,
       accent: "bg-indigo-50 text-indigo-600",
-    },
-    {
-      label: t("overview.valueData"),
-      value: messagingStats
-        ? messagingStats.totalValue.toLocaleString(locale, { style: "currency", currency: "USD", maximumFractionDigits: 0 })
-        : "—",
-      icon: DollarSign,
-      accent: "bg-rose-50 text-rose-600",
     },
   ]
 
