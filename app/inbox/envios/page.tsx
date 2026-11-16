@@ -548,17 +548,32 @@ function EnviosMasivosPage() {
     try {
       const XLSX = await import("xlsx")
       const data = await file.arrayBuffer()
-      const workbook = XLSX.read(data, { type: "array" })
+      // cellDates: true hace que las celdas con formato de fecha lleguen como Date de JS
+      // en vez de número de serie de Excel (p. ej. 46368), para poder formatearlas nosotros.
+      const workbook = XLSX.read(data, { type: "array", cellDates: true })
       const sheetName = workbook.SheetNames[0]
       const sheet = workbook.Sheets[sheetName]
-      // raw: false fuerza a que las celdas de fecha vengan como el texto formateado que se
-      // ve en Excel (p. ej. "12/12/2026") en vez del número de serie interno (p. ej. 46368).
-      const json = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false })
-      const mappedContacts = json.map((row: any) => ({
-        ...row,
-        nombre: row["CLIENTE"] || row["Nombre"] || row["name"] || "",
-        telefono: row["PHONE_A"] || row["Teléfono"] || row["phone"] || "",
-      }))
+      // Dejamos raw (por defecto) para que columnas numéricas como el teléfono conserven su
+      // valor exacto en vez del texto con notación científica que Excel a veces muestra
+      // (p. ej. "5.25635E+11").
+      const json = XLSX.utils.sheet_to_json(sheet, { defval: "" })
+      const mappedContacts = json.map((row: any) => {
+        const normalizedRow: Record<string, any> = {}
+        for (const [key, value] of Object.entries(row)) {
+          if (value instanceof Date) {
+            normalizedRow[key] = `${String(value.getDate()).padStart(2, "0")}/${String(value.getMonth() + 1).padStart(2, "0")}/${value.getFullYear()}`
+          } else if (typeof value === "number") {
+            normalizedRow[key] = String(value)
+          } else {
+            normalizedRow[key] = value
+          }
+        }
+        return {
+          ...normalizedRow,
+          nombre: normalizedRow["CLIENTE"] || normalizedRow["Nombre"] || normalizedRow["name"] || "",
+          telefono: normalizedRow["PHONE_A"] || normalizedRow["Teléfono"] || normalizedRow["phone"] || "",
+        }
+      })
       setContacts(mappedContacts)
     } catch {
       setExcelError(t("camp.excelProcessError"))
