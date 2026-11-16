@@ -10,6 +10,8 @@ import { InboxHeader } from "@/components/inbox-header"
 import { ApiKeysSection } from "@/components/api-keys-section"
 import { WorkspaceNameSection } from "@/components/workspace-name-section"
 import { BrandingSection } from "@/components/branding-section"
+import { TenantModulesSection } from "@/components/tenant-modules-section"
+import { DarkModeToggle } from "@/components/dark-mode-toggle"
 import { WhatsappIntegrationSection } from "@/components/whatsapp-integration-section"
 import { FacebookIntegrationSection } from "@/components/facebook-integration-section"
 import { VoiceIntegrationSection } from "@/components/voice-integration-section"
@@ -36,6 +38,10 @@ export default async function ConfiguracionPage() {
     redirect("/inbox")
   }
 
+  // Integraciones y Seguridad quedan reservadas al super-admin de plataforma;
+  // un admin de tenant normal solo ve General y Notificaciones.
+  const isPlatformAdmin = Boolean(user.is_platform_admin)
+
   return (
     <>
       <InboxHeader />
@@ -50,11 +56,11 @@ export default async function ConfiguracionPage() {
           </div>
 
           <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className={`grid w-full ${isPlatformAdmin ? "grid-cols-4" : "grid-cols-2"}`}>
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="notificaciones">Notificaciones</TabsTrigger>
-              <TabsTrigger value="integraciones">Integraciones</TabsTrigger>
-              <TabsTrigger value="seguridad">Seguridad</TabsTrigger>
+              {isPlatformAdmin && <TabsTrigger value="integraciones">Integraciones</TabsTrigger>}
+              {isPlatformAdmin && <TabsTrigger value="seguridad">Seguridad</TabsTrigger>}
             </TabsList>
 
             <TabsContent value="general" className="space-y-4">
@@ -73,12 +79,12 @@ export default async function ConfiguracionPage() {
 
                   <BrandingSection />
 
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone">Zona Horaria</Label>
-                    <Input id="timezone" defaultValue="América/Ciudad de México" />
-                  </div>
+                  {isPlatformAdmin && (
+                    <>
+                      <Separator />
+                      <TenantModulesSection />
+                    </>
+                  )}
 
                   <Separator />
 
@@ -87,7 +93,7 @@ export default async function ConfiguracionPage() {
                       <Label>Tema Oscuro</Label>
                       <p className="text-sm text-muted-foreground">Activa el modo oscuro para la interfaz</p>
                     </div>
-                    <Switch />
+                    <DarkModeToggle />
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -174,6 +180,7 @@ export default async function ConfiguracionPage() {
               </Card>
             </TabsContent>
 
+            {isPlatformAdmin && (
             <TabsContent value="integraciones" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -200,7 +207,9 @@ export default async function ConfiguracionPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            )}
 
+            {isPlatformAdmin && (
             <TabsContent value="seguridad" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -260,6 +269,7 @@ export default async function ConfiguracionPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            )}
           </Tabs>
         </div>
       </main>

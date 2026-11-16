@@ -1,13 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Save } from "lucide-react"
+import { Save, Upload } from "lucide-react"
 import { api } from "@/lib/api"
 
 const DEFAULT_ACCENT_COLOR = "#2563EB"
+const MAX_LOGO_BYTES = 2 * 1024 * 1024
 
 export function BrandingSection() {
   const [logoUrl, setLogoUrl] = useState("")
@@ -15,8 +16,10 @@ export function BrandingSection() {
   const [displayName, setDisplayName] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [error, setError] = useState("")
   const [saved, setSaved] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     let active = true
@@ -37,13 +40,37 @@ export function BrandingSection() {
     }
   }, [])
 
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+    if (file.size > MAX_LOGO_BYTES) {
+      setError("El logo no puede pesar más de 2MB")
+      return
+    }
+    setUploadingLogo(true)
+    setError("")
+    setSaved(false)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const { data } = await api.post("/api/tenants/me/branding/logo", formData)
+      setLogoUrl(data?.branding_logo_url || "")
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "No se pudo subir el logo")
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setError("")
     setSaved(false)
     try {
       await api.patch("/api/tenants/me/branding", {
-        branding_logo_url: logoUrl.trim() || null,
         branding_accent_color: accentColor.trim() || null,
         branding_display_name: displayName.trim() || null,
       })
@@ -67,15 +94,36 @@ export function BrandingSection() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="branding-logo">URL del logo</Label>
-        <Input
-          id="branding-logo"
-          value={logoUrl}
-          onChange={(e) => setLogoUrl(e.target.value)}
-          disabled={loading || saving}
-          placeholder="https://miempresa.com/logo.png"
-        />
-        <p className="text-xs text-muted-foreground">Debe ser una URL https. Se muestra en el menú lateral y el encabezado.</p>
+        <Label>Logo</Label>
+        <div className="flex items-center gap-3">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="Logo actual" className="h-12 w-12 rounded-md border object-contain" />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded-md border text-xs text-muted-foreground">
+              Sin logo
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            className="hidden"
+            onChange={handleLogoFileChange}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={loading || uploadingLogo}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-4 w-4" />
+            {uploadingLogo ? "Subiendo..." : "Subir logo"}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">PNG, JPG, WEBP o SVG, máx. 2MB. Se muestra en el menú lateral y el encabezado.</p>
       </div>
 
       <div className="space-y-2">

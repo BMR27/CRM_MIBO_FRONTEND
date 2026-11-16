@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -44,10 +45,12 @@ export default function RootLayout({
     // Puedes ejecutar window.showTestToast() en la consola del navegador
   }
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        {children}
-        <Toaster />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          {children}
+          <Toaster />
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

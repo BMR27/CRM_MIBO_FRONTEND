@@ -203,8 +203,8 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           {!collapsed && <span className="ml-3">Campañas</span>}
         </Button>
         
-        {/* Citas: solo visible para administrador */}
-        {isAdmin && (
+        {/* Citas: solo visible para administrador, y si el super-admin lo habilitó para este espacio */}
+        {isAdmin && branding.modules.citas && (
           <Button
             variant="ghost"
             onClick={() => router.push("/inbox/citas")}
@@ -221,8 +221,8 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           </Button>
         )}
         
-        {/* Agentes tab - visible para admin y supervisor */}
-        {!isAgent && (
+        {/* Agentes tab - visible para admin y supervisor, y si el super-admin lo habilitó */}
+        {!isAgent && branding.modules.agentes && (
           <Button
             variant="ghost"
             onClick={() => router.push("/inbox/agentes")}
@@ -239,8 +239,8 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           </Button>
         )}
 
-        {/* Leads: visible para admin y supervisor */}
-        {!isAgent && (
+        {/* Leads: visible para admin y supervisor, y si el super-admin lo habilitó */}
+        {!isAgent && branding.modules.leads && (
           <Button
             variant="ghost"
             onClick={() => router.push("/inbox/leads")}
@@ -257,21 +257,24 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           </Button>
         )}
 
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/inbox/documentacion-api")}
-          className={cn(
-            "w-full justify-start transition-colors",
-            collapsed && "justify-center px-2",
-            isDocumentacionApi
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
-              : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
-          )}
-        >
-          <BookOpen className="h-5 w-5" />
-          {!collapsed && <span className="ml-3">Documentación API</span>}
-        </Button>
-        
+        {/* Documentación API: solo si el super-admin lo habilitó para este espacio */}
+        {branding.modules.docsApi && (
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/inbox/documentacion-api")}
+            className={cn(
+              "w-full justify-start transition-colors",
+              collapsed && "justify-center px-2",
+              isDocumentacionApi
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+                : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
+            )}
+          >
+            <BookOpen className="h-5 w-5" />
+            {!collapsed && <span className="ml-3">Documentación API</span>}
+          </Button>
+        )}
+
         {isAdmin && (
           <Button
             variant="ghost"
