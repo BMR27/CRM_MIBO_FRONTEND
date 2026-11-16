@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { KeyRound, Copy, Trash2 } from "lucide-react"
 import { api } from "@/lib/api"
+import { useLanguage } from "@/components/language-provider"
 
 interface ApiKeyRow {
   id: string
@@ -18,6 +19,7 @@ interface ApiKeyRow {
 }
 
 export function ApiKeysSection() {
+  const { t } = useLanguage()
   const [keys, setKeys] = useState<ApiKeyRow[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -33,7 +35,7 @@ export function ApiKeysSection() {
       setKeys(data)
       setError("")
     } catch (err) {
-      setError("No se pudieron cargar las API keys")
+      setError(t("ak.loadFail"))
     } finally {
       setLoading(false)
     }
@@ -53,7 +55,7 @@ export function ApiKeysSection() {
       setNewName("")
       await loadKeys()
     } catch (err) {
-      setError("No se pudo generar la API key")
+      setError(t("ak.createFail"))
     } finally {
       setCreating(false)
     }
@@ -64,7 +66,7 @@ export function ApiKeysSection() {
       await api.patch(`/api/api-keys/${id}/revoke`)
       await loadKeys()
     } catch (err) {
-      setError("No se pudo revocar la API key")
+      setError(t("ak.revokeFail"))
     }
   }
 
@@ -75,19 +77,19 @@ export function ApiKeysSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-foreground">API Keys — Captura de leads</h3>
+        <h3 className="font-medium text-foreground">{t("ak.sectionTitle")}</h3>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setRevealedKey(null) }}>
           <Button variant="outline" className="gap-2" onClick={() => setDialogOpen(true)}>
             <KeyRound className="h-4 w-4" />
-            Generar API key
+            {t("ak.generate")}
           </Button>
 
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nueva API key</DialogTitle>
+              <DialogTitle>{t("ak.newKey")}</DialogTitle>
               <DialogDescription>
-                Úsala para enviar leads desde tu sitio web o sistemas externos vía{" "}
-                <code className="text-xs">POST /api/public/leads</code> con el header{" "}
+                {t("ak.newKeyDescPrefix")}{" "}
+                <code className="text-xs">POST /api/public/leads</code> {t("ak.newKeyDescSuffix")}{" "}
                 <code className="text-xs">X-API-Key</code>.
               </DialogDescription>
             </DialogHeader>
@@ -98,29 +100,29 @@ export function ApiKeysSection() {
                   {revealedKey}
                 </div>
                 <p className="text-xs text-destructive">
-                  Guarda esta key ahora: no volverá a mostrarse completa.
+                  {t("ak.saveNowWarning")}
                 </p>
                 <Button variant="outline" className="gap-2 w-full" onClick={() => copyToClipboard(revealedKey)}>
                   <Copy className="h-4 w-4" />
-                  Copiar
+                  {t("ak.copy")}
                 </Button>
                 <div className="space-y-1 pt-2 border-t border-border">
-                  <p className="text-xs font-medium text-foreground">Formulario web embebible</p>
+                  <p className="text-xs font-medium text-foreground">{t("ak.embeddableForm")}</p>
                   <p className="text-xs text-muted-foreground break-all font-mono">
                     {typeof window !== "undefined" ? window.location.origin : ""}/lead-form?key={revealedKey}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Ponlo en un &lt;iframe&gt; en tu sitio para capturar leads directo al CRM.
+                    {t("ak.iframeHint")}
                   </p>
                 </div>
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="key-name">Nombre</Label>
+                  <Label htmlFor="key-name">{t("contacts.name")}</Label>
                   <Input
                     id="key-name"
-                    placeholder="Sitio web principal"
+                    placeholder={t("ak.namePlaceholder")}
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     disabled={creating}
@@ -131,10 +133,10 @@ export function ApiKeysSection() {
 
             <DialogFooter>
               {revealedKey ? (
-                <Button onClick={() => { setDialogOpen(false); setRevealedKey(null) }}>Listo</Button>
+                <Button onClick={() => { setDialogOpen(false); setRevealedKey(null) }}>{t("ak.done")}</Button>
               ) : (
                 <Button onClick={handleCreate} disabled={creating || !newName.trim()}>
-                  {creating ? "Generando..." : "Generar API key"}
+                  {creating ? t("ak.generating") : t("ak.generate")}
                 </Button>
               )}
             </DialogFooter>
@@ -145,9 +147,9 @@ export function ApiKeysSection() {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Cargando...</p>
+        <p className="text-sm text-muted-foreground">{t("ak.loading")}</p>
       ) : keys.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Todavía no has generado ninguna API key.</p>
+        <p className="text-sm text-muted-foreground">{t("ak.empty")}</p>
       ) : (
         <div className="space-y-2">
           {keys.map((k) => (
@@ -155,18 +157,18 @@ export function ApiKeysSection() {
               <div>
                 <p className="font-medium text-foreground">{k.name}</p>
                 <p className="text-xs text-muted-foreground font-mono">
-                  {k.key_prefix}••••••••{k.is_active ? "" : " · revocada"}
+                  {k.key_prefix}••••••••{k.is_active ? "" : ` · ${t("ak.revoked")}`}
                 </p>
                 {k.last_used_at && (
                   <p className="text-xs text-muted-foreground">
-                    Último uso: {new Date(k.last_used_at).toLocaleString()}
+                    {t("ak.lastUsed")} {new Date(k.last_used_at).toLocaleString()}
                   </p>
                 )}
               </div>
               {k.is_active && (
                 <Button variant="ghost" size="sm" className="gap-2 text-destructive" onClick={() => handleRevoke(k.id)}>
                   <Trash2 className="h-4 w-4" />
-                  Revocar
+                  {t("ak.revoke")}
                 </Button>
               )}
             </div>

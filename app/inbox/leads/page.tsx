@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast"
 import { api } from "@/lib/api"
 import { Inbox, Mail, Phone, Building2, ArrowRightCircle, Sparkles } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 
 type LeadStatus = "new" | "contacted" | "converted" | "discarded"
 
@@ -27,14 +28,21 @@ interface Lead {
   created_at: string
 }
 
-const statusConfig: Record<LeadStatus, { label: string; className: string }> = {
-  new: { label: "Nuevo", className: "bg-blue-50 text-blue-700 border-blue-200" },
-  contacted: { label: "Contactado", className: "bg-amber-50 text-amber-700 border-amber-200" },
-  converted: { label: "Convertido", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  discarded: { label: "Descartado", className: "bg-slate-100 text-slate-600 border-slate-200" },
+const statusClassName: Record<LeadStatus, string> = {
+  new: "bg-blue-50 text-blue-700 border-blue-200",
+  contacted: "bg-amber-50 text-amber-700 border-amber-200",
+  converted: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  discarded: "bg-slate-100 text-slate-600 border-slate-200",
 }
 
 export default function LeadsPage() {
+  const { t } = useLanguage()
+  const statusConfig: Record<LeadStatus, { label: string; className: string }> = {
+    new: { label: t("leads.status.new"), className: statusClassName.new },
+    contacted: { label: t("leads.status.contacted"), className: statusClassName.contacted },
+    converted: { label: t("leads.status.converted"), className: statusClassName.converted },
+    discarded: { label: t("leads.status.discarded"), className: statusClassName.discarded },
+  }
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
   const [actingId, setActingId] = useState<string | null>(null)
@@ -45,7 +53,7 @@ export default function LeadsPage() {
       const { data } = await api.get("/api/leads")
       setLeads(Array.isArray(data) ? data : [])
     } catch (err) {
-      toast({ title: "Error", description: "No se pudieron cargar los leads.", variant: "destructive" })
+      toast({ title: t("contacts.error"), description: t("leads.loadFail"), variant: "destructive" })
     } finally {
       setLoading(false)
     }
@@ -59,12 +67,12 @@ export default function LeadsPage() {
     setActingId(lead.id)
     try {
       await api.post(`/api/leads/${lead.id}/convert`)
-      toast({ title: "Lead convertido", description: `${lead.name} ahora es un contacto del CRM.` })
+      toast({ title: t("leads.convertedTitle"), description: `${lead.name} ${t("leads.convertedDesc")}` })
       await loadLeads()
     } catch (err: any) {
       toast({
-        title: "No se pudo convertir",
-        description: err?.response?.data?.message || "Revisa que el lead tenga un teléfono válido.",
+        title: t("leads.convertFailTitle"),
+        description: err?.response?.data?.message || t("leads.convertFailDesc"),
         variant: "destructive",
       })
     } finally {
@@ -78,7 +86,7 @@ export default function LeadsPage() {
       await api.patch(`/api/leads/${lead.id}`, { status })
       await loadLeads()
     } catch (err) {
-      toast({ title: "Error", description: "No se pudo actualizar el estado.", variant: "destructive" })
+      toast({ title: t("contacts.error"), description: t("leads.statusUpdateFail"), variant: "destructive" })
     } finally {
       setActingId(null)
     }
@@ -93,9 +101,9 @@ export default function LeadsPage() {
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Leads</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("leads.title")}</h1>
             <p className="text-sm text-muted-foreground">
-              Prospectos capturados desde formularios externos o integraciones vía API.
+              {t("leads.subtitle")}
             </p>
           </div>
         </div>
@@ -108,7 +116,7 @@ export default function LeadsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold leading-none">{leads.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Leads totales</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("leads.total")}</p>
               </div>
             </CardContent>
           </Card>
@@ -119,7 +127,7 @@ export default function LeadsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold leading-none">{newCount}</p>
-                <p className="text-xs text-muted-foreground mt-1">Sin atender</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("leads.unattended")}</p>
               </div>
             </CardContent>
           </Card>
@@ -130,7 +138,7 @@ export default function LeadsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold leading-none">{convertedCount}</p>
-                <p className="text-xs text-muted-foreground mt-1">Convertidos a contacto</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("leads.convertedToContact")}</p>
               </div>
             </CardContent>
           </Card>
@@ -138,38 +146,38 @@ export default function LeadsPage() {
 
         <Tabs defaultValue="leads" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="leads">Leads recibidos</TabsTrigger>
-            <TabsTrigger value="api">Captura por API</TabsTrigger>
+            <TabsTrigger value="leads">{t("leads.received")}</TabsTrigger>
+            <TabsTrigger value="api">{t("leads.apiCapture")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="leads">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Prospectos</CardTitle>
-                <CardDescription>Ordenados del más reciente al más antiguo.</CardDescription>
+                <CardTitle className="text-base">{t("leads.prospects")}</CardTitle>
+                <CardDescription>{t("leads.sortedDesc")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <p className="text-sm text-muted-foreground py-6 text-center">Cargando leads...</p>
+                  <p className="text-sm text-muted-foreground py-6 text-center">{t("leads.loading")}</p>
                 ) : leads.length === 0 ? (
                   <div className="text-center py-10 space-y-2">
                     <Inbox className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="text-sm font-medium text-foreground">Todavía no has recibido leads</p>
+                    <p className="text-sm font-medium text-foreground">{t("leads.emptyTitle")}</p>
                     <p className="text-xs text-muted-foreground">
-                      Genera una API key en la pestaña "Captura por API" para empezar a recibirlos.
+                      {t("leads.emptyDesc")}
                     </p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Contacto</TableHead>
-                        <TableHead>Empresa</TableHead>
-                        <TableHead>Origen</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead>Recibido</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
+                        <TableHead>{t("contacts.name")}</TableHead>
+                        <TableHead>{t("cl.contact")}</TableHead>
+                        <TableHead>{t("leads.company")}</TableHead>
+                        <TableHead>{t("leads.source")}</TableHead>
+                        <TableHead>{t("details.status")}</TableHead>
+                        <TableHead>{t("leads.receivedCol")}</TableHead>
+                        <TableHead className="text-right">{t("cl.actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -221,7 +229,7 @@ export default function LeadsPage() {
                                   disabled={actingId === lead.id}
                                   onClick={() => handleStatusChange(lead, "contacted")}
                                 >
-                                  Marcar contactado
+                                  {t("leads.markContacted")}
                                 </Button>
                               )}
                               {!lead.contact_id && lead.phone_number && lead.status !== "discarded" && (
@@ -232,7 +240,7 @@ export default function LeadsPage() {
                                   className="gap-1"
                                 >
                                   <ArrowRightCircle className="h-3.5 w-3.5" />
-                                  Convertir
+                                  {t("leads.convert")}
                                 </Button>
                               )}
                               {lead.status !== "converted" && lead.status !== "discarded" && (
@@ -243,7 +251,7 @@ export default function LeadsPage() {
                                   onClick={() => handleStatusChange(lead, "discarded")}
                                   className="text-muted-foreground"
                                 >
-                                  Descartar
+                                  {t("leads.discard")}
                                 </Button>
                               )}
                             </div>
@@ -260,9 +268,9 @@ export default function LeadsPage() {
           <TabsContent value="api">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Captura de leads por API</CardTitle>
+                <CardTitle className="text-base">{t("leads.apiCaptureTitle")}</CardTitle>
                 <CardDescription>
-                  Genera una API key para integrar tu sitio web o sistemas externos con{" "}
+                  {t("leads.apiCaptureDesc")}{" "}
                   <code className="text-xs">POST /api/public/leads</code>.
                 </CardDescription>
               </CardHeader>
