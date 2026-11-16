@@ -14,8 +14,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UserPlus } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 
 export function AddAgentDialog() {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -41,7 +43,7 @@ export function AddAgentDialog() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.message || data.error || "Error al crear agente")
+        setError(data.message || data.error || t("addAgent.createFail"))
         setLoading(false)
         return
       }
@@ -52,7 +54,7 @@ export function AddAgentDialog() {
       window.location.reload()
     } catch (err) {
       console.error("Add agent error:", err)
-      setError("Error al crear agente. Intenta nuevamente.")
+      setError(t("addAgent.createFailRetry"))
       setLoading(false)
     }
   }
@@ -62,18 +64,18 @@ export function AddAgentDialog() {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <UserPlus className="h-4 w-4" />
-          Agregar Agente
+          {t("addAgent.button")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Agregar Nuevo Agente</DialogTitle>
-            <DialogDescription>Completa el formulario para crear una nueva cuenta de agente.</DialogDescription>
+            <DialogTitle>{t("addAgent.title")}</DialogTitle>
+            <DialogDescription>{t("addAgent.desc")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nombre completo</Label>
+              <Label htmlFor="name">{t("addAgent.fullName")}</Label>
               <Input
                 id="name"
                 placeholder="Juan Pérez"
@@ -83,7 +85,7 @@ export function AddAgentDialog() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label htmlFor="email">{t("addAgent.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -94,11 +96,11 @@ export function AddAgentDialog() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t("addAgent.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Mínimo 6 caracteres"
+                placeholder={t("addAgent.passwordHint")}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
@@ -113,10 +115,10 @@ export function AddAgentDialog() {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-              Cancelar
+              {t("chat.cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Creando..." : "Crear Agente"}
+              {loading ? t("addAgent.creating") : t("addAgent.create")}
             </Button>
           </DialogFooter>
         </form>

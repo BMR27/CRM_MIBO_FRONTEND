@@ -13,6 +13,7 @@ import { useAgents } from "@/hooks/use-agents"
 import { useAgentStats } from "@/hooks/use-agent-stats"
 import { useRouter } from "next/navigation"
 import { useConversations } from "@/hooks/use-conversations"
+import { useLanguage } from "@/components/language-provider"
 
 function cnRoleBadge(role: string) {
   if (role === "admin") return "bg-purple-100 text-purple-700"
@@ -21,6 +22,7 @@ function cnRoleBadge(role: string) {
 }
 
 export default function AgentesPage() {
+  const { t } = useLanguage()
   const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null)
   const { role, loading } = useUserRole()
   const router = useRouter()
@@ -37,12 +39,12 @@ export default function AgentesPage() {
           <div className="mx-auto max-w-6xl">
             <Card className="border-destructive/50">
               <CardHeader>
-                <CardTitle className="text-destructive">Acceso Denegado</CardTitle>
-                <CardDescription>No tienes permisos para acceder a esta sección</CardDescription>
+                <CardTitle className="text-destructive">{t("agents.accessDenied")}</CardTitle>
+                <CardDescription>{t("agents.accessDeniedDesc")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button onClick={() => router.push("/inbox")}> 
-                  Volver a Conversaciones
+                  {t("agents.backToConversations")}
                 </Button>
               </CardContent>
             </Card>
@@ -65,9 +67,9 @@ export default function AgentesPage() {
   const visibleAgents = agents.filter((agent) => agent.role === "agent")
 
   const roleLabels: Record<string, string> = {
-    admin: "Administrador",
-    supervisor: "Supervisor",
-    agent: "Agente",
+    admin: t("agents.role.admin"),
+    supervisor: t("agents.role.supervisor"),
+    agent: t("agents.role.agent"),
   }
 
   const agentStats = visibleAgents.map((agent) => {
@@ -101,8 +103,8 @@ export default function AgentesPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Gestión de Agentes</h1>
-              <p className="mt-1 text-muted-foreground">Administra tu equipo de soporte y monitorea su desempeño</p>
+              <h1 className="text-3xl font-bold text-foreground">{t("agents.title")}</h1>
+              <p className="mt-1 text-muted-foreground">{t("agents.subtitle")}</p>
             </div>
             {role === "admin" && <AddAgentDialog />}
           </div>
@@ -111,36 +113,36 @@ export default function AgentesPage() {
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Agentes</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("agents.totalAgents")}</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{loadingAgents ? "-" : visibleAgents.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  {loadingAgents ? "-" : visibleAgents.filter((a) => a.status === "available").length} en línea
+                  {loadingAgents ? "-" : visibleAgents.filter((a) => a.status === "available").length} {t("agents.online")}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Conversaciones Activas</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("agents.activeConvs")}</CardTitle>
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{agentStats.reduce((sum, a) => sum + a.activeConversations, 0)}</div>
-                <p className="text-xs text-muted-foreground">Asignadas al equipo</p>
+                <p className="text-xs text-muted-foreground">{t("agents.assignedToTeam")}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Tasa de Resolución</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("agents.resolutionRate")}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">87%</div>
-                <p className="text-xs text-muted-foreground">+5% desde el mes pasado</p>
+                <p className="text-xs text-muted-foreground">{t("agents.resolutionRateDelta")}</p>
               </CardContent>
             </Card>
           </div>
@@ -148,16 +150,16 @@ export default function AgentesPage() {
           {/* Agents List */}
           <Card>
             <CardHeader>
-              <CardTitle>Equipo de Agentes</CardTitle>
-              <CardDescription>Lista completa de agentes y sus métricas de desempeño</CardDescription>
+              <CardTitle>{t("agents.team")}</CardTitle>
+              <CardDescription>{t("agents.teamDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {error && (
-                  <p className="text-sm text-destructive">Error al cargar agentes: {error}</p>
+                  <p className="text-sm text-destructive">{t("agents.loadError")} {error}</p>
                 )}
                 {loadingAgents && !error && (
-                  <p className="text-sm text-muted-foreground">Cargando agentes...</p>
+                  <p className="text-sm text-muted-foreground">{t("agents.loading")}</p>
                 )}
                 {!loadingAgents && agentStats.map((agent) => (
                   <div key={agent.id} className="space-y-0">
@@ -180,24 +182,24 @@ export default function AgentesPage() {
                             <h3 className="font-semibold text-foreground">{agent.name}</h3>
                             {agent.status === "available" && (
                               <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
-                                En línea
+                                {t("chat.online")}
                               </Badge>
                             )}
                             {agent.status === "busy" && (
                               <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">
-                                Ausente
+                                {t("agents.statusAway")}
                               </Badge>
                             )}
                             {agent.status === "offline" && (
                               <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50">
-                                Desconectado
+                                {t("agents.statusOffline")}
                               </Badge>
                             )}
                             <Badge
                               variant="secondary"
                               className={cnRoleBadge(agent.role)}
                             >
-                              {roleLabels[agent.role] || "Agente"}
+                              {roleLabels[agent.role] || t("agents.role.agent")}
                             </Badge>
                           </div>
                           <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
@@ -210,15 +212,15 @@ export default function AgentesPage() {
                       <div className="flex items-center gap-8">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-foreground">{agent.activeConversations}</div>
-                          <div className="text-xs text-muted-foreground">Activas</div>
+                          <div className="text-xs text-muted-foreground">{t("agents.active")}</div>
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-foreground">{agent.closedConversations}</div>
-                          <div className="text-xs text-muted-foreground">Resueltas</div>
+                          <div className="text-xs text-muted-foreground">{t("agents.resolved")}</div>
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-foreground">{agent.totalConversations}</div>
-                          <div className="text-xs text-muted-foreground">Total</div>
+                          <div className="text-xs text-muted-foreground">{t("agents.total")}</div>
                         </div>
                         {role === "admin" && (
                           <Button 
@@ -228,11 +230,11 @@ export default function AgentesPage() {
                           >
                             {expandedAgentId === agent.id ? (
                               <>
-                                Ocultar <ChevronUp className="ml-2 h-4 w-4" />
+                                {t("agents.hide")} <ChevronUp className="ml-2 h-4 w-4" />
                               </>
                             ) : (
                               <>
-                                Ver Detalles <ChevronDown className="ml-2 h-4 w-4" />
+                                {t("agents.viewDetails")} <ChevronDown className="ml-2 h-4 w-4" />
                               </>
                             )}
                           </Button>
@@ -245,11 +247,11 @@ export default function AgentesPage() {
                       <div className="border border-t-0 border-border rounded-b-lg p-4 bg-muted/30">
                         <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
                           <MessageSquare className="h-4 w-4" />
-                          Conversaciones Asignadas
+                          {t("agents.assignedConvs")}
                         </h4>
                         {agent.conversations.length === 0 ? (
                           <p className="text-sm text-muted-foreground py-4 text-center">
-                            No hay conversaciones asignadas a este agente
+                            {t("agents.noAssignedConvs")}
                           </p>
                         ) : (
                           <div className="space-y-2">
@@ -264,18 +266,18 @@ export default function AgentesPage() {
                                     {conv.status === "active" && (
                                       <Badge variant="outline" className="text-xs border-green-500 text-green-700 bg-green-50">
                                         <Clock className="h-3 w-3 mr-1" />
-                                        Abierta
+                                        {t("agents.open")}
                                       </Badge>
                                     )}
                                     {conv.status === "resolved" && (
                                       <Badge variant="outline" className="text-xs border-gray-500 text-gray-700 bg-gray-50">
                                         <CheckCircle2 className="h-3 w-3 mr-1" />
-                                        Cerrada
+                                        {t("agents.closed")}
                                       </Badge>
                                     )}
                                     {conv.priority === "high" && (
                                       <Badge variant="destructive" className="text-xs">
-                                        Alta Prioridad
+                                        {t("agents.highPriority")}
                                       </Badge>
                                     )}
                                   </div>
@@ -285,14 +287,14 @@ export default function AgentesPage() {
                                 </div>
                                 <div className="text-right">
                                   <p className="text-xs text-muted-foreground">
-                                    Última actividad: {conv.last_message && conv.last_message.created_at
+                                    {t("agents.lastActivity")} {conv.last_message && conv.last_message.created_at
                                       ? new Date(conv.last_message.created_at).toLocaleDateString('es-ES', {
                                           day: '2-digit',
                                           month: 'short',
                                           hour: '2-digit',
                                           minute: '2-digit'
                                         })
-                                      : "Sin mensajes"}
+                                      : t("conv.noMessages")}
                                   </p>
                                 </div>
                               </div>
