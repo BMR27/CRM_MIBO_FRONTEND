@@ -38,6 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/language-provider"
 
 type Contacto = {
   nombre: string
@@ -90,6 +91,7 @@ type CampaignRecipient = {
 }
 
 const LOCAL_CAMPAIGNS_KEY = "mibo_bulk_campaigns_v1"
+const localeMap: Record<string, string> = { es: "es-MX", en: "en-US", pl: "pl-PL", ru: "ru-RU" }
 
 const waTemplates = [
   {
@@ -179,38 +181,6 @@ function normalizeDate(value: string | undefined) {
   return d.toISOString().slice(0, 10)
 }
 
-function formatDate(value: string | undefined) {
-  const normalized = normalizeDate(value)
-  if (!normalized) return "Sin fecha"
-  const d = new Date(`${normalized}T12:00:00`)
-  return d.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
-}
-
-function formatStatus(status: CampaignStatus) {
-  const labels: Record<CampaignStatus, string> = {
-    scheduled: "Programada",
-    sending: "Enviando",
-    completed: "Completada",
-    failed: "Fallida",
-  }
-  return labels[status] || status
-}
-
-function statusClassName(status: CampaignStatus) {
-  return {
-    scheduled: "border-blue-200 bg-blue-50 text-blue-700",
-    sending: "border-amber-200 bg-amber-50 text-amber-700",
-    completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    failed: "border-red-200 bg-red-50 text-red-700",
-  }[status]
-}
-
-function getTemplateLabel(value?: string) {
-  const raw = String(value || "").trim()
-  if (!raw) return "Sin plantilla"
-  return templateBySid.get(raw)?.name || templateByName.get(raw)?.name || raw
-}
-
 function getStoredCampaigns(): Campaign[] {
   if (typeof window === "undefined") return []
   try {
@@ -241,6 +211,41 @@ function mergeCampaigns(apiCampaigns: Campaign[], localCampaigns: Campaign[]) {
 }
 
 function EnviosMasivosPage() {
+  const { t, language } = useLanguage()
+  const locale = localeMap[language] || "es-MX"
+
+  const formatDate = (value: string | undefined) => {
+    const normalized = normalizeDate(value)
+    if (!normalized) return t("camp.noDate")
+    const d = new Date(`${normalized}T12:00:00`)
+    return d.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
+  }
+
+  const formatStatus = (status: CampaignStatus) => {
+    const labels: Record<CampaignStatus, string> = {
+      scheduled: t("camp.status.scheduled"),
+      sending: t("camp.status.sending"),
+      completed: t("camp.status.completed"),
+      failed: t("camp.status.failed"),
+    }
+    return labels[status] || status
+  }
+
+  const statusClassName = (status: CampaignStatus) => {
+    return {
+      scheduled: "border-blue-200 bg-blue-50 text-blue-700",
+      sending: "border-amber-200 bg-amber-50 text-amber-700",
+      completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      failed: "border-red-200 bg-red-50 text-red-700",
+    }[status]
+  }
+
+  const getTemplateLabel = (value?: string) => {
+    const raw = String(value || "").trim()
+    if (!raw) return t("camp.noTemplate")
+    return templateBySid.get(raw)?.name || templateByName.get(raw)?.name || raw
+  }
+
   const router = useRouter()
   const [showNewForm, setShowNewForm] = useState(false)
   const [campaignName, setCampaignName] = useState("")
@@ -254,7 +259,7 @@ function EnviosMasivosPage() {
   const [loadingSavedContacts, setLoadingSavedContacts] = useState(false)
   const [savedContactsError, setSavedContactsError] = useState("")
   const [excelError, setExcelError] = useState("")
-  const [currentAgentName, setCurrentAgentName] = useState("Agente")
+  const [currentAgentName, setCurrentAgentName] = useState(t("camp.defaultAgent"))
   const [tenantId, setTenantId] = useState("")
   const [sending, setSending] = useState(false)
   const [sendResult, setSendResult] = useState("")
@@ -389,7 +394,7 @@ function EnviosMasivosPage() {
         const data = await campaignRes.json()
         setCampaigns(Array.isArray(data?.campaigns) ? data.campaigns.map((c: any) => ({ ...c, source: "api" })) : [])
       } else {
-        setCampaignsError("No se pudo cargar el historial de campañas del servidor.")
+        setCampaignsError(t("camp.loadHistoryFail"))
       }
 
       if (statsRes.ok) {
@@ -404,7 +409,7 @@ function EnviosMasivosPage() {
         })
       }
     } catch {
-      setCampaignsError("No se pudo conectar con el historial de campañas.")
+      setCampaignsError(t("camp.connectHistoryFail"))
     } finally {
       setLoadingCampaigns(false)
     }
@@ -416,18 +421,18 @@ function EnviosMasivosPage() {
     try {
       const response = await fetch("/api/contacts", { cache: "no-store" })
       const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data?.error || "No se pudieron cargar los contactos.")
+      if (!response.ok) throw new Error(data?.error || t("camp.loadContactsFail"))
       const list = Array.isArray(data) ? data : data?.contacts || []
       setSavedContacts(
         list.map((contact: any) => ({
           id: String(contact.id),
-          name: String(contact.name || contact.phone_number || "Sin nombre"),
+          name: String(contact.name || contact.phone_number || t("camp.noName")),
           phone_number: String(contact.phone_number || ""),
           channel: String(contact.channel || "whatsapp"),
         })),
       )
     } catch (error) {
-      setSavedContactsError(error instanceof Error ? error.message : "No se pudieron cargar los contactos.")
+      setSavedContactsError(error instanceof Error ? error.message : t("camp.loadContactsFail"))
     } finally {
       setLoadingSavedContacts(false)
     }
@@ -442,7 +447,7 @@ function EnviosMasivosPage() {
       if (response.ok && name) setCurrentAgentName(name)
       if (response.ok) setTenantId(String(user?.tenant_id || ""))
     } catch {
-      setCurrentAgentName("Agente")
+      setCurrentAgentName(t("camp.defaultAgent"))
     }
   }
 
@@ -455,11 +460,11 @@ function EnviosMasivosPage() {
       const response = await fetch(`/api/campaigns/${encodeURIComponent(campaign.id)}/recipients`)
       const data = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(data?.error || "No se pudo cargar el detalle de la campaña.")
+        throw new Error(data?.error || t("camp.loadDetailFail"))
       }
       setCampaignRecipients(Array.isArray(data?.recipients) ? data.recipients : [])
     } catch (error) {
-      setRecipientsError(error instanceof Error ? error.message : "No se pudo cargar el detalle de la campaña.")
+      setRecipientsError(error instanceof Error ? error.message : t("camp.loadDetailFail"))
     } finally {
       setLoadingRecipients(false)
     }
@@ -484,7 +489,7 @@ function EnviosMasivosPage() {
       } else {
         const response = await fetch(`/api/campaigns?id=${encodeURIComponent(campaign.id)}`, { method: "DELETE" })
         const data = await response.json().catch(() => ({}))
-        if (!response.ok) throw new Error(data?.error || "No se pudo eliminar la campaña.")
+        if (!response.ok) throw new Error(data?.error || t("camp.deleteFail"))
         setCampaigns((current) => current.filter((item) => item.id !== campaign.id))
       }
 
@@ -493,10 +498,10 @@ function EnviosMasivosPage() {
         setCampaignRecipients([])
       }
 
-      setSendResult(`Campaña ${campaign.campaignCode || campaign.id} eliminada correctamente.`)
+      setSendResult(`${t("camp.pageTitle")}: ${campaign.campaignCode || campaign.id} ${t("camp.deletedOk")}`)
       await loadCampaigns()
     } catch (error) {
-      setCampaignsError(error instanceof Error ? error.message : "No se pudo eliminar la campaña.")
+      setCampaignsError(error instanceof Error ? error.message : t("camp.deleteFail"))
     } finally {
       setDeleteDialogOpen(false)
       setCampaignToDelete(null)
@@ -550,7 +555,7 @@ function EnviosMasivosPage() {
       }))
       setContacts(mappedContacts)
     } catch {
-      setExcelError("Error al procesar el archivo. Asegúrate de que sea un Excel válido.")
+      setExcelError(t("camp.excelProcessError"))
     }
   }
 
@@ -570,7 +575,7 @@ function EnviosMasivosPage() {
     setSendResult("")
     const tpl = selectedTemplate ? templateBySid.get(selectedTemplate) : undefined
     if (!tpl) {
-      setSendResult("Debes seleccionar una plantilla válida.")
+      setSendResult(t("camp.selectValidTemplate"))
       setSending(false)
       return
     }
@@ -585,17 +590,15 @@ function EnviosMasivosPage() {
 
     const contactsToSend = effectiveContacts
     if (contactsToSend.length === 0) {
-      setSendResult("Selecciona contactos guardados o sube un Excel con destinatarios.")
+      setSendResult(t("camp.selectContactsOrExcel"))
       setSending(false)
       return
     }
 
-    const templateParamMap = tpl.paramMap as Record<string, string>
-
     if (contactSource === "saved") {
       const missingField = getExtraTemplateFields(tpl).find((campo) => !campaignParams[campo]?.trim())
       if (missingField) {
-        setSendResult(`Captura el campo "${missingField}" para completar la plantilla antes de enviar.`)
+        setSendResult(`${t("camp.captureField")} "${missingField}" ${t("camp.captureFieldSuffix")}`)
         setSending(false)
         return
       }
@@ -610,7 +613,7 @@ function EnviosMasivosPage() {
         const hasValue = typeof campoValue !== "undefined" && campoValue !== null && String(campoValue).trim() !== ""
         const hasFallback = typeof paramFallbacks[p] !== "undefined" && String(paramFallbacks[p]).trim() !== ""
         if (!hasValue && !hasFallback) {
-          setSendResult(`El contacto ${c["CLIENTE"] || c["PHONE_A"] || i + 1} no tiene el campo requerido para {{${p}}} (${campo}).`)
+          setSendResult(`${t("camp.contactMissingField1")} ${c["CLIENTE"] || c["PHONE_A"] || i + 1} ${t("camp.contactMissingField2")} {{${p}}} (${campo}).`)
           setSending(false)
           return
         }
@@ -669,14 +672,14 @@ function EnviosMasivosPage() {
         storeCampaign(localCampaign)
         setLocalCampaigns(getStoredCampaigns())
         setSendResult(
-          `Campaña ${campaignCode} procesada. ${delivered}/${recipients} mensajes enviados${failed ? `, ${failed} fallidos` : ""}${firstError ? `. Primer error: ${firstError}` : ""}.`,
+          `${campaignCode} ${t("camp.processedCampaign")} ${delivered}/${recipients} ${t("camp.messagesSent")}${failed ? `, ${failed} ${t("camp.failedSuffix")}` : ""}${firstError ? `. ${t("camp.firstError")} ${firstError}` : ""}.`,
         )
         await loadCampaigns()
       } else {
-        setSendResult(`Error en el envío: ${data.error || "Error desconocido"}`)
+        setSendResult(`${t("camp.sendError")} ${data.error || t("camp.unknownError")}`)
       }
     } catch {
-      setSendResult("Error de conexión con el backend.")
+      setSendResult(t("camp.connectionError"))
     }
     setSending(false)
     setShowNewForm(false)
@@ -702,31 +705,31 @@ function EnviosMasivosPage() {
       <div className="mx-auto flex max-w-[1500px] flex-col gap-4">
         <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-slate-950">Campañas de mensajes</h1>
-            <p className="text-sm text-slate-500">Envíos masivos, seguimiento operativo e identificación por campaña.</p>
+            <h1 className="text-2xl font-semibold tracking-normal text-slate-950">{t("camp.pageTitle")}</h1>
+            <p className="text-sm text-slate-500">{t("camp.pageSubtitle")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={loadCampaigns} disabled={loadingCampaigns} className="gap-2">
               {loadingCampaigns ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              Actualizar
+              {t("camp.refresh")}
             </Button>
             <Button variant="outline" onClick={() => router.push("/inbox/contactos")} className="gap-2">
               <Upload className="h-4 w-4" />
-              Importar contactos
+              {t("camp.importContacts")}
             </Button>
             <Button onClick={() => setShowNewForm((v) => !v)} className="gap-2">
               <Send className="h-4 w-4" />
-              Nueva campaña
+              {t("camp.newCampaign")}
             </Button>
           </div>
         </header>
 
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <MetricCard icon={MessageSquareText} label="Campañas filtradas" value={filteredCampaigns.length} />
-          <MetricCard icon={Users} label="Destinatarios" value={filteredSummary.total} />
-          <MetricCard icon={CheckCircle2} label="Enviados" value={filteredSummary.sent} />
-          <MetricCard icon={XCircle} label="Fallidos" value={filteredSummary.failed} tone="danger" />
-          <MetricCard icon={CalendarDays} label="Activas" value={activeFilteredCampaigns} />
+          <MetricCard icon={MessageSquareText} label={t("camp.metricFiltered")} value={filteredCampaigns.length} locale={locale} />
+          <MetricCard icon={Users} label={t("camp.metricRecipients")} value={filteredSummary.total} locale={locale} />
+          <MetricCard icon={CheckCircle2} label={t("camp.metricSent")} value={filteredSummary.sent} locale={locale} />
+          <MetricCard icon={XCircle} label={t("camp.metricFailed")} value={filteredSummary.failed} tone="danger" locale={locale} />
+          <MetricCard icon={CalendarDays} label={t("camp.metricActive")} value={activeFilteredCampaigns} locale={locale} />
         </section>
 
         {sendResult && (
@@ -739,15 +742,15 @@ function EnviosMasivosPage() {
           <section className="grid gap-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm xl:grid-cols-[minmax(0,1fr)_420px]">
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Nombre de campaña</label>
-                <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder="Ej: Recuperación entregas junio" />
+                <label className="text-sm font-medium text-slate-700">{t("camp.campaignNameLabel")}</label>
+                <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder={t("camp.campaignNamePlaceholder")} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Plantilla WhatsApp</label>
+                <label className="text-sm font-medium text-slate-700">{t("camp.templateLabel")}</label>
                 <div className="flex gap-2">
                   <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecciona una plantilla" />
+                      <SelectValue placeholder={t("camp.templatePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       {visibleTemplates.map((tpl) => (
@@ -758,13 +761,13 @@ function EnviosMasivosPage() {
                     </SelectContent>
                   </Select>
                   <Button type="button" variant="outline" size="sm" onClick={handleDownloadTemplate} disabled={!selectedTemplateData}>
-                    Descargar Excel
+                    {t("camp.downloadExcel")}
                   </Button>
                 </div>
               </div>
               {extraTemplateFields.length > 0 && (
                 <div className="space-y-3 lg:col-span-2">
-                  <p className="text-sm font-medium text-slate-700">Campos de la plantilla</p>
+                  <p className="text-sm font-medium text-slate-700">{t("camp.templateFields")}</p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {extraTemplateFields.map((campo) => (
                       <div key={campo} className="space-y-1">
@@ -778,13 +781,13 @@ function EnviosMasivosPage() {
                     ))}
                   </div>
                   <p className="text-xs text-slate-500">
-                    Se usarán para completar la plantilla en los contactos guardados. Para valores distintos por contacto, usa Excel.
+                    {t("camp.templateFieldsHint")}
                   </p>
                 </div>
               )}
               <div className="space-y-3 lg:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label className="text-sm font-medium text-slate-700">Destinatarios</label>
+                  <label className="text-sm font-medium text-slate-700">{t("camp.recipients")}</label>
                   <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-1">
                     <Button
                       type="button"
@@ -792,7 +795,7 @@ function EnviosMasivosPage() {
                       variant={contactSource === "saved" ? "default" : "ghost"}
                       onClick={() => setContactSource("saved")}
                     >
-                      Contactos guardados
+                      {t("camp.savedContacts")}
                     </Button>
                     <Button
                       type="button"
@@ -800,7 +803,7 @@ function EnviosMasivosPage() {
                       variant={contactSource === "excel" ? "default" : "ghost"}
                       onClick={() => setContactSource("excel")}
                     >
-                      Excel
+                      {t("camp.excel")}
                     </Button>
                   </div>
                 </div>
@@ -811,28 +814,28 @@ function EnviosMasivosPage() {
                       <Input
                         value={savedContactSearch}
                         onChange={(e) => setSavedContactSearch(e.target.value)}
-                        placeholder="Buscar contacto, teléfono o ID..."
+                        placeholder={t("camp.searchContactPlaceholder")}
                         className="bg-white md:max-w-md"
                       />
                       <div className="flex flex-wrap gap-2">
                         <Button type="button" variant="outline" size="sm" onClick={selectAllFilteredSavedContacts} disabled={filteredSavedContacts.length === 0}>
-                          Seleccionar filtrados
+                          {t("camp.selectFiltered")}
                         </Button>
                         <Button type="button" variant="outline" size="sm" onClick={clearSavedContactSelection} disabled={selectedSavedContactIds.size === 0}>
-                          Limpiar selección
+                          {t("camp.clearSelection")}
                         </Button>
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                      <span>{selectedSavedContactIds.size} seleccionado{selectedSavedContactIds.size === 1 ? "" : "s"}</span>
-                      <span>{filteredSavedContacts.length} contacto{filteredSavedContacts.length === 1 ? "" : "s"} visible{filteredSavedContacts.length === 1 ? "" : "s"}</span>
+                      <span>{selectedSavedContactIds.size} {selectedSavedContactIds.size === 1 ? t("camp.selected") : t("camp.selectedPlural")}</span>
+                      <span>{filteredSavedContacts.length} {filteredSavedContacts.length === 1 ? t("camp.visibleContact") : t("camp.visibleContacts")} {filteredSavedContacts.length === 1 ? t("camp.visible") : t("camp.visiblePlural")}</span>
                     </div>
                     {savedContactsError && <p className="mt-2 text-xs font-medium text-red-600">{savedContactsError}</p>}
                     <div className="mt-3 max-h-64 overflow-auto rounded-md border border-slate-200 bg-white">
                       {loadingSavedContacts ? (
-                        <div className="p-4 text-center text-sm text-slate-500">Cargando contactos...</div>
+                        <div className="p-4 text-center text-sm text-slate-500">{t("camp.loadingContacts")}</div>
                       ) : filteredSavedContacts.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-slate-500">No hay contactos disponibles.</div>
+                        <div className="p-4 text-center text-sm text-slate-500">{t("camp.noContactsAvailable")}</div>
                       ) : (
                         filteredSavedContacts.map((contact) => (
                           <label
@@ -856,30 +859,30 @@ function EnviosMasivosPage() {
                   <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
                     <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="bg-white" />
                     <p className="mt-2 text-xs text-slate-500">
-                      Segunda opción: sube un Excel con columnas CLIENTE, PHONE_A
-                      {selectedTemplateData ? ` y ${Object.values(selectedTemplateData.paramMap).filter((c) => c !== "CLIENTE" && c !== "ASESOR" && c !== "PHONE_A").join(", ")}` : " y PRODUCTS_A"}.
+                      {t("camp.excelSecondOption")}
+                      {selectedTemplateData ? ` ${t("camp.excelAnd")} ${Object.values(selectedTemplateData.paramMap).filter((c) => c !== "CLIENTE" && c !== "ASESOR" && c !== "PHONE_A").join(", ")}` : ` ${t("camp.excelAnd")} PRODUCTS_A`}.
                     </p>
                     {excelError && <p className="mt-2 text-xs font-medium text-red-600">{excelError}</p>}
                   </div>
                 )}
               </div>
               <div className="space-y-2 lg:col-span-2">
-                <label className="text-sm font-medium text-slate-700">Notas internas</label>
-                <Textarea value={campaignNotes} onChange={(e) => setCampaignNotes(e.target.value)} placeholder="Segmento, objetivo o referencia interna" />
+                <label className="text-sm font-medium text-slate-700">{t("camp.internalNotes")}</label>
+                <Textarea value={campaignNotes} onChange={(e) => setCampaignNotes(e.target.value)} placeholder={t("camp.internalNotesPlaceholder")} />
               </div>
             </div>
 
             <aside className="rounded-md border border-slate-200 bg-slate-50 p-4">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold text-slate-900">Resumen</span>
+                <span className="text-sm font-semibold text-slate-900">{t("camp.summary")}</span>
                 <Badge variant="outline" className="bg-white">
-                  {effectiveContacts.length} contactos
+                  {effectiveContacts.length} {t("camp.contactsBadge")}
                 </Badge>
               </div>
               {selectedTemplateData ? (
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs font-medium uppercase text-slate-500">Plantilla</p>
+                    <p className="text-xs font-medium uppercase text-slate-500">{t("camp.template")}</p>
                     <p className="text-sm font-semibold text-slate-900">{selectedTemplateData.name}</p>
                   </div>
                   <pre className="max-h-44 overflow-auto whitespace-pre-wrap rounded-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-700">
@@ -887,25 +890,25 @@ function EnviosMasivosPage() {
                   </pre>
                 </div>
               ) : (
-                <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">Selecciona una plantilla para ver el mensaje.</div>
+                <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">{t("camp.selectTemplateToView")}</div>
               )}
               {effectiveContacts.length > 0 && (
                 <div className="mt-4 max-h-36 overflow-auto rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
                   {effectiveContacts.slice(0, 20).map((c, idx) => (
                     <div key={`${c.telefono}-${idx}`} className="flex justify-between gap-2 border-b border-slate-100 py-1 last:border-b-0">
-                      <span className="truncate">{c.nombre || "Sin nombre"}</span>
-                      <span className="shrink-0 text-slate-400">{c.telefono || "Sin teléfono"}</span>
+                      <span className="truncate">{c.nombre || t("camp.noName")}</span>
+                      <span className="shrink-0 text-slate-400">{c.telefono || t("camp.noPhone")}</span>
                     </div>
                   ))}
                 </div>
               )}
               <div className="mt-4 flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setShowNewForm(false)} disabled={sending}>
-                  Cancelar
+                  {t("camp.cancel")}
                 </Button>
                 <Button disabled={effectiveContacts.length === 0 || sending || !selectedTemplate} onClick={handleSend} className="gap-2">
                   {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  {sending ? "Enviando" : "Enviar ahora"}
+                  {sending ? t("camp.sending") : t("camp.sendNow")}
                 </Button>
               </div>
             </aside>
@@ -916,28 +919,28 @@ function EnviosMasivosPage() {
           <div className="grid gap-3 border-b border-slate-200 p-4 xl:grid-cols-[minmax(260px,1fr)_170px_170px_190px_190px_auto]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar campaña, ID o plantilla" className="pl-9" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("camp.searchCampaignPlaceholder")} className="pl-9" />
             </div>
             <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
             <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Estado" />
+                <SelectValue placeholder={t("camp.colStatus")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="scheduled">Programadas</SelectItem>
-                <SelectItem value="sending">Enviando</SelectItem>
-                <SelectItem value="completed">Completadas</SelectItem>
-                <SelectItem value="failed">Fallidas</SelectItem>
+                <SelectItem value="all">{t("camp.allStatuses")}</SelectItem>
+                <SelectItem value="scheduled">{t("camp.scheduledPlural")}</SelectItem>
+                <SelectItem value="sending">{t("camp.sendingPlural")}</SelectItem>
+                <SelectItem value="completed">{t("camp.completedPlural")}</SelectItem>
+                <SelectItem value="failed">{t("camp.failedPlural")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={templateFilter} onValueChange={setTemplateFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Plantilla" />
+                <SelectValue placeholder={t("camp.colTemplate")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las plantillas</SelectItem>
+                <SelectItem value="all">{t("camp.allTemplates")}</SelectItem>
                 {visibleTemplates.map((tpl) => (
                   <SelectItem key={tpl.sid} value={tpl.name}>
                     {tpl.name}
@@ -947,7 +950,7 @@ function EnviosMasivosPage() {
             </Select>
             <Button variant="outline" onClick={resetFilters} className="gap-2">
               <Filter className="h-4 w-4" />
-              Limpiar
+              {t("camp.clear")}
             </Button>
           </div>
 
@@ -956,13 +959,13 @@ function EnviosMasivosPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Campaña</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Plantilla</TableHead>
-                <TableHead className="text-right">Destinatarios</TableHead>
-                <TableHead className="min-w-48">Avance</TableHead>
-                <TableHead className="text-right">Fallidos</TableHead>
+                <TableHead>{t("camp.colCampaign")}</TableHead>
+                <TableHead>{t("camp.colDate")}</TableHead>
+                <TableHead>{t("camp.colStatus")}</TableHead>
+                <TableHead>{t("camp.colTemplate")}</TableHead>
+                <TableHead className="text-right">{t("camp.colRecipients")}</TableHead>
+                <TableHead className="min-w-48">{t("camp.colProgress")}</TableHead>
+                <TableHead className="text-right">{t("camp.colFailed")}</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -970,7 +973,7 @@ function EnviosMasivosPage() {
               {filteredCampaigns.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="h-36 text-center text-slate-500">
-                    {loadingCampaigns ? "Cargando campañas..." : "No hay campañas con los filtros actuales."}
+                    {loadingCampaigns ? t("camp.loadingCampaigns") : t("camp.noCampaignsFiltered")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -1013,20 +1016,20 @@ function EnviosMasivosPage() {
                             size="sm"
                             onClick={() => loadCampaignRecipients(campaign)}
                             className="gap-2"
-                            title="Ver contactos y mensajes"
+                            title={t("camp.viewTitle")}
                           >
                             <Eye className="h-4 w-4" />
-                            Ver
+                            {t("camp.view")}
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => navigator.clipboard?.writeText(code)}
                             className="gap-2"
-                            title="Copiar ID de campaña"
+                            title={t("camp.copyTitle")}
                           >
                             <Copy className="h-4 w-4" />
-                            Copiar
+                            {t("camp.copy")}
                           </Button>
                           <Button
                             variant="ghost"
@@ -1034,10 +1037,10 @@ function EnviosMasivosPage() {
                             onClick={() => requestDeleteCampaign(campaign)}
                             disabled={deletingCampaignId === campaign.id}
                             className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
-                            title="Eliminar campaña"
+                            title={t("camp.deleteTitle")}
                           >
                             {deletingCampaignId === campaign.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                            Eliminar
+                            {t("camp.delete")}
                           </Button>
                         </div>
                       </TableCell>
@@ -1053,12 +1056,12 @@ function EnviosMasivosPage() {
           <section className="rounded-md border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-col gap-3 border-b border-slate-200 p-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <p className="text-xs font-medium uppercase text-slate-500">Detalle de campaña</p>
+                <p className="text-xs font-medium uppercase text-slate-500">{t("camp.campaignDetail")}</p>
                 <h2 className="text-lg font-semibold text-slate-950">{selectedCampaign.name}</h2>
                 <p className="font-mono text-xs text-slate-500">{selectedCampaign.campaignCode || selectedCampaign.id}</p>
               </div>
               <Button variant="outline" size="sm" onClick={() => setSelectedCampaignId(null)}>
-                Cerrar detalle
+                {t("camp.closeDetail")}
               </Button>
             </div>
 
@@ -1067,38 +1070,38 @@ function EnviosMasivosPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Contacto</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Mensaje enviado</TableHead>
+                  <TableHead>{t("camp.colContact")}</TableHead>
+                  <TableHead>{t("camp.colPhone")}</TableHead>
+                  <TableHead>{t("camp.colStatus")}</TableHead>
+                  <TableHead>{t("camp.colDate")}</TableHead>
+                  <TableHead>{t("camp.colMessageSent")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loadingRecipients ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-28 text-center text-slate-500">
-                      Cargando contactos enviados...
+                      {t("camp.loadingSentContacts")}
                     </TableCell>
                   </TableRow>
                 ) : campaignRecipients.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-28 text-center text-slate-500">
-                      No hay contactos registrados para esta campaña.
+                      {t("camp.noRecipientsRegistered")}
                     </TableCell>
                   </TableRow>
                 ) : (
                   campaignRecipients.map((recipient) => (
                     <TableRow key={recipient.id}>
-                      <TableCell className="font-medium text-slate-900">{recipient.contactName || "Sin nombre"}</TableCell>
-                      <TableCell className="text-slate-600">{recipient.phoneNumber || "Sin teléfono"}</TableCell>
+                      <TableCell className="font-medium text-slate-900">{recipient.contactName || t("camp.noName")}</TableCell>
+                      <TableCell className="text-slate-600">{recipient.phoneNumber || t("camp.noPhone")}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={recipient.status === "failed" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}>
-                          {recipient.status === "failed" ? "Fallido" : recipient.status === "skipped" ? "Omitido" : "Enviado"}
+                          {recipient.status === "failed" ? t("camp.statusFailed") : recipient.status === "skipped" ? t("camp.statusSkipped") : t("camp.statusSent")}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-slate-600">{formatDate(recipient.createdAt)}</TableCell>
-                      <TableCell className="max-w-xl whitespace-pre-wrap text-sm text-slate-700">{recipient.message || "Sin contenido"}</TableCell>
+                      <TableCell className="max-w-xl whitespace-pre-wrap text-sm text-slate-700">{recipient.message || t("camp.noContent")}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -1110,19 +1113,19 @@ function EnviosMasivosPage() {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent className="border-red-200">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-slate-950">¿Eliminar campaña?</AlertDialogTitle>
+              <AlertDialogTitle className="text-slate-950">{t("camp.deleteConfirmTitle")}</AlertDialogTitle>
               <AlertDialogDescription className="text-slate-600">
-                {`¿Eliminar la campaña "${campaignToDelete?.name || ""}"? Esta acción solo quitará el registro de campaña, no los mensajes del chat.`}
+                {`${t("camp.deleteConfirmDesc1")} "${campaignToDelete?.name || ""}"${t("camp.deleteConfirmDesc2")}`}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={Boolean(deletingCampaignId)}>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel disabled={Boolean(deletingCampaignId)}>{t("camp.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteCampaign}
                 className="bg-red-600 hover:bg-red-700 focus-visible:ring-red-400"
                 disabled={Boolean(deletingCampaignId)}
               >
-                {deletingCampaignId ? "Eliminando..." : "Eliminar campaña"}
+                {deletingCampaignId ? t("camp.deleting") : t("camp.deleteCampaign")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1137,18 +1140,20 @@ function MetricCard({
   label,
   value,
   tone = "default",
+  locale,
 }: {
   icon: ElementType
   label: string
   value: number
   tone?: "default" | "danger"
+  locale: string
 }) {
   return (
     <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm text-slate-500">{label}</p>
-          <p className={cn("mt-1 text-2xl font-semibold text-slate-950", tone === "danger" && "text-red-600")}>{value.toLocaleString("es-MX")}</p>
+          <p className={cn("mt-1 text-2xl font-semibold text-slate-950", tone === "danger" && "text-red-600")}>{value.toLocaleString(locale)}</p>
         </div>
         <div className={cn("flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 text-slate-600", tone === "danger" && "bg-red-50 text-red-600")}>
           <Icon className="h-5 w-5" />
