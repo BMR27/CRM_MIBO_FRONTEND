@@ -11,7 +11,8 @@ import { ApiKeysSection } from "@/components/api-keys-section"
 import { WorkspaceNameSection } from "@/components/workspace-name-section"
 import { BrandingSection } from "@/components/branding-section"
 import { TenantModulesSection } from "@/components/tenant-modules-section"
-import { DarkModeToggle } from "@/components/dark-mode-toggle"
+import { ThemeSelector } from "@/components/theme-selector"
+import { LanguageSelector } from "@/components/language-selector"
 import { WhatsappIntegrationSection } from "@/components/whatsapp-integration-section"
 import { FacebookIntegrationSection } from "@/components/facebook-integration-section"
 import { VoiceIntegrationSection } from "@/components/voice-integration-section"
@@ -88,12 +89,24 @@ export default async function ConfiguracionPage() {
 
                   <Separator />
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <div className="space-y-0.5">
-                      <Label>Tema Oscuro</Label>
-                      <p className="text-sm text-muted-foreground">Activa el modo oscuro para la interfaz</p>
+                      <Label>Apariencia</Label>
+                      <p className="text-sm text-muted-foreground">Elige el tema claro, oscuro, o el del sistema</p>
                     </div>
-                    <DarkModeToggle />
+                    <div className="w-40">
+                      <ThemeSelector />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <Label>Idioma</Label>
+                      <p className="text-sm text-muted-foreground">Idioma de la interfaz (menú y encabezado por ahora)</p>
+                    </div>
+                    <div className="w-40">
+                      <LanguageSelector />
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between">

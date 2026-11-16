@@ -9,6 +9,9 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { PlatformAdminSwitcher } from "@/components/platform-admin-switcher"
 import { useTenantBranding } from "@/hooks/use-tenant-branding"
+import { useLanguage } from "@/components/language-provider"
+import { ThemeSelector } from "@/components/theme-selector"
+import { LanguageSelector } from "@/components/language-selector"
 
 interface InboxSidebarProps {
   user: {
@@ -24,6 +27,7 @@ const SIDEBAR_COLLAPSED_KEY = "inbox_sidebar_collapsed"
 export function InboxSidebar({ user }: InboxSidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const branding = useTenantBranding()
+  const { t } = useLanguage()
   const workspaceName = branding.displayName || branding.name
   const router = useRouter()
   const pathname = usePathname()
@@ -133,7 +137,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
             )}
             <div className="overflow-hidden">
               <p className="truncate text-sm font-semibold leading-tight text-sidebar-foreground">
-                {workspaceName || "Cargando…"}
+                {workspaceName || t("nav.loading")}
               </p>
               <p className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/50">Hilo</p>
             </div>
@@ -170,7 +174,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           )}
         >
           <MessageSquare className="h-5 w-5" />
-          {!collapsed && <span className="ml-3">Conversaciones</span>}
+          {!collapsed && <span className="ml-3">{t("nav.conversations")}</span>}
         </Button>
 
         <Button
@@ -185,7 +189,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           )}
         >
           <User className="h-5 w-5" />
-          {!collapsed && <span className="ml-3">Contactos</span>}
+          {!collapsed && <span className="ml-3">{t("nav.contacts")}</span>}
         </Button>
 
         <Button
@@ -200,7 +204,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           )}
         >
           <Send className="h-5 w-5" />
-          {!collapsed && <span className="ml-3">Campañas</span>}
+          {!collapsed && <span className="ml-3">{t("nav.campaigns")}</span>}
         </Button>
         
         {/* Citas: solo visible para administrador, y si el super-admin lo habilitó para este espacio */}
@@ -217,7 +221,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
             )}
           >
             <Calendar className="h-5 w-5" />
-            {!collapsed && <span className="ml-3">Citas</span>}
+            {!collapsed && <span className="ml-3">{t("nav.appointments")}</span>}
           </Button>
         )}
         
@@ -235,7 +239,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
             )}
           >
             <Users className="h-5 w-5" />
-            {!collapsed && <span className="ml-3">Agentes</span>}
+            {!collapsed && <span className="ml-3">{t("nav.agents")}</span>}
           </Button>
         )}
 
@@ -253,7 +257,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
             )}
           >
             <Inbox className="h-5 w-5" />
-            {!collapsed && <span className="ml-3">Leads</span>}
+            {!collapsed && <span className="ml-3">{t("nav.leads")}</span>}
           </Button>
         )}
 
@@ -271,7 +275,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
             )}
           >
             <BookOpen className="h-5 w-5" />
-            {!collapsed && <span className="ml-3">Documentación API</span>}
+            {!collapsed && <span className="ml-3">{t("nav.docsApi")}</span>}
           </Button>
         )}
 
@@ -288,12 +292,20 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
             )}
           >
             <Settings className="h-5 w-5" />
-            {!collapsed && <span className="ml-3">Configuración</span>}
+            {!collapsed && <span className="ml-3">{t("nav.settings")}</span>}
           </Button>
         )}
       </nav>
 
       <Separator className="bg-sidebar-border" />
+
+      {/* Tema y idioma */}
+      {!collapsed && (
+        <div className="space-y-2 border-b border-sidebar-border px-4 py-3">
+          <ThemeSelector compact />
+          <LanguageSelector compact />
+        </div>
+      )}
 
       {/* User Profile */}
       <div className="p-4">
@@ -326,7 +338,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
             onClick={handleLogout}
           >
             <LogOut className="mr-2 h-4 w-4" />
-            Cerrar sesión
+            {t("nav.logout")}
           </Button>
         )}
       </div>

@@ -4,9 +4,11 @@ import { Filter, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTenantBranding } from "@/hooks/use-tenant-branding"
+import { useLanguage } from "@/components/language-provider"
 
 export function InboxHeader() {
   const branding = useTenantBranding()
+  const { t } = useLanguage()
   const hasBranding = Boolean(branding.logoUrl || branding.displayName)
 
   return (
@@ -31,7 +33,7 @@ export function InboxHeader() {
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm">
           <Filter className="mr-2 h-4 w-4" />
-          Filtros
+          {t("header.filters")}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -40,8 +42,8 @@ export function InboxHeader() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Exportar</DropdownMenuItem>
-            <DropdownMenuItem>Configuración</DropdownMenuItem>
+            <DropdownMenuItem>{t("header.export")}</DropdownMenuItem>
+            <DropdownMenuItem>{t("header.settings")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
