@@ -551,7 +551,9 @@ function EnviosMasivosPage() {
       const workbook = XLSX.read(data, { type: "array" })
       const sheetName = workbook.SheetNames[0]
       const sheet = workbook.Sheets[sheetName]
-      const json = XLSX.utils.sheet_to_json(sheet, { defval: "" })
+      // raw: false fuerza a que las celdas de fecha vengan como el texto formateado que se
+      // ve en Excel (p. ej. "12/12/2026") en vez del número de serie interno (p. ej. 46368).
+      const json = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false })
       const mappedContacts = json.map((row: any) => ({
         ...row,
         nombre: row["CLIENTE"] || row["Nombre"] || row["name"] || "",
