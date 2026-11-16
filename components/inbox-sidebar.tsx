@@ -12,6 +12,7 @@ import { useTenantBranding } from "@/hooks/use-tenant-branding"
 import { useLanguage } from "@/components/language-provider"
 import { ThemeSelector } from "@/components/theme-selector"
 import { LanguageSelector } from "@/components/language-selector"
+import { HelpGuideDialog } from "@/components/help-guide-dialog"
 
 interface InboxSidebarProps {
   user: {
@@ -314,6 +315,8 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
             {!collapsed && <span className="ml-3">{t("nav.settings")}</span>}
           </Button>
         )}
+
+        <HelpGuideDialog collapsed={collapsed} isAdmin={isAdmin} isAgent={isAgent} modules={branding.modules} />
       </nav>
 
       <Separator className="bg-sidebar-border" />
