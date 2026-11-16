@@ -125,12 +125,25 @@ const waTemplates = [
     sid: "HX5dd56e7d661ce1e31d03e5115dac1b5a",
     language: "pl",
     // Igual que v1, pero con la fecha límite del descuento como variable {{2}} en vez
-    // de fija. Pendiente de aprobación de WhatsApp — no se puede enviar hasta que Meta
-    // la apruebe (puede tardar algunas horas).
+    // de fija. Ya aprobada por WhatsApp.
     body: "Pani {{1}}, wybrała już Pani Relivital — więc wie, jak ważna jest regularna pielęgnacja skóry.\nKolagen morski i elastyna działają stopniowo — dlatego warto kontynuować pielęgnację bez dłuższych przerw.\nWłaśnie dla naszych Klientek przygotowaliśmy rabat 20% na kolejne zamówienie Relivital, na dowolną liczbę opakowań.\nZwykle ten rabat obowiązuje tylko miesiąc po zakupie, ale dla Pani przedłużyliśmy go do {{2}}.\nWystarczy zadzwonić pod numer +48 12 420 73 49 i podać naszej konsultantce kod KLIENT20.",
     paramMap: {
       "1": "CLIENTE",
       "2": "FECHA_LIMITE",
+    } as Record<string, string>,
+    paramFallbacks: {} as Record<string, string>,
+    // Plantilla exclusiva: solo la ve el tenant Relivital, no el resto de espacios.
+    tenantIds: ["0b50210b-d7d0-47df-8fe1-71ce95b419e6"],
+  },
+  {
+    name: "relivital_bono30_v1",
+    sid: "HXcd993f395dac137dec02e68505f8074c",
+    language: "pl",
+    // Plantilla con header de imagen (bono de 30 zł). Pendiente de aprobación de
+    // WhatsApp al crearla — los envíos fallarán hasta que Meta la apruebe.
+    body: "Droga {{1}}, dziękujemy, że wybrałaś RELIVITAL 💛\nJako nasza klientka masz 30 zł na swoim koncie. Wykorzystasz je do 30.11 przy zamówieniu od 100 zł — wpisz w koszyku kod ZNIZKA30.\n\nTwój krem na dzień RELIVITAL to świetna podstawa. Jesienią skóra potrzebuje więcej nawilżenia i troski, dlatego przygotowaliśmy dla Ciebie 3 nowości:\n🌙 Anti-age Night Cream — odżywia skórę nocą, rano wygląda na gładszą\n💧 Double Hydration Boost Gel + HA — natychmiast nawilża i wygładza\n👁 Brightening Eye Cream — mniej widoczne cienie i opuchnięcia pod oczami\n\n30 zł wykorzystasz na nowości albo na kolejne opakowanie swojego kremu na dzień.\n\n🎁 Wybierz pełny kurs pielęgnacji i odbierz dodatkowy rabat −20% na zestaw 👇\nhttps://relivital.pl/catalog",
+    paramMap: {
+      "1": "CLIENTE",
     } as Record<string, string>,
     paramFallbacks: {} as Record<string, string>,
     // Plantilla exclusiva: solo la ve el tenant Relivital, no el resto de espacios.
