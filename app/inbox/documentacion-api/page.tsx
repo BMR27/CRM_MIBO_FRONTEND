@@ -20,50 +20,52 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { InboxHeader } from "@/components/inbox-header"
 import { useUserRole } from "@/hooks/use-user-role"
+import { useLanguage } from "@/components/language-provider"
 
 const RAILWAY_BACKEND_URL = "https://crmmibobackend-production.up.railway.app"
 
-const clientEndpointGroups = [
-  {
-    id: "auth",
-    title: "Autenticación",
-    icon: KeyRound,
-    description: "Inicia sesión y obtén el token necesario para usar la API.",
-    endpoints: [
-      {
-        method: "POST",
-        path: "/api/auth/login",
-        summary: "Inicia sesión con correo y contraseña.",
-        useCase: "Obtener access_token para integraciones.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/auth/login" \\
+function buildEndpointGroups(t: (key: string) => string) {
+  return [
+    {
+      id: "auth",
+      title: t("docs.group.auth.title"),
+      icon: KeyRound,
+      description: t("docs.group.auth.desc"),
+      endpoints: [
+        {
+          method: "POST",
+          path: "/api/auth/login",
+          summary: t("docs.ep.auth.0.summary"),
+          useCase: t("docs.ep.auth.0.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/auth/login" \\
   -H "Content-Type: application/json" \\
   -d '{
     "email": "cliente@empresa.com",
     "password": "tu_password"
   }'`,
-      },
-    ],
-  },
-  {
-    id: "contactos",
-    title: "Contactos",
-    icon: Users,
-    description: "Alta y consulta de contactos autorizados para campañas o seguimiento.",
-    endpoints: [
-      {
-        method: "GET",
-        path: "/api/contacts",
-        summary: "Consulta contactos disponibles para la cuenta.",
-        useCase: "Sincronizar una libreta externa o validar destinatarios.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/contacts" \\
+        },
+      ],
+    },
+    {
+      id: "contactos",
+      title: t("docs.group.contactos.title"),
+      icon: Users,
+      description: t("docs.group.contactos.desc"),
+      endpoints: [
+        {
+          method: "GET",
+          path: "/api/contacts",
+          summary: t("docs.ep.contactos.0.summary"),
+          useCase: t("docs.ep.contactos.0.useCase"),
+          example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/contacts" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-      {
-        method: "POST",
-        path: "/api/contacts",
-        summary: "Crea o actualiza un contacto por teléfono.",
-        useCase: "Registrar clientes antes de enviar mensajes.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/contacts" \\
+        },
+        {
+          method: "POST",
+          path: "/api/contacts",
+          summary: t("docs.ep.contactos.1.summary"),
+          useCase: t("docs.ep.contactos.1.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/contacts" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -71,13 +73,13 @@ const clientEndpointGroups = [
     "channel": "whatsapp",
     "phone_number": "+5215512345678"
   }'`,
-      },
-      {
-        method: "POST",
-        path: "/api/contacts/import",
-        summary: "Crea o actualiza contactos de manera masiva.",
-        useCase: "Importar una base de destinatarios antes de enviar campañas.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/contacts/import" \\
+        },
+        {
+          method: "POST",
+          path: "/api/contacts/import",
+          summary: t("docs.ep.contactos.2.summary"),
+          useCase: t("docs.ep.contactos.2.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/contacts/import" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -86,21 +88,21 @@ const clientEndpointGroups = [
       { "name": "Luis Perez", "phone_number": "+5215598765432", "channel": "whatsapp" }
     ]
   }'`,
-      },
-    ],
-  },
-  {
-    id: "ordenes",
-    title: "Órdenes",
-    icon: Package,
-    description: "Cada orden pertenece a un contacto existente (contact_id) y avanza por 6 estados posibles.",
-    endpoints: [
-      {
-        method: "POST",
-        path: "/api/orders",
-        summary: "Crea una orden asociada a un contacto.",
-        useCase: "Registrar un pedido después de crear o localizar al contacto (ver sección Contactos). El estado inicial siempre es \"pending\", no se puede omitir.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/orders" \\
+        },
+      ],
+    },
+    {
+      id: "ordenes",
+      title: t("docs.group.ordenes.title"),
+      icon: Package,
+      description: t("docs.group.ordenes.desc"),
+      endpoints: [
+        {
+          method: "POST",
+          path: "/api/orders",
+          summary: t("docs.ep.ordenes.0.summary"),
+          useCase: t("docs.ep.ordenes.0.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/orders" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -110,103 +112,103 @@ const clientEndpointGroups = [
     "items": [{ "sku": "SKU-1", "name": "Producto demo", "quantity": 2 }],
     "shipping_address": "Calle Falsa 123, CDMX"
   }'`,
-      },
-      {
-        method: "GET",
-        path: "/api/orders",
-        summary: "Lista todas las órdenes del espacio de trabajo.",
-        useCase: "Sincronizar el catálogo de pedidos con un sistema externo.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/orders" \\
+        },
+        {
+          method: "GET",
+          path: "/api/orders",
+          summary: t("docs.ep.ordenes.1.summary"),
+          useCase: t("docs.ep.ordenes.1.useCase"),
+          example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/orders" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-      {
-        method: "GET",
-        path: "/api/orders/{id}",
-        summary: "Consulta una orden específica (incluye los datos del contacto).",
-        useCase: "Mostrar el detalle de un pedido en otro sistema.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/orders/ORDER_ID" \\
+        },
+        {
+          method: "GET",
+          path: "/api/orders/{id}",
+          summary: t("docs.ep.ordenes.2.summary"),
+          useCase: t("docs.ep.ordenes.2.useCase"),
+          example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/orders/ORDER_ID" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-      {
-        method: "GET",
-        path: "/api/orders/contact/{contactId}",
-        summary: "Lista todas las órdenes de un contacto.",
-        useCase: "Ver el historial de compras de un cliente antes de atenderlo.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/orders/contact/CONTACT_ID" \\
+        },
+        {
+          method: "GET",
+          path: "/api/orders/contact/{contactId}",
+          summary: t("docs.ep.ordenes.3.summary"),
+          useCase: t("docs.ep.ordenes.3.useCase"),
+          example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/orders/contact/CONTACT_ID" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-      {
-        method: "PATCH",
-        path: "/api/orders/{id}",
-        summary: "Actualiza el estado u otros datos de una orden (envío parcial, solo mandas los campos que cambian).",
-        useCase: "Mover el pedido al siguiente estado del flujo, o agregar el número de guía al despacharlo.",
-        example: `curl -X PATCH "${RAILWAY_BACKEND_URL}/api/orders/ORDER_ID" \\
+        },
+        {
+          method: "PATCH",
+          path: "/api/orders/{id}",
+          summary: t("docs.ep.ordenes.4.summary"),
+          useCase: t("docs.ep.ordenes.4.useCase"),
+          example: `curl -X PATCH "${RAILWAY_BACKEND_URL}/api/orders/ORDER_ID" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
     "status": "shipped",
     "tracking_number": "TRK123456"
   }'`,
-      },
-      {
-        method: "DELETE",
-        path: "/api/orders/{id}",
-        summary: "Elimina una orden.",
-        useCase: "Depurar órdenes de prueba.",
-        example: `curl -X DELETE "${RAILWAY_BACKEND_URL}/api/orders/ORDER_ID" \\
+        },
+        {
+          method: "DELETE",
+          path: "/api/orders/{id}",
+          summary: t("docs.ep.ordenes.5.summary"),
+          useCase: t("docs.ep.ordenes.5.useCase"),
+          example: `curl -X DELETE "${RAILWAY_BACKEND_URL}/api/orders/ORDER_ID" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-    ],
-  },
-  {
-    id: "conversaciones",
-    title: "Conversaciones",
-    icon: MessageCircle,
-    description: "Consulta conversaciones y mensajes relacionados con la operación del cliente.",
-    endpoints: [
-      {
-        method: "GET",
-        path: "/api/conversations",
-        summary: "Lista conversaciones visibles para la cuenta.",
-        useCase: "Integrar seguimiento de atención en otro sistema.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/conversations" \\
+        },
+      ],
+    },
+    {
+      id: "conversaciones",
+      title: t("docs.group.conversaciones.title"),
+      icon: MessageCircle,
+      description: t("docs.group.conversaciones.desc"),
+      endpoints: [
+        {
+          method: "GET",
+          path: "/api/conversations",
+          summary: t("docs.ep.conversaciones.0.summary"),
+          useCase: t("docs.ep.conversaciones.0.useCase"),
+          example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/conversations" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-      {
-        method: "GET",
-        path: "/api/conversations/{id}/messages",
-        summary: "Consulta mensajes de una conversación específica.",
-        useCase: "Auditar historial o sincronizar mensajes.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/conversations/CONVERSATION_ID/messages" \\
+        },
+        {
+          method: "GET",
+          path: "/api/conversations/{id}/messages",
+          summary: t("docs.ep.conversaciones.1.summary"),
+          useCase: t("docs.ep.conversaciones.1.useCase"),
+          example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/conversations/CONVERSATION_ID/messages" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-    ],
-  },
-  {
-    id: "mensajes",
-    title: "Mensajes",
-    icon: Send,
-    description: "Envía un mensaje de WhatsApp directo a un contacto, sin necesidad de crear una campaña.",
-    endpoints: [
-      {
-        method: "POST",
-        path: "/api/whatsapp/send",
-        summary: "Envía un mensaje de texto a un número de WhatsApp.",
-        useCase: "Notificar a un cliente puntual sin pasar por el flujo de campañas masivas.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/whatsapp/send" \\
+        },
+      ],
+    },
+    {
+      id: "mensajes",
+      title: t("docs.group.mensajes.title"),
+      icon: Send,
+      description: t("docs.group.mensajes.desc"),
+      endpoints: [
+        {
+          method: "POST",
+          path: "/api/whatsapp/send",
+          summary: t("docs.ep.mensajes.0.summary"),
+          useCase: t("docs.ep.mensajes.0.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/whatsapp/send" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
     "phone_number": "+5215512345678",
     "message": "Hola Ana, tenemos información para ti."
   }'`,
-      },
-      {
-        method: "POST",
-        path: "/api/whatsapp/send-template",
-        summary: "Envía un mensaje usando una plantilla aprobada por WhatsApp.",
-        useCase: "Iniciar conversación fuera de la ventana de 24h (requiere plantilla autorizada).",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/whatsapp/send-template" \\
+        },
+        {
+          method: "POST",
+          path: "/api/whatsapp/send-template",
+          summary: t("docs.ep.mensajes.1.summary"),
+          useCase: t("docs.ep.mensajes.1.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/whatsapp/send-template" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -214,13 +216,13 @@ const clientEndpointGroups = [
     "template_name": "recordatorio_cita",
     "language": "es_MX"
   }'`,
-      },
-      {
-        method: "POST",
-        path: "/api/twilio/send-wa-template",
-        summary: "Envía una plantilla de WhatsApp aprobada vía Twilio (Content API).",
-        useCase: "Enviar notificaciones transaccionales (p. ej. confirmación de pedido) fuera de la ventana de 24h. \"from\" es opcional: si no lo mandas, se usa el número de WhatsApp configurado para tu espacio de trabajo.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/twilio/send-wa-template" \\
+        },
+        {
+          method: "POST",
+          path: "/api/twilio/send-wa-template",
+          summary: t("docs.ep.mensajes.2.summary"),
+          useCase: t("docs.ep.mensajes.2.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/twilio/send-wa-template" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -228,25 +230,25 @@ const clientEndpointGroups = [
     "contentSid": "HX36751a5be358338dd5082fa394b515f5",
     "variables": ["Juan Perez", "2000 MXN", "12345"]
   }'`,
-        response: `{
+          response: `{
   "success": true,
   "twilio": { "sid": "SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "status": "queued", "..." : "..." }
 }`,
-      },
-    ],
-  },
-  {
-    id: "leads",
-    title: "Leads",
-    icon: Users,
-    description: "Captura leads desde tu sitio web u otros sistemas, sin necesidad de iniciar sesión.",
-    endpoints: [
-      {
-        method: "POST",
-        path: "/api/public/leads",
-        summary: "Registra un lead nuevo usando una API key (no requiere JWT).",
-        useCase: "Conectar un formulario web o un sistema externo para enviar leads directo al CRM.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/public/leads" \\
+        },
+      ],
+    },
+    {
+      id: "leads",
+      title: t("docs.group.leads.title"),
+      icon: Users,
+      description: t("docs.group.leads.desc"),
+      endpoints: [
+        {
+          method: "POST",
+          path: "/api/public/leads",
+          summary: t("docs.ep.leads.0.summary"),
+          useCase: t("docs.ep.leads.0.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/public/leads" \\
   -H "X-API-Key: TU_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -255,89 +257,87 @@ const clientEndpointGroups = [
     "phone_number": "+5215512345678",
     "company": "Acme Inc."
   }'`,
-      },
-      {
-        method: "GET",
-        path: "/api/leads",
-        summary: "Lista los leads recibidos (requiere sesión).",
-        useCase: "Revisar y dar seguimiento a los leads capturados.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/leads" \\
+        },
+        {
+          method: "GET",
+          path: "/api/leads",
+          summary: t("docs.ep.leads.1.summary"),
+          useCase: t("docs.ep.leads.1.useCase"),
+          example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/leads" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-      },
-      {
-        method: "POST",
-        path: "/api/leads/{id}/convert",
-        summary: "Convierte un lead en un contacto del CRM. NO crea una orden.",
-        useCase: "Pasar un lead calificado a un contacto real para poder chatear con él o, en un paso aparte, crearle una orden.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/leads/LEAD_ID/convert" \\
+        },
+        {
+          method: "POST",
+          path: "/api/leads/{id}/convert",
+          summary: t("docs.ep.leads.2.summary"),
+          useCase: t("docs.ep.leads.2.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/leads/LEAD_ID/convert" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-        response: `{
+          response: `{
   "lead": { "id": "...", "status": "converted", "contact_id": "..." },
   "contact": { "id": "...", "name": "...", "phone_number": "..." },
   "alreadyConverted": false
 }`,
-      },
-    ],
-  },
-  {
-    id: "webhooks",
-    title: "Webhooks salientes",
-    icon: Webhook,
-    description:
-      "Registra tu propia URL para recibir, en tiempo real, los mensajes de WhatsApp que te respondan y los cambios de estado de los que envíes. Requiere JWT de un usuario con rol admin.",
-    endpoints: [
-      {
-        method: "GET",
-        path: "/api/tenants/me/webhook",
-        summary: "Consulta la configuración actual de tu webhook.",
-        useCase: "Verificar si ya tienes una URL registrada y si está habilitada.",
-        example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/tenants/me/webhook" \\
+        },
+      ],
+    },
+    {
+      id: "webhooks",
+      title: t("docs.group.webhooks.title"),
+      icon: Webhook,
+      description: t("docs.group.webhooks.desc"),
+      endpoints: [
+        {
+          method: "GET",
+          path: "/api/tenants/me/webhook",
+          summary: t("docs.ep.webhooks.0.summary"),
+          useCase: t("docs.ep.webhooks.0.useCase"),
+          example: `curl -X GET "${RAILWAY_BACKEND_URL}/api/tenants/me/webhook" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-        response: `{
+          response: `{
   "webhook_url": "https://tuempresa.com/webhooks/mibo",
   "webhook_events_enabled": true,
   "has_secret": true
 }`,
-      },
-      {
-        method: "PATCH",
-        path: "/api/tenants/me/webhook",
-        summary: "Registra o actualiza tu URL y habilita/deshabilita el envío.",
-        useCase:
-          "Dar de alta la URL donde quieres recibir los eventos. La primera vez que habilitas (enabled: true) se genera un secreto de firma que se devuelve una sola vez — guárdalo, no se puede volver a consultar.",
-        example: `curl -X PATCH "${RAILWAY_BACKEND_URL}/api/tenants/me/webhook" \\
+        },
+        {
+          method: "PATCH",
+          path: "/api/tenants/me/webhook",
+          summary: t("docs.ep.webhooks.1.summary"),
+          useCase: t("docs.ep.webhooks.1.useCase"),
+          example: `curl -X PATCH "${RAILWAY_BACKEND_URL}/api/tenants/me/webhook" \\
   -H "Authorization: Bearer TU_TOKEN_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{
     "webhook_url": "https://tuempresa.com/webhooks/mibo",
     "enabled": true
   }'`,
-        response: `{
+          response: `{
   "webhook_url": "https://tuempresa.com/webhooks/mibo",
   "webhook_events_enabled": true,
   "has_secret": true,
   "webhook_secret": "a1b2c3...",
   "warning": "Guarda este secreto ahora: no volverá a mostrarse completo."
 }`,
-      },
-      {
-        method: "POST",
-        path: "/api/tenants/me/webhook/rotate-secret",
-        summary: "Genera un nuevo secreto de firma, invalidando el anterior.",
-        useCase: "Rotar el secreto si sospechas que se filtró.",
-        example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/tenants/me/webhook/rotate-secret" \\
+        },
+        {
+          method: "POST",
+          path: "/api/tenants/me/webhook/rotate-secret",
+          summary: t("docs.ep.webhooks.2.summary"),
+          useCase: t("docs.ep.webhooks.2.useCase"),
+          example: `curl -X POST "${RAILWAY_BACKEND_URL}/api/tenants/me/webhook/rotate-secret" \\
   -H "Authorization: Bearer TU_TOKEN_JWT"`,
-        response: `{
+          response: `{
   "webhook_secret": "a1b2c3...",
   "warning": "Guarda este secreto ahora: no volverá a mostrarse completo."
 }`,
-      },
-      {
-        method: "EVENT",
-        path: "message.received",
-        summary: "Te lo enviamos cuando un contacto responde uno de tus mensajes de WhatsApp.",
-        useCase: "Procesar respuestas entrantes sin tener que consultar la API constantemente.",
-        example: `POST https://tuempresa.com/webhooks/mibo
+        },
+        {
+          method: "EVENT",
+          path: "message.received",
+          summary: t("docs.ep.webhooks.3.summary"),
+          useCase: t("docs.ep.webhooks.3.useCase"),
+          example: `POST https://tuempresa.com/webhooks/mibo
 Content-Type: application/json
 X-Mibo-Event: message.received
 X-Mibo-Signature: sha256=...
@@ -356,13 +356,13 @@ X-Mibo-Signature: sha256=...
     "message_type": "text"
   }
 }`,
-      },
-      {
-        method: "EVENT",
-        path: "message.status_updated",
-        summary: "Te lo enviamos cuando cambia el estado de un mensaje que enviaste (enviado, entregado, leído, fallido).",
-        useCase: "Saber si tu notificación llegó, sin tener que hacer polling.",
-        example: `POST https://tuempresa.com/webhooks/mibo
+        },
+        {
+          method: "EVENT",
+          path: "message.status_updated",
+          summary: t("docs.ep.webhooks.4.summary"),
+          useCase: t("docs.ep.webhooks.4.useCase"),
+          example: `POST https://tuempresa.com/webhooks/mibo
 Content-Type: application/json
 X-Mibo-Event: message.status_updated
 X-Mibo-Signature: sha256=...
@@ -381,14 +381,13 @@ X-Mibo-Signature: sha256=...
     "error_code": null
   }
 }`,
-      },
-      {
-        method: "INFO",
-        path: "Verificación de firma",
-        summary: "Cada evento llega firmado en el header X-Mibo-Signature (sha256=<hmac>).",
-        useCase:
-          "Calcula HMAC-SHA256 del cuerpo crudo (raw body) de la petición usando tu webhook_secret y compáralo con el valor recibido, para confirmar que el evento viene de nosotros.",
-        example: `// Node.js
+        },
+        {
+          method: "INFO",
+          path: t("docs.ep.webhooks.5.summary"),
+          summary: t("docs.ep.webhooks.5.summary"),
+          useCase: t("docs.ep.webhooks.5.useCase"),
+          example: `// Node.js
 const crypto = require("crypto")
 
 function isValid(rawBody, signatureHeader, secret) {
@@ -398,27 +397,22 @@ function isValid(rawBody, signatureHeader, secret) {
     .digest("hex")
   return signatureHeader === expected
 }`,
-      },
-    ],
-  },
-]
+        },
+      ],
+    },
+  ]
+}
 
-const orderStates = [
-  { value: "pending", label: "Pendiente", description: "Estado inicial al crear la orden. No se puede omitir en el POST." },
-  { value: "confirmed", label: "Confirmada", description: "El negocio confirmó el pedido (stock, pago, etc.)." },
-  { value: "processing", label: "En preparación", description: "Se está surtiendo/empacando el pedido." },
-  { value: "shipped", label: "Enviada", description: "Salió a reparto. Aquí suele mandarse también tracking_number." },
-  { value: "delivered", label: "Entregada", description: "El cliente ya recibió el pedido." },
-  { value: "cancelled", label: "Cancelada", description: "El pedido se canceló en cualquier punto del flujo." },
-]
-
-const hiddenInternalAreas = [
-  "Eliminación masiva de contactos",
-  "Administración de usuarios, roles y agentes",
-  "Webhooks internos de proveedor",
-  "Endpoints de migración, debug o mantenimiento",
-  "Operaciones directas sobre media y mensajes sensibles",
-]
+function buildOrderStates(t: (key: string) => string) {
+  return [
+    { value: "pending", label: t("docs.orderState.pending.label"), description: t("docs.orderState.pending.desc") },
+    { value: "confirmed", label: t("docs.orderState.confirmed.label"), description: t("docs.orderState.confirmed.desc") },
+    { value: "processing", label: t("docs.orderState.processing.label"), description: t("docs.orderState.processing.desc") },
+    { value: "shipped", label: t("docs.orderState.shipped.label"), description: t("docs.orderState.shipped.desc") },
+    { value: "delivered", label: t("docs.orderState.delivered.label"), description: t("docs.orderState.delivered.desc") },
+    { value: "cancelled", label: t("docs.orderState.cancelled.label"), description: t("docs.orderState.cancelled.desc") },
+  ]
+}
 
 function methodClassName(method: string) {
   const map: Record<string, string> = {
@@ -431,7 +425,7 @@ function methodClassName(method: string) {
   return map[method] || "bg-muted text-muted-foreground border-border"
 }
 
-function CodeBlock({ code }: { code: string }) {
+function CodeBlock({ code, copyLabel, copiedLabel }: { code: string; copyLabel: string; copiedLabel: string }) {
   const [copied, setCopied] = useState(false)
   const handleCopy = () => {
     navigator.clipboard?.writeText(code)
@@ -446,7 +440,7 @@ function CodeBlock({ code }: { code: string }) {
         className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-[11px] font-medium text-slate-200 hover:bg-white/20 transition-colors"
       >
         <Copy className="h-3 w-3" />
-        {copied ? "Copiado" : "Copiar"}
+        {copied ? copiedLabel : copyLabel}
       </button>
       <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words p-4 pr-20 text-xs leading-5 text-slate-100">
         <code>{code}</code>
@@ -456,9 +450,21 @@ function CodeBlock({ code }: { code: string }) {
 }
 
 export default function DocumentacionApiPage() {
+  const { t } = useLanguage()
   const { user } = useUserRole()
   const isAdmin = String(user?.role || "").toLowerCase().startsWith("admin")
   const apiBaseUrl = `${RAILWAY_BACKEND_URL}/api`
+
+  const clientEndpointGroups = buildEndpointGroups(t)
+  const orderStates = buildOrderStates(t)
+  const hiddenInternalAreas = [
+    t("docs.hidden.0"),
+    t("docs.hidden.1"),
+    t("docs.hidden.2"),
+    t("docs.hidden.3"),
+    t("docs.hidden.4"),
+  ]
+  const flowItems = [t("docs.flow.0"), t("docs.flow.1"), t("docs.flow.2"), t("docs.flow.3")]
 
   return (
     <>
@@ -472,13 +478,13 @@ export default function DocumentacionApiPage() {
               </div>
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold tracking-tight text-foreground">Documentación API</h1>
+                  <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("docs.title")}</h1>
                   <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                    Producción
+                    {t("docs.badge")}
                   </Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground max-w-xl">
-                  Endpoints disponibles para integrar tu sitio web o sistemas externos con el CRM.
+                  {t("docs.subtitle")}
                 </p>
               </div>
             </div>
@@ -489,16 +495,16 @@ export default function DocumentacionApiPage() {
               <CardContent className="flex items-start gap-3 pt-6">
                 <ShieldCheck className="h-4.5 w-4.5 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Política de acceso</p>
+                  <p className="text-sm font-medium text-foreground">{t("docs.accessPolicyTitle")}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Esta vista muestra únicamente endpoints seguros para integraciones externas.
+                    {t("docs.accessPolicyDesc")}
                   </p>
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <p className="text-sm font-medium text-foreground">Base URL de producción</p>
+                <p className="text-sm font-medium text-foreground">{t("docs.baseUrlLabel")}</p>
                 <code className="mt-1.5 block break-all rounded-md bg-muted px-2.5 py-1.5 text-xs text-foreground">
                   {apiBaseUrl}
                 </code>
@@ -508,37 +514,53 @@ export default function DocumentacionApiPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Formato de respuesta</CardTitle>
-              <CardDescription>Todas las respuestas son JSON. La forma varía según el tipo de operación.</CardDescription>
+              <CardTitle className="text-base">{t("docs.responseFormatTitle")}</CardTitle>
+              <CardDescription>{t("docs.responseFormatDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs font-semibold text-foreground mb-1">Listados (GET)</p>
-                <p className="text-xs text-muted-foreground mb-2">Devuelven un arreglo directo, sin envoltorio.</p>
-                <CodeBlock code={`[\n  { "id": "...", "name": "..." },\n  { "id": "...", "name": "..." }\n]`} />
+                <p className="text-xs font-semibold text-foreground mb-1">{t("docs.listings")}</p>
+                <p className="text-xs text-muted-foreground mb-2">{t("docs.listingsDesc")}</p>
+                <CodeBlock
+                  code={`[\n  { "id": "...", "name": "..." },\n  { "id": "...", "name": "..." }\n]`}
+                  copyLabel={t("docs.copy")}
+                  copiedLabel={t("docs.copied")}
+                />
               </div>
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs font-semibold text-foreground mb-1">Creación (POST)</p>
-                <p className="text-xs text-muted-foreground mb-2">Devuelven el objeto creado con su id.</p>
-                <CodeBlock code={`{\n  "id": "...",\n  "status": "new",\n  "created_at": "..."\n}`} />
+                <p className="text-xs font-semibold text-foreground mb-1">{t("docs.creation")}</p>
+                <p className="text-xs text-muted-foreground mb-2">{t("docs.creationDesc")}</p>
+                <CodeBlock
+                  code={`{\n  "id": "...",\n  "status": "new",\n  "created_at": "..."\n}`}
+                  copyLabel={t("docs.copy")}
+                  copiedLabel={t("docs.copied")}
+                />
               </div>
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs font-semibold text-foreground mb-1">Autenticación</p>
-                <p className="text-xs text-muted-foreground mb-2">Incluye el token y los datos del usuario.</p>
-                <CodeBlock code={`{\n  "access_token": "...",\n  "token_type": "Bearer",\n  "expires_in": "7d",\n  "user": { "id": "...", "email": "...", "role": "..." }\n}`} />
+                <p className="text-xs font-semibold text-foreground mb-1">{t("docs.authFormat")}</p>
+                <p className="text-xs text-muted-foreground mb-2">{t("docs.authFormatDesc")}</p>
+                <CodeBlock
+                  code={`{\n  "access_token": "...",\n  "token_type": "Bearer",\n  "expires_in": "7d",\n  "user": { "id": "...", "email": "...", "role": "..." }\n}`}
+                  copyLabel={t("docs.copy")}
+                  copiedLabel={t("docs.copied")}
+                />
               </div>
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs font-semibold text-foreground mb-1">Errores</p>
-                <p className="text-xs text-muted-foreground mb-2">Formato estándar con código HTTP.</p>
-                <CodeBlock code={`{\n  "statusCode": 404,\n  "error": "Not Found",\n  "message": "Cannot GET /api/xyz"\n}`} />
+                <p className="text-xs font-semibold text-foreground mb-1">{t("docs.errors")}</p>
+                <p className="text-xs text-muted-foreground mb-2">{t("docs.errorsDesc")}</p>
+                <CodeBlock
+                  code={`{\n  "statusCode": 404,\n  "error": "Not Found",\n  "message": "Cannot GET /api/xyz"\n}`}
+                  copyLabel={t("docs.copy")}
+                  copiedLabel={t("docs.copied")}
+                />
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Endpoints por categoría</CardTitle>
-              <CardDescription>Expande una categoría para ver los endpoints y un ejemplo listo para copiar.</CardDescription>
+              <CardTitle className="text-base">{t("docs.endpointsByCategory")}</CardTitle>
+              <CardDescription>{t("docs.endpointsByCategoryDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible defaultValue="auth" className="w-full">
@@ -564,8 +586,8 @@ export default function DocumentacionApiPage() {
                               <table className="w-full text-xs">
                                 <thead className="bg-muted/60">
                                   <tr>
-                                    <th className="text-left font-medium text-foreground px-3 py-2">Estado</th>
-                                    <th className="text-left font-medium text-foreground px-3 py-2">Descripción</th>
+                                    <th className="text-left font-medium text-foreground px-3 py-2">{t("docs.stateCol")}</th>
+                                    <th className="text-left font-medium text-foreground px-3 py-2">{t("docs.descCol")}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -584,10 +606,10 @@ export default function DocumentacionApiPage() {
                           )}
                           {group.id === "leads" && (
                             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-                              <span className="font-semibold">Importante:</span> convertir un lead solo crea un{" "}
-                              <span className="font-semibold">Contacto</span>, no una orden. Si necesitas registrar
-                              una compra, crea la orden aparte con <code>POST /api/orders</code> usando el{" "}
-                              <code>contact_id</code> que devuelve el convert (ver sección "Órdenes").
+                              <span className="font-semibold">{t("docs.leadsImportantPrefix")}</span> {t("docs.leadsImportantMid1")}{" "}
+                              <span className="font-semibold">{t("docs.leadsImportantContact")}</span>
+                              {t("docs.leadsImportantMid2")} <code>POST /api/orders</code> {t("docs.leadsImportantMid3")}{" "}
+                              <code>contact_id</code> {t("docs.leadsImportantMid4")}
                             </div>
                           )}
                           {group.endpoints.map((endpoint) => (
@@ -602,14 +624,14 @@ export default function DocumentacionApiPage() {
                               </div>
                               <p className="text-sm text-foreground">{endpoint.summary}</p>
                               <p className="text-xs text-muted-foreground">
-                                <span className="font-medium text-foreground/80">Uso:</span> {endpoint.useCase}
+                                <span className="font-medium text-foreground/80">{t("docs.usageLabel")}</span> {endpoint.useCase}
                               </p>
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Request</p>
-                              <CodeBlock code={endpoint.example} />
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("docs.request")}</p>
+                              <CodeBlock code={endpoint.example} copyLabel={t("docs.copy")} copiedLabel={t("docs.copied")} />
                               {(endpoint as any).response && (
                                 <>
-                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Response</p>
-                                  <CodeBlock code={(endpoint as any).response} />
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("docs.response")}</p>
+                                  <CodeBlock code={(endpoint as any).response} copyLabel={t("docs.copy")} copiedLabel={t("docs.copied")} />
                                 </>
                               )}
                             </div>
@@ -626,15 +648,10 @@ export default function DocumentacionApiPage() {
           <div className={`grid gap-4 ${isAdmin ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Flujo recomendado para integraciones</CardTitle>
+                <CardTitle className="text-base">{t("docs.recommendedFlowTitle")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {[
-                  "Solicitar credenciales o token de integración.",
-                  "Crear o sincronizar contactos autorizados.",
-                  "Enviar campañas o consultar conversaciones según permisos contratados.",
-                  "Consultar métricas de campañas y estados de entrega.",
-                ].map((item) => (
+                {flowItems.map((item) => (
                   <div key={item} className="flex items-start gap-2 text-sm">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 shrink-0" />
                     <span className="text-foreground">{item}</span>
@@ -648,9 +665,9 @@ export default function DocumentacionApiPage() {
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Lock className="h-4 w-4 text-muted-foreground" />
-                    <CardTitle className="text-base">No expuesto a clientes</CardTitle>
+                    <CardTitle className="text-base">{t("docs.notExposedTitle")}</CardTitle>
                   </div>
-                  <CardDescription>Visible solo para administradores.</CardDescription>
+                  <CardDescription>{t("docs.notExposedDesc")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
@@ -661,7 +678,7 @@ export default function DocumentacionApiPage() {
                     ))}
                   </div>
                   <p className="mt-4 text-xs text-muted-foreground">
-                    El Swagger completo es documentación interna y permanece deshabilitado en producción.
+                    {t("docs.swaggerNote")}
                   </p>
                 </CardContent>
               </Card>
