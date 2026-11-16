@@ -10,6 +10,7 @@ import { es } from "date-fns/locale"
 import { MessageCircle } from "lucide-react"
 
 import { useConversations, Conversation } from "@/hooks/use-conversations"
+import { useLanguage } from "@/components/language-provider"
 
 interface ConversationListProps {
   selectedId?: string
@@ -23,6 +24,7 @@ export function ConversationList({
   onlyAssigned,
 }: ConversationListProps) {
 
+  const { t } = useLanguage()
   const { conversations, loading, error, markAsRead, refetch } = useConversations(onlyAssigned)
   // Obtener el usuario logueado
   const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
@@ -64,10 +66,10 @@ export function ConversationList({
 
   const getPriorityLabel = (priority: string) => {
     const labels: Record<string, string> = {
-      high: "Alta",
-      medium: "Media",
-      normal: "Normal",
-      low: "Baja",
+      high: t("conv.priority.high"),
+      medium: t("conv.priority.medium"),
+      normal: t("conv.priority.normal"),
+      low: t("conv.priority.low"),
     }
     return labels[priority] || priority
   }
@@ -103,7 +105,7 @@ export function ConversationList({
     return (
       <div className="h-full p-3">
         <div className="h-full rounded-xl border bg-card shadow-sm flex items-center justify-center">
-          <p className="text-muted-foreground text-sm">Cargando conversaciones...</p>
+          <p className="text-muted-foreground text-sm">{t("conv.loading")}</p>
         </div>
       </div>
     )
@@ -124,7 +126,7 @@ export function ConversationList({
     return (
       <div className="h-full p-3">
         <div className="h-full rounded-xl border bg-card shadow-sm flex items-center justify-center p-4">
-          <p className="text-muted-foreground text-sm text-center">No hay conversaciones</p>
+          <p className="text-muted-foreground text-sm text-center">{t("conv.empty")}</p>
         </div>
       </div>
     )
@@ -140,7 +142,7 @@ export function ConversationList({
             type="text"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nombre o número..."
+            placeholder={t("conv.searchPlaceholder")}
             className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
@@ -202,11 +204,11 @@ export function ConversationList({
                     {unreadCount > 0 && (
                       <div
                         className="mb-2 inline-flex h-6 max-w-full items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-2 text-[11px] font-semibold text-emerald-800"
-                        title={`${unreadCount} mensaje${unreadCount === 1 ? "" : "s"} entrante${unreadCount === 1 ? "" : "s"} sin leer`}
+                        title={`${unreadCount} ${unreadCount === 1 ? t("conv.unreadTitleOne") : t("conv.unreadTitleMany")}`}
                       >
                         <MessageCircle className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="truncate">
-                          {unreadCount} nuevo{unreadCount === 1 ? "" : "s"}
+                          {unreadCount} {unreadCount === 1 ? t("conv.newOne") : t("conv.newMany")}
                         </span>
                       </div>
                     )}
@@ -214,7 +216,7 @@ export function ConversationList({
                     <p className="line-clamp-1 text-muted-foreground text-xs leading-relaxed mb-2">
                       {typeof conv.last_message === "string"
                         ? conv.last_message
-                        : conv.last_message?.content || "Sin mensajes"}
+                        : conv.last_message?.content || t("conv.noMessages")}
                     </p>
 
                     <div className="flex items-center gap-1.5 flex-wrap">

@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import { frontendApi, api } from "@/lib/api"
+import { useLanguage } from "@/components/language-provider"
 
 interface Message {
   id: number | string
@@ -60,6 +61,7 @@ interface ChatAreaProps {
 }
 
 export function ChatArea({ conversationId, contactName, currentAgentId, channel = 'whatsapp', externalUserId, onUpdate, onConversationDeleted }: ChatAreaProps) {
+    const { t } = useLanguage()
     const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://crmmibobackend-production.up.railway.app"
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
@@ -130,9 +132,9 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       setDeletingConversation(true)
       const { data, status } = await frontendApi.delete(`/api/conversations/${encodeURIComponent(String(conversationId))}`)
       if (status !== 200) {
-        const message = data?.error || "No se pudo eliminar la conversación"
+        const message = data?.error || t("chat.deleteConvFail")
         toast({
-          title: "Error",
+          title: t("chat.error"),
           description: message,
           variant: "destructive",
         })
@@ -140,8 +142,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       }
 
       toast({
-        title: "Conversación eliminada",
-        description: "Se eliminó correctamente.",
+        title: t("chat.deleteConvOk"),
+        description: t("chat.deleteConvOkDesc"),
       })
 
       setDeleteConversationOpen(false)
@@ -149,8 +151,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       onUpdate?.()
     } catch (err) {
       toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "No se pudo eliminar la conversación",
+        title: t("chat.error"),
+        description: err instanceof Error ? err.message : t("chat.deleteConvFail"),
         variant: "destructive",
       })
     } finally {
@@ -245,14 +247,14 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         const errorMessage = error?.response?.data?.error || 
                              error?.response?.data?.message ||
                              error?.message || 
-                             "Ocurrió un error inesperado al enviar el archivo."
+                             t("chat.sendMediaErrorDesc")
         const errorHint = error?.response?.data?.hint || ""
         const errorDetails = error?.response?.data?.details || ""
         const fullMessage = [errorMessage, errorHint, errorDetails].filter(Boolean).join(" - ")
 
         toast({
-          title: "Error al enviar adjunto",
-          description: fullMessage || "Ocurrió un error inesperado al enviar el archivo.",
+          title: t("chat.sendMediaErrorTitle"),
+          description: fullMessage || t("chat.sendMediaErrorDesc"),
           variant: "destructive",
         });
 
@@ -299,8 +301,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         } else {
           console.log("[ChatArea] WhatsApp error", data.error);
           toast({
-            title: "Error al enviar mensaje WhatsApp",
-            description: data.error || "No se pudo enviar el mensaje.",
+            title: t("chat.sendWaErrorTitle"),
+            description: data.error || t("chat.sendWaErrorDesc"),
             variant: "destructive",
           });
           setNewMessage(messageContent);
@@ -314,7 +316,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         if (data.success === false) {
           console.log("[ChatArea] Error in generic response", data.error, data.hint);
           toast({
-            title: "Error al enviar mensaje",
+            title: t("chat.sendErrorTitle"),
             description: data.error + (data.hint ? ` (${data.hint})` : ""),
             variant: "destructive",
           });
@@ -328,8 +330,8 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
     } catch (error) {
       console.error("[ChatArea] Send message error:", error);
       toast({
-        title: "Error al enviar mensaje",
-        description: "Ocurrió un error inesperado.",
+        title: t("chat.sendErrorTitle"),
+        description: t("chat.sendErrorDesc"),
         variant: "destructive",
       });
       setNewMessage(messageContent);
@@ -541,7 +543,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">{displayName}</p>
-              <p className="text-xs text-muted-foreground">Archivo no disponible para previsualizar</p>
+              <p className="text-xs text-muted-foreground">{t("chat.previewUnavailable")}</p>
             </div>
           </div>
 
@@ -551,7 +553,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
               download={filename || undefined}
               className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-full"
             >
-              ⬇ Descargar archivo
+              ⬇ {t("chat.downloadFile")}
             </a>
           ) : (
             <button
@@ -559,7 +561,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
               disabled
               className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium w-full bg-muted text-muted-foreground border border-border cursor-not-allowed"
             >
-              Descarga no disponible
+              {t("chat.downloadUnavailable")}
             </button>
           )}
         </div>
@@ -581,7 +583,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
               download={filename || "imagen"}
               className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-fit"
             >
-              ⬇ Descargar imagen
+              ⬇ {t("chat.downloadImage")}
             </a>
           </div>
           {textToShow && (
@@ -606,7 +608,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             download={filename || "video"}
             className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-fit"
           >
-            ⬇ Descargar video
+            ⬇ {t("chat.downloadVideo")}
           </a>
           {textToShow && (
             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
@@ -626,7 +628,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             download={filename || "audio"}
             className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-fit"
           >
-            ⬇ Descargar audio
+            ⬇ {t("chat.downloadAudio")}
           </a>
           {textToShow && (
             <p className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
@@ -652,7 +654,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             download={filename || undefined}
             className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors w-full"
           >
-            ⬇ Descargar archivo
+            ⬇ {t("chat.downloadFile")}
           </a>
         </div>
         {caption && (
@@ -683,7 +685,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
   if (!conversationId) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-        <p className="text-muted-foreground">Selecciona una conversación para comenzar</p>
+        <p className="text-muted-foreground">{t("chat.selectConversation")}</p>
       </div>
     )
   }
@@ -700,7 +702,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
           </Avatar>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-semibold text-sm text-foreground">{displayContactName || "Contacto"}</h2>
+              <h2 className="font-semibold text-sm text-foreground">{displayContactName || t("chat.contactFallback")}</h2>
               {/* Channel badge */}
               {channel && (
                 <span className={cn(
@@ -716,7 +718,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             </div>
             <p className="text-muted-foreground text-xs flex items-center gap-1">
               <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-sm shadow-blue-500/50" />
-              En línea
+              {t("chat.online")}
             </p>
           </div>
         </div>
@@ -733,7 +735,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             size="icon"
             className="hover:bg-accent transition-colors"
             onClick={() => console.log("Initiate phone call")}
-            title="Llamada telefónica"
+            title={t("chat.phoneCall")}
           >
             <Phone className="h-5 w-5" />
           </Button>
@@ -742,7 +744,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             size="icon"
             className="hover:bg-accent transition-colors"
             onClick={() => console.log("Initiate video call")}
-            title="Videollamada"
+            title={t("chat.videoCall")}
           >
             <Video className="h-5 w-5" />
           </Button>
@@ -754,16 +756,16 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setScheduleCallOpen(true)}>
-                Agendar llamada
+                {t("chat.scheduleCall")}
               </DropdownMenuItem>
-              <DropdownMenuItem>Enviar encuesta</DropdownMenuItem>
-              <DropdownMenuItem>Transferir conversación</DropdownMenuItem>
+              <DropdownMenuItem>{t("chat.sendSurvey")}</DropdownMenuItem>
+              <DropdownMenuItem>{t("chat.transferConv")}</DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onClick={() => setDeleteConversationOpen(true)}
                 disabled={!conversationId || deletingConversation}
               >
-                Eliminar conversación
+                {t("chat.deleteConv")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -773,13 +775,13 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       <AlertDialog open={deleteConversationOpen} onOpenChange={setDeleteConversationOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar conversación?</AlertDialogTitle>
+            <AlertDialogTitle>{t("chat.deleteConvConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará la conversación y sus mensajes. No se puede deshacer.
+              {t("chat.deleteConvConfirmDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingConversation}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletingConversation}>{t("chat.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={(e) => {
@@ -788,7 +790,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
               }}
               disabled={deletingConversation}
             >
-              {deletingConversation ? "Eliminando..." : "Eliminar"}
+              {deletingConversation ? t("chat.deleting") : t("chat.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -810,9 +812,9 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
       >
         <div className="flex flex-col justify-end gap-4 p-6 min-h-full">
           {loading ? (
-            <p className="text-center text-muted-foreground text-sm">Cargando mensajes...</p>
+            <p className="text-center text-muted-foreground text-sm">{t("chat.loadingMessages")}</p>
           ) : messages.length === 0 ? (
-            <p className="text-center text-muted-foreground text-sm">No hay mensajes aún</p>
+            <p className="text-center text-muted-foreground text-sm">{t("chat.noMessagesYet")}</p>
           ) : (
             
             messages.map((msg, index) => {
@@ -862,7 +864,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
                             }}
                             className="text-xs h-8"
                           >
-                            Cancelar
+                            {t("chat.cancel")}
                           </Button>
                           <Button
                             size="sm"
@@ -870,7 +872,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
                             disabled={!editingContent.trim()}
                             className="text-xs h-8"
                           >
-                            Guardar
+                            {t("chat.save")}
                           </Button>
                         </div>
                       </div>
@@ -933,7 +935,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
         {pendingFile && (
           <div className="mb-2 flex items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2">
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Adjunto listo para enviar</p>
+              <p className="text-xs text-muted-foreground">{t("chat.attachmentReady")}</p>
               <p className="text-sm truncate">{pendingFile.name}</p>
               {pendingPreviewUrl && String(pendingFile.type || "").toLowerCase().startsWith("image/") && (
                 <img src={pendingPreviewUrl} alt={pendingFile.name} className="mt-2 max-h-48 rounded-md border border-border" />
@@ -946,7 +948,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
               )}
             </div>
             <Button type="button" variant="ghost" onClick={clearPendingAttachment} disabled={sending || sendingMedia}>
-              Quitar
+              {t("chat.remove")}
             </Button>
           </div>
         )}
@@ -964,7 +966,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
             onClick={handlePickFile}
             disabled={sending || sendingMedia}
             className="shrink-0"
-            title="Adjuntar archivo"
+            title={t("chat.attachFile")}
           >
             <Paperclip className="h-4 w-4" />
           </Button>
@@ -975,7 +977,7 @@ export function ChatArea({ conversationId, contactName, currentAgentId, channel 
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={pendingFile ? "Escribe una leyenda (opcional)..." : "Escribe un mensaje..."}
+            placeholder={pendingFile ? t("chat.captionPlaceholder") : t("chat.messagePlaceholder")}
             disabled={sending || sendingMedia}
             className="flex-1 transition-all focus:ring-2 focus:ring-primary"
           />

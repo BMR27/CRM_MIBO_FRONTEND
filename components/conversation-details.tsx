@@ -24,6 +24,7 @@ import {
 import { Button } from "../components/ui/button"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select"
 import { Textarea } from "../components/ui/textarea"
+import { useLanguage } from "@/components/language-provider"
    
 
 interface Meeting {
@@ -70,6 +71,7 @@ export function ConversationDetails({
   lastMessage,
   ...props
 }: DetailsPanelProps) {
+  const { t } = useLanguage();
   const { isAgent, isSupervisor } = useUserRole();
   const showSchedulingSections = !isAgent && !isSupervisor
   // LOG: Validar externalUserId
@@ -158,8 +160,8 @@ export function ConversationDetails({
           const status = error?.response?.status || error?.status;
           if (status === 404) {
             toast({
-              title: "Conversación eliminada o no encontrada",
-              description: "La conversación ya no existe.",
+              title: t("details.toast.convNotFoundTitle"),
+              description: t("details.toast.convNotFoundDesc"),
               variant: "destructive",
             });
             setComments([]);
@@ -188,7 +190,7 @@ export function ConversationDetails({
           const d = new Date(call.scheduled_at)
           return {
             id: Number(call.id),
-            title: call.notes?.trim() || "Llamada programada",
+            title: call.notes?.trim() || t("details.scheduledCall"),
             date: d.toLocaleDateString("es-MX", { day: "2-digit", month: "short" }),
             time: d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }),
             type: call.call_type === "video" ? "video" : "phone",
@@ -201,7 +203,7 @@ export function ConversationDetails({
         if (nextPending) {
           const d = new Date(nextPending.scheduled_at)
           setScheduledSession({
-            title: nextPending.notes?.trim() || "Llamada programada",
+            title: nextPending.notes?.trim() || t("details.scheduledCall"),
             date: d.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" }),
             time: d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }),
             link: nextPending.meet_link,
@@ -235,7 +237,7 @@ export function ConversationDetails({
       try {
         const response = await frontendApi.put(`/api/conversations/${conversationId}/status`, { status: value })
         if (response.status === 200) {
-          toast({ title: "Estado actualizado", description: "La conversación fue actualizada correctamente." })
+          toast({ title: t("details.toast.statusUpdatedTitle"), description: t("details.toast.statusUpdatedDesc") })
           onUpdate?.()
         } else {
           setCurrentStatus(previousStatus)
@@ -243,7 +245,7 @@ export function ConversationDetails({
       } catch (error) {
         console.error("Error updating status:", error)
         setCurrentStatus(previousStatus)
-        toast({ title: "Error al actualizar estado", description: "No se pudo guardar el estado de la conversación.", variant: "destructive" })
+        toast({ title: t("details.toast.statusErrorTitle"), description: t("details.toast.statusErrorDesc"), variant: "destructive" })
       }
     }
   }
@@ -276,12 +278,12 @@ export function ConversationDetails({
       if (response.status === 200) {
         setComments(response.data.comments)
         setNewComment("")
-        toast({ title: "Comentario guardado", description: "El comentario quedó registrado correctamente." })
+        toast({ title: t("details.toast.commentSavedTitle"), description: t("details.toast.commentSavedDesc") })
         onUpdate?.()
       }
     } catch (error) {
       console.error("Error adding comment:", error)
-      toast({ title: "Error al guardar comentario", description: "No se pudo guardar el comentario.", variant: "destructive" })
+      toast({ title: t("details.toast.commentErrorTitle"), description: t("details.toast.commentErrorDesc"), variant: "destructive" })
     } finally {
       setLoading(false)
     }
@@ -334,7 +336,7 @@ export function ConversationDetails({
           <div className="flex items-center justify-center w-4 h-4 rounded-full bg-blue-100">
             <Info className="h-2.5 w-2.5 text-blue-500" />
           </div>
-          <span className="font-semibold text-xs text-foreground">Detalles</span>
+          <span className="font-semibold text-xs text-foreground">{t("details.title")}</span>
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-4">
@@ -362,7 +364,7 @@ export function ConversationDetails({
             <div className="flex items-center mb-1">
               <div className="flex items-center gap-1.5">
                 <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                <span className="text-xs text-foreground">Estado</span>
+                <span className="text-xs text-foreground">{t("details.status")}</span>
               </div>
             </div>
             <Select value={currentStatus} onValueChange={handleStatusChange}>
@@ -373,13 +375,13 @@ export function ConversationDetails({
                 <SelectItem value="active">
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                    Activa
+                    {t("details.status.active")}
                   </div>
                 </SelectItem>
                 <SelectItem value="resolved">
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                    Resuelta
+                    {t("details.status.resolved")}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -392,7 +394,7 @@ export function ConversationDetails({
           <div className="flex-1 p-2">
             <div className="flex items-center gap-1.5 mb-1">
               <Zap className="h-3 w-3 text-blue-500" />
-              <span className="text-xs text-foreground">Prioridad</span>
+              <span className="text-xs text-foreground">{t("details.priority")}</span>
             </div>
             <Select value={currentPriority} onValueChange={handlePriorityChange}>
               <SelectTrigger className="h-7 text-xs bg-background">
@@ -402,19 +404,19 @@ export function ConversationDetails({
                 <SelectItem value="high">
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                    Alta
+                    {t("conv.priority.high")}
                   </div>
                 </SelectItem>
                 <SelectItem value="medium">
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
-                    Media
+                    {t("conv.priority.medium")}
                   </div>
                 </SelectItem>
                 <SelectItem value="low">
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                    Baja
+                    {t("conv.priority.low")}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -427,7 +429,7 @@ export function ConversationDetails({
           <div className="flex-1 p-2">
             <div className="flex items-center gap-1.5 mb-1">
               <User className="h-3 w-3 text-blue-500" />
-              <span className="text-xs text-foreground">Agente</span>
+              <span className="text-xs text-foreground">{t("details.agent")}</span>
             </div>
             <Select
               value={currentAgent}
@@ -437,10 +439,10 @@ export function ConversationDetails({
                   setLoading(true);
                   try {
                     await frontendApi.post(`/api/conversations/${conversationId}/assign`, { agentId: value });
-                    toast({ title: "Conversación transferida", description: "La conversación fue asignada al nuevo agente." });
+                    toast({ title: t("details.toast.transferredTitle"), description: t("details.toast.transferredDesc") });
                     onUpdate?.();
                   } catch (err) {
-                    toast({ title: "Error al transferir", description: "No se pudo asignar la conversación." });
+                    toast({ title: t("details.toast.transferErrorTitle"), description: t("details.toast.transferErrorDesc") });
                   } finally {
                     setLoading(false);
                   }
@@ -449,7 +451,7 @@ export function ConversationDetails({
               disabled={agentsLoading || loading}
             >
               <SelectTrigger className="h-7 text-xs bg-background min-w-[120px]">
-                <SelectValue placeholder="Seleccionar agente" />
+                <SelectValue placeholder={t("details.selectAgent")} />
               </SelectTrigger>
               <SelectContent>
                 {agents.map((agent: any) => (
@@ -470,7 +472,7 @@ export function ConversationDetails({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3 w-3 text-blue-500" />
-                  <span className="text-xs text-foreground">Reuniones</span>
+                  <span className="text-xs text-foreground">{t("details.meetings")}</span>
                 </div>
                 <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-muted">
                   <Plus className="h-3 w-3 text-muted-foreground" />
@@ -494,7 +496,7 @@ export function ConversationDetails({
                   ))}
                 </div>
               ) : (
-                <div className="text-xs text-muted-foreground text-center py-2">Sin reuniones agendadas</div>
+                <div className="text-xs text-muted-foreground text-center py-2">{t("details.noMeetings")}</div>
               )}
             </div>
           </div>
@@ -506,12 +508,12 @@ export function ConversationDetails({
             <div className="flex-1 p-2">
               <div className="flex items-center gap-1.5 mb-2">
                 <Link className="h-3 w-3 text-blue-500" />
-                <span className="text-xs text-foreground">Agenda</span>
+                <span className="text-xs text-foreground">{t("details.schedule")}</span>
               </div>
 
               {/* Booking Link */}
               <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-2">
-                <p className="text-xs text-blue-800 mb-1.5">Link para agendar sesión:</p>
+                <p className="text-xs text-blue-800 mb-1.5">{t("details.bookingLinkLabel")}</p>
                 <div className="flex items-center gap-1">
                   <input
                     type="text"
@@ -538,7 +540,7 @@ export function ConversationDetails({
                 <div className="bg-blue-50 border border-blue-200 rounded p-2">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Video className="h-3 w-3 text-blue-600" />
-                    <span className="text-xs font-medium text-blue-800">Sesión agendada</span>
+                    <span className="text-xs font-medium text-blue-800">{t("details.sessionScheduled")}</span>
                   </div>
                   <p className="text-xs text-blue-700 font-medium">{scheduledSession.title}</p>
                   <div className="flex items-center justify-between mt-1">
@@ -552,13 +554,13 @@ export function ConversationDetails({
                     className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
                   >
                     <Video className="h-2.5 w-2.5" />
-                    Unirse a la sesión
+                    {t("details.joinSession")}
                   </a>
                 </div>
               ) : (
                 <div className="text-center py-2 border border-dashed border-blue-200 rounded">
-                  <p className="text-xs text-muted-foreground mb-1">Sin sesión agendada</p>
-                  <p className="text-xs text-muted-foreground">Comparte el link con el cliente</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t("details.noSessionScheduled")}</p>
+                  <p className="text-xs text-muted-foreground">{t("details.shareLinkWithClient")}</p>
                 </div>
               )}
             </div>
@@ -572,7 +574,7 @@ export function ConversationDetails({
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
                 <MessageSquare className="h-4 w-4 text-[#6C5DD3]" />
-                <span className="text-sm font-semibold text-[#6C5DD3]">Comentarios</span>
+                <span className="text-sm font-semibold text-[#6C5DD3]">{t("details.comments")}</span>
               </div>
             </div>
 
@@ -600,7 +602,7 @@ export function ConversationDetails({
                             disabled={loading}
                             className="h-6 text-xs"
                           >
-                            Cancelar
+                            {t("chat.cancel")}
                           </Button>
                           <Button
                             size="sm"
@@ -608,7 +610,7 @@ export function ConversationDetails({
                             disabled={!editingText.trim() || loading}
                             className="h-6 text-xs"
                           >
-                            Guardar
+                            {t("chat.save")}
                           </Button>
                         </div>
                       </>
@@ -649,11 +651,11 @@ export function ConversationDetails({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground py-1 mb-2">No hay comentarios</p>
+              <p className="text-xs text-muted-foreground py-1 mb-2">{t("details.noComments")}</p>
             )}
 
             <Textarea
-              placeholder="Agregar comentario..."
+              placeholder={t("details.addCommentPlaceholder")}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               className="resize-none h-16 text-xs mb-1.5"
@@ -666,7 +668,7 @@ export function ConversationDetails({
               size="sm"
               className="w-full gap-1 text-xs h-7"
             >
-              {loading || commentsLoading ? "Guardando..." : "Guardar comentario"}
+              {loading || commentsLoading ? t("details.saving") : t("details.saveComment")}
             </Button>
           </div>
         </div>
