@@ -14,7 +14,12 @@ import {
   Clock,
   ArrowUpRight,
   Building2,
+  Send,
+  MessageCircleReply,
+  Eye,
+  DollarSign,
 } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 
 interface ConversationSummary {
   id: string
@@ -39,10 +44,20 @@ interface TenantInfo {
   wa_templates_enabled: boolean
 }
 
+const localeMap: Record<string, string> = { es: "es-MX", en: "en-US", pl: "pl-PL", ru: "ru-RU" }
+
 export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewProps) {
+  const { t, language } = useLanguage()
+  const locale = localeMap[language] || "es-MX"
   const router = useRouter()
   const [tenant, setTenant] = useState<TenantInfo | null>(null)
   const [leadsCount, setLeadsCount] = useState<number | null>(null)
+  const [messagingStats, setMessagingStats] = useState<{
+    messagesSent: number
+    messagesRead: number
+    repliesReceived: number
+    totalValue: number
+  } | null>(null)
 
   useEffect(() => {
     let active = true
@@ -55,6 +70,10 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
         setLeadsCount(list.filter((l: any) => l.status === "new").length)
       })
       .catch(() => {})
+    api
+      .get("/api/workspace/stats")
+      .then(({ data }) => active && setMessagingStats(data))
+      .catch(() => {})
     return () => {
       active = false
     }
@@ -66,28 +85,54 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
 
   const stats = [
     {
-      label: "Conversaciones abiertas",
+      label: t("overview.openConversations"),
       value: open,
       icon: MessageSquare,
       accent: "bg-blue-50 text-blue-600",
     },
     {
-      label: "Resueltas",
+      label: t("overview.resolved"),
       value: resolved,
       icon: CheckCircle2,
       accent: "bg-emerald-50 text-emerald-600",
     },
     {
-      label: "Agentes conectados",
+      label: t("overview.agentsConnected"),
       value: `${agentsOnline}/${agents.length}`,
       icon: Users,
       accent: "bg-violet-50 text-violet-600",
     },
     {
-      label: "Leads sin atender",
+      label: t("overview.unattendedLeads"),
       value: leadsCount ?? "—",
       icon: Inbox,
       accent: "bg-amber-50 text-amber-600",
+    },
+    {
+      label: t("overview.messagesSent"),
+      value: messagingStats ? messagingStats.messagesSent.toLocaleString(locale) : "—",
+      icon: Send,
+      accent: "bg-sky-50 text-sky-600",
+    },
+    {
+      label: t("overview.repliesReceived"),
+      value: messagingStats ? messagingStats.repliesReceived.toLocaleString(locale) : "—",
+      icon: MessageCircleReply,
+      accent: "bg-teal-50 text-teal-600",
+    },
+    {
+      label: t("overview.messagesRead"),
+      value: messagingStats ? messagingStats.messagesRead.toLocaleString(locale) : "—",
+      icon: Eye,
+      accent: "bg-indigo-50 text-indigo-600",
+    },
+    {
+      label: t("overview.valueData"),
+      value: messagingStats
+        ? messagingStats.totalValue.toLocaleString(locale, { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+        : "—",
+      icon: DollarSign,
+      accent: "bg-rose-50 text-rose-600",
     },
   ]
 
@@ -98,23 +143,23 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <Building2 className="h-3.5 w-3.5" />
-              {tenant?.name || "Tu espacio de trabajo"}
+              {tenant?.name || t("overview.yourWorkspace")}
             </p>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">Resumen general</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">{t("overview.title")}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Vista global de la operación. Elige una conversación de la izquierda para entrar al detalle.
+              {t("overview.subtitle")}
             </p>
           </div>
           {tenant && (
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="capitalize">
-                Plan {tenant.plan}
+                {t("overview.plan")} {tenant.plan}
               </Badge>
               <Badge variant={tenant.bulk_messaging_enabled ? "default" : "secondary"}>
-                Envío masivo {tenant.bulk_messaging_enabled ? "activado" : "desactivado"}
+                {t("overview.bulkMessaging")} {tenant.bulk_messaging_enabled ? t("overview.enabled") : t("overview.disabled")}
               </Badge>
               <Badge variant={tenant.wa_templates_enabled ? "default" : "secondary"}>
-                Plantillas {tenant.wa_templates_enabled ? "activadas" : "desactivadas"}
+                {t("overview.templates")} {tenant.wa_templates_enabled ? t("overview.templatesEnabled") : t("overview.templatesDisabled")}
               </Badge>
             </div>
           )}
@@ -139,13 +184,13 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                Actividad reciente
+                {t("overview.recentActivity")}
               </CardTitle>
-              <CardDescription>{conversations.length} conversaciones totales en el espacio.</CardDescription>
+              <CardDescription>{conversations.length} {t("overview.totalConversations")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => router.push("/inbox/agentes")}>
-                Ver desempeño por agente
+                {t("overview.viewAgentPerformance")}
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Button>
             </CardContent>
@@ -155,13 +200,13 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Inbox className="h-4 w-4" />
-                Leads
+                {t("overview.leads")}
               </CardTitle>
-              <CardDescription>Prospectos capturados por API o formularios web.</CardDescription>
+              <CardDescription>{t("overview.leadsDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => router.push("/inbox/leads")}>
-                Ir a Leads
+                {t("overview.goToLeads")}
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Button>
             </CardContent>

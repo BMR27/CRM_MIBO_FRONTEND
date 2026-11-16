@@ -10,6 +10,7 @@ import { useSearchParams } from "next/navigation"
 import { useConversations } from "@/hooks/use-conversations"
 import { useAgents } from "@/hooks/use-agents"
 import { useUserRole } from "@/hooks/use-user-role"
+import { useLanguage } from "@/components/language-provider"
 
 interface ConversationData {
   id: string;
@@ -27,6 +28,7 @@ interface ConversationData {
 }
 
 export default function InboxPage() {
+  const { t } = useLanguage();
   const { isAgent, isAdminOrSupervisor, loading: loadingRole } = useUserRole();
   const [selectedConversationId, setSelectedConversationId] = useState<string>()
   const [selectedContactName, setSelectedContactName] = useState<string>()
@@ -164,7 +166,7 @@ export default function InboxPage() {
   }
 
   if (loadingRole) {
-    return <div className="flex items-center justify-center h-full w-full">Cargando conversaciones...</div>;
+    return <div className="flex items-center justify-center h-full w-full">{t("inbox.loadingConversations")}</div>;
   }
   return (
     <>

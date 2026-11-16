@@ -9,8 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Lock, Mail, Shield, MessageSquare, BarChart3, Users2, CheckCircle2 } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 
 function LoginForm() {
+  const { t } = useLanguage()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -23,7 +25,7 @@ function LoginForm() {
   useEffect(() => {
     const message = searchParams.get("message")
     if (message === "signup-success") {
-      setSuccess("¡Espacio de trabajo creado exitosamente! Ahora puedes iniciar sesión.")
+      setSuccess(t("login.signupSuccess"))
     }
   }, [searchParams])
 
@@ -49,7 +51,7 @@ function LoginForm() {
       }
 
       if (!response.ok) {
-        setError(data.message || data.error || "No se pudo iniciar sesión")
+        setError(data.message || data.error || t("login.couldNotLogin"))
         setLoading(false)
         return
       }
@@ -82,7 +84,7 @@ function LoginForm() {
       }
     } catch (err) {
       console.error("Login error:", err)
-      setError("No se pudo conectar con el servidor local. Revisa que el frontend esté corriendo correctamente.")
+      setError(t("login.connectionError"))
       setLoading(false)
     }
   }
@@ -113,12 +115,11 @@ function LoginForm() {
             </div>
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-xs font-medium tracking-wide uppercase mb-6 border border-white/15">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-              Plataforma empresarial
+              {t("login.enterpriseTag")}
             </div>
-            <h1 className="text-4xl font-bold mb-4 text-balance tracking-tight">Hilo</h1>
+            <h1 className="text-4xl font-bold mb-4 text-balance tracking-tight">{t("login.heroTitle")}</h1>
             <p className="text-lg text-white/85 leading-relaxed text-pretty max-w-md">
-              La suite de atención al cliente y operaciones para equipos que gestionan conversaciones, pedidos y
-              logística a escala.
+              {t("login.heroDesc")}
             </p>
           </div>
 
@@ -128,8 +129,8 @@ function LoginForm() {
                 <MessageSquare className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h3 className="font-semibold mb-0.5 text-white text-sm">Bandeja unificada</h3>
-                <p className="text-sm text-white/75">WhatsApp, Facebook y voz en una sola conversación por cliente</p>
+                <h3 className="font-semibold mb-0.5 text-white text-sm">{t("login.feature1Title")}</h3>
+                <p className="text-sm text-white/75">{t("login.feature1Desc")}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -137,8 +138,8 @@ function LoginForm() {
                 <BarChart3 className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h3 className="font-semibold mb-0.5 text-white text-sm">Órdenes y analítica</h3>
-                <p className="text-sm text-white/75">Visibilidad en tiempo real del pedido mientras atiendes al cliente</p>
+                <h3 className="font-semibold mb-0.5 text-white text-sm">{t("login.feature2Title")}</h3>
+                <p className="text-sm text-white/75">{t("login.feature2Desc")}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -146,15 +147,15 @@ function LoginForm() {
                 <Users2 className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h3 className="font-semibold mb-0.5 text-white text-sm">Equipos y roles</h3>
-                <p className="text-sm text-white/75">Espacios de trabajo aislados por empresa, con control de acceso por rol</p>
+                <h3 className="font-semibold mb-0.5 text-white text-sm">{t("login.feature3Title")}</h3>
+                <p className="text-sm text-white/75">{t("login.feature3Desc")}</p>
               </div>
             </div>
           </div>
 
           <div className="mt-12 flex items-center gap-2 text-xs text-white/60">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Datos aislados por espacio de trabajo · Cifrado en tránsito
+            {t("login.footerNote")}
           </div>
         </div>
       </div>
@@ -165,20 +166,20 @@ function LoginForm() {
             <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-primary text-primary-foreground mb-3">
               <MessageSquare className="w-5 h-5" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">Hilo</h2>
-            <p className="text-sm text-muted-foreground">Sistema de Gestión Empresarial</p>
+            <h2 className="text-xl font-bold text-foreground">{t("login.heroTitle")}</h2>
+            <p className="text-sm text-muted-foreground">{t("login.mobileSubtitle")}</p>
           </div>
 
           <div className="rounded-2xl border border-border bg-card shadow-sm p-6 sm:p-8 space-y-6">
             <div className="space-y-1.5">
-              <h2 className="text-2xl font-bold tracking-tight">Bienvenido de nuevo</h2>
-              <p className="text-sm text-muted-foreground">Ingresa tus credenciales para continuar</p>
+              <h2 className="text-2xl font-bold tracking-tight">{t("login.welcomeBack")}</h2>
+              <p className="text-sm text-muted-foreground">{t("login.enterCredentials")}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
-                  Correo electrónico
+                  {t("login.email")}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
@@ -198,10 +199,10 @@ function LoginForm() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-sm font-medium">
-                    Contraseña
+                    {t("login.password")}
                   </Label>
                   <button type="button" className="text-xs text-primary hover:underline font-medium">
-                    ¿Olvidaste tu contraseña?
+                    {t("login.forgotPassword")}
                   </button>
                 </div>
                 <div className="relative">
@@ -243,19 +244,19 @@ function LoginForm() {
                 {loading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Verificando...
+                    {t("login.verifying")}
                   </div>
                 ) : (
-                  "Iniciar sesión"
+                  t("login.signIn")
                 )}
               </Button>
             </form>
           </div>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">¿Tu empresa aún no tiene un espacio de trabajo? </span>
+            <span className="text-muted-foreground">{t("login.noWorkspaceYet")} </span>
             <Link href="/signup-company" className="text-primary hover:underline font-medium">
-              Regístrala aquí
+              {t("login.registerHere")}
             </Link>
           </div>
         </div>
@@ -270,12 +271,12 @@ function LoginForm() {
             <DialogTitle className="flex items-start justify-center gap-3 text-[24px] sm:text-[30px] font-semibold text-[#4f9dff] leading-tight tracking-normal">
               <Shield className="mt-1 h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0 text-[#4f9dff]" />
               <span className="flex flex-col items-center gap-1.5 text-center">
-                <span className="block">Sesión activa</span>
-                <span className="block">detectada</span>
+                <span className="block">{t("login.activeSessionTitle1")}</span>
+                <span className="block">{t("login.activeSessionTitle2")}</span>
               </span>
             </DialogTitle>
             <DialogDescription className="text-[16px] sm:text-[19px] leading-[1.4] text-slate-200 w-full max-w-none">
-              Ya existe una sesión activa para este usuario. ¿Deseas cerrar la anterior y activar esta?
+              {t("login.activeSessionDesc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -287,7 +288,7 @@ function LoginForm() {
               onClick={() => setSessionConflictOpen(false)}
               disabled={loading}
             >
-              Cancelar
+              {t("login.cancel")}
             </Button>
             <Button
               type="button"
@@ -295,7 +296,7 @@ function LoginForm() {
               onClick={handleTakeoverSession}
               disabled={loading}
             >
-              Cerrar sesión anterior y continuar
+              {t("login.closePreviousSession")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -305,8 +306,9 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const { t } = useLanguage()
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Cargando...</div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">{t("login.loading")}</div>}>
       <LoginForm />
     </Suspense>
   )

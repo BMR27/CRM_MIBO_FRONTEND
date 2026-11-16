@@ -9,10 +9,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { User, Lock, Mail, Building2, UserSquare2, Landmark, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/language-provider"
 
 type LegalType = "fisica" | "moral"
 
 export default function SignupCompanyPage() {
+  const { t } = useLanguage()
   const [legalType, setLegalType] = useState<LegalType>("fisica")
   const [companyName, setCompanyName] = useState("")
   const [taxId, setTaxId] = useState("")
@@ -40,7 +42,7 @@ export default function SignupCompanyPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.message || data.error || "No se pudo registrar la compañía")
+        setError(data.message || data.error || t("signup.couldNotRegister"))
         setLoading(false)
         return
       }
@@ -68,7 +70,7 @@ export default function SignupCompanyPage() {
 
       window.location.href = "/inbox"
     } catch (err) {
-      setError("Ocurrió un error. Intenta nuevamente.")
+      setError(t("signup.genericError"))
       setLoading(false)
     }
   }
@@ -81,25 +83,24 @@ export default function SignupCompanyPage() {
         <div className="relative z-10 flex flex-col justify-center px-16 text-primary-foreground">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-xs font-medium tracking-wide uppercase mb-6 border border-white/15 w-fit">
             <ShieldCheck className="h-3.5 w-3.5" />
-            Espacio aislado por empresa
+            {t("signup.isolatedTag")}
           </div>
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm mb-6 border border-white/15">
             <Building2 className="w-8 h-8" />
           </div>
-          <h1 className="text-4xl font-bold mb-4 text-balance tracking-tight">Crea tu espacio de trabajo</h1>
+          <h1 className="text-4xl font-bold mb-4 text-balance tracking-tight">{t("signup.heroTitle")}</h1>
           <p className="text-lg text-primary-foreground/85 leading-relaxed text-pretty max-w-md">
-            Registra tu empresa o tu actividad como persona física y obtén tu propio CRM aislado para gestionar
-            conversaciones, contactos y pedidos.
+            {t("signup.heroDesc")}
           </p>
 
           <div className="mt-10 space-y-3 text-sm text-primary-foreground/80">
             <div className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-white/70" />
-              Facturación y datos fiscales asociados a tu tipo de registro
+              {t("signup.bullet1")}
             </div>
             <div className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-white/70" />
-              Roles, permisos y bandeja de conversaciones desde el primer minuto
+              {t("signup.bullet2")}
             </div>
           </div>
         </div>
@@ -109,13 +110,13 @@ export default function SignupCompanyPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="lg:hidden text-center mb-6">
             <h2 className="text-xl font-bold text-foreground">Hilo</h2>
-            <p className="text-sm text-muted-foreground">Sistema de Gestión Empresarial</p>
+            <p className="text-sm text-muted-foreground">{t("signup.mobileSubtitle")}</p>
           </div>
 
           <div className="rounded-2xl border border-border bg-card shadow-sm p-6 sm:p-8 space-y-6">
             <div className="space-y-1.5">
-              <h2 className="text-2xl font-bold tracking-tight">Registra tu cuenta</h2>
-              <p className="text-sm text-muted-foreground">Elige el tipo de persona y crea tu espacio de trabajo</p>
+              <h2 className="text-2xl font-bold tracking-tight">{t("signup.registerAccount")}</h2>
+              <p className="text-sm text-muted-foreground">{t("signup.chooseType")}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -132,8 +133,8 @@ export default function SignupCompanyPage() {
               >
                 <UserSquare2 className={cn("h-5 w-5", legalType === "fisica" ? "text-primary" : "text-muted-foreground")} />
                 <div>
-                  <p className="text-sm font-semibold leading-none">Persona física</p>
-                  <p className="text-xs text-muted-foreground mt-1">Trabajas de forma independiente</p>
+                  <p className="text-sm font-semibold leading-none">{t("signup.fisica")}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("signup.fisicaDesc")}</p>
                 </div>
               </button>
 
@@ -150,8 +151,8 @@ export default function SignupCompanyPage() {
               >
                 <Landmark className={cn("h-5 w-5", legalType === "moral" ? "text-primary" : "text-muted-foreground")} />
                 <div>
-                  <p className="text-sm font-semibold leading-none">Persona moral</p>
-                  <p className="text-xs text-muted-foreground mt-1">Empresa o razón social</p>
+                  <p className="text-sm font-semibold leading-none">{t("signup.moral")}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("signup.moralDesc")}</p>
                 </div>
               </button>
             </div>
@@ -159,7 +160,7 @@ export default function SignupCompanyPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="companyName" className="text-sm font-medium">
-                  {isMoral ? "Razón social" : "Nombre del negocio o actividad"}
+                  {isMoral ? t("signup.legalName") : t("signup.businessName")}
                 </Label>
                 <div className="relative">
                   <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
@@ -178,7 +179,7 @@ export default function SignupCompanyPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="taxId" className="text-sm font-medium">
-                  RFC {isMoral ? "de la empresa" : "(opcional)"}
+                  {isMoral ? t("signup.taxIdCompany") : t("signup.taxIdOptional")}
                 </Label>
                 <div className="relative">
                   <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
@@ -198,7 +199,7 @@ export default function SignupCompanyPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="adminName" className="text-sm font-medium">
-                  {isMoral ? "Nombre del representante legal" : "Tu nombre completo"}
+                  {isMoral ? t("signup.legalRepName") : t("signup.fullName")}
                 </Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
@@ -217,7 +218,7 @@ export default function SignupCompanyPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="adminEmail" className="text-sm font-medium">
-                  Correo electrónico
+                  {t("signup.email")}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
@@ -236,14 +237,14 @@ export default function SignupCompanyPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="adminPassword" className="text-sm font-medium">
-                  Contraseña
+                  {t("signup.password")}
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
                   <Input
                     id="adminPassword"
                     type="password"
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={t("signup.passwordHint")}
                     value={adminPassword}
                     onChange={(e) => setAdminPassword(e.target.value)}
                     required
@@ -271,19 +272,19 @@ export default function SignupCompanyPage() {
                 {loading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Creando espacio de trabajo...
+                    {t("signup.creatingWorkspace")}
                   </div>
                 ) : (
-                  "Crear espacio de trabajo"
+                  t("signup.createWorkspace")
                 )}
               </Button>
             </form>
           </div>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">¿Ya tienes cuenta? </span>
+            <span className="text-muted-foreground">{t("signup.alreadyHaveAccount")} </span>
             <Link href="/login" className="text-primary hover:underline font-medium">
-              Inicia sesión
+              {t("signup.signIn")}
             </Link>
           </div>
         </div>
