@@ -9,7 +9,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Users, Plus, Trash2, Edit2, Calendar } from "lucide-react"
 import { format } from "date-fns"
-import { es } from "date-fns/locale"
+import { es, enUS, pl, ru } from "date-fns/locale"
+import { useLanguage } from "@/components/language-provider"
+
+const dateFnsLocales = { es, en: enUS, pl, ru }
 
 interface UserSession {
   id: string
@@ -24,6 +27,8 @@ interface UserSession {
 }
 
 export default function SessionsPage() {
+  const { t, language } = useLanguage()
+  const dateLocale = dateFnsLocales[language] || es
   const [sessions, setSessions] = useState<UserSession[]>([])
   const [loading, setLoading] = useState(true)
   const [openDialog, setOpenDialog] = useState(false)
@@ -80,7 +85,7 @@ export default function SessionsPage() {
 
   const handleSaveSession = async () => {
     if (!formData.user_name || !formData.user_email) {
-      alert("Por favor completa el nombre y correo del usuario")
+      alert(t("sess.fillNameEmail"))
       return
     }
 
@@ -100,16 +105,16 @@ export default function SessionsPage() {
       if (response.ok) {
         fetchSessions()
         setOpenDialog(false)
-        alert("Sesión guardada correctamente")
+        alert(t("sess.saved"))
       }
     } catch (error) {
       console.error("Error saving session:", error)
-      alert("Error al guardar la sesión")
+      alert(t("sess.saveFail"))
     }
   }
 
   const handleDeleteSession = async (id: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar esta sesión?")) return
+    if (!confirm(t("sess.confirmDelete"))) return
 
     try {
       await fetch(`/api/sessions/${id}`, {
@@ -123,10 +128,10 @@ export default function SessionsPage() {
 
   const getSessionTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      consultation: "🎯 Consulta",
-      "follow-up": "📞 Seguimiento",
-      training: "📚 Capacitación",
-      other: "📋 Otro",
+      consultation: t("sess.type.consultation"),
+      "follow-up": t("sess.type.followUp"),
+      training: t("sess.type.training"),
+      other: t("sess.type.other"),
     }
     return labels[type] || type
   }
@@ -134,7 +139,7 @@ export default function SessionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-muted-foreground">Cargando sesiones...</p>
+        <p className="text-muted-foreground">{t("sess.loading")}</p>
       </div>
     )
   }
@@ -147,10 +152,10 @@ export default function SessionsPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Users className="h-6 w-6" />
-              Gestión de Sesiones
+              {t("sess.title")}
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Registra y gestiona sesiones con usuarios
+              {t("sess.subtitle")}
             </p>
           </div>
           <Button
@@ -158,7 +163,7 @@ export default function SessionsPage() {
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
-            Nueva Sesión
+            {t("sess.new")}
           </Button>
         </div>
       </div>
@@ -170,7 +175,7 @@ export default function SessionsPage() {
             <div className="flex flex-col items-center justify-center py-12">
               <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-muted-foreground text-center">
-                No hay sesiones registradas
+                {t("sess.empty")}
               </p>
             </div>
           ) : (
@@ -194,12 +199,12 @@ export default function SessionsPage() {
                           <div className="flex items-center gap-2">
                             <Calendar className="h-3 w-3" />
                             <span>
-                              {format(new Date(session.session_date), "dd 'de' MMMM 'de' yyyy HH:mm", {
-                                locale: es,
+                              {format(new Date(session.session_date), t("sess.dateFormat"), {
+                                locale: dateLocale,
                               })}
                             </span>
                           </div>
-                          <div>⏱️ Duración: {session.duration_minutes} minutos</div>
+                          <div>⏱️ {t("sess.duration")}: {session.duration_minutes} {t("sess.minutes")}</div>
                         </CardDescription>
                       </div>
                     </div>
@@ -209,13 +214,13 @@ export default function SessionsPage() {
                     <CardContent className="pb-3 pt-0 space-y-2">
                       {session.notes && (
                         <div className="bg-muted/50 p-2 rounded text-xs">
-                          <p className="font-semibold text-muted-foreground mb-1">Notas:</p>
+                          <p className="font-semibold text-muted-foreground mb-1">{t("sess.notes")}</p>
                           <p className="text-foreground">{session.notes}</p>
                         </div>
                       )}
                       {session.outcomes && (
                         <div className="bg-muted/50 p-2 rounded text-xs">
-                          <p className="font-semibold text-muted-foreground mb-1">Resultados:</p>
+                          <p className="font-semibold text-muted-foreground mb-1">{t("sess.outcomes")}</p>
                           <p className="text-foreground">{session.outcomes}</p>
                         </div>
                       )}
@@ -230,7 +235,7 @@ export default function SessionsPage() {
                       className="flex-1 h-8 text-xs"
                     >
                       <Edit2 className="h-3 w-3 mr-1" />
-                      Editar
+                      {t("sess.edit")}
                     </Button>
                     <Button
                       size="sm"
@@ -253,29 +258,29 @@ export default function SessionsPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingSession ? "Editar Sesión" : "Nueva Sesión"}
+              {editingSession ? t("sess.editTitle") : t("sess.new")}
             </DialogTitle>
             <DialogDescription>
               {editingSession
-                ? "Actualiza los detalles de la sesión"
-                : "Registra una nueva sesión con un usuario"}
+                ? t("sess.editDesc")
+                : t("sess.newDesc")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Nombre del Usuario</label>
+                <label className="text-sm font-medium">{t("sess.userName")}</label>
                 <Input
                   value={formData.user_name}
                   onChange={(e) =>
                     setFormData({ ...formData, user_name: e.target.value })
                   }
-                  placeholder="Ej: Juan Pérez"
+                  placeholder={t("sess.userNamePlaceholder")}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Correo Electrónico</label>
+                <label className="text-sm font-medium">{t("sess.email")}</label>
                 <Input
                   type="email"
                   value={formData.user_email}
@@ -289,7 +294,7 @@ export default function SessionsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Tipo de Sesión</label>
+                <label className="text-sm font-medium">{t("sess.sessionType")}</label>
                 <select
                   value={formData.session_type}
                   onChange={(e) =>
@@ -297,14 +302,14 @@ export default function SessionsPage() {
                   }
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                 >
-                  <option value="consultation">🎯 Consulta</option>
-                  <option value="follow-up">📞 Seguimiento</option>
-                  <option value="training">📚 Capacitación</option>
-                  <option value="other">📋 Otro</option>
+                  <option value="consultation">{t("sess.type.consultation")}</option>
+                  <option value="follow-up">{t("sess.type.followUp")}</option>
+                  <option value="training">{t("sess.type.training")}</option>
+                  <option value="other">{t("sess.type.other")}</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Duración (minutos)</label>
+                <label className="text-sm font-medium">{t("sess.durationMinutes")}</label>
                 <Input
                   type="number"
                   value={formData.duration_minutes}
@@ -320,25 +325,25 @@ export default function SessionsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Notas de la Sesión</label>
+              <label className="text-sm font-medium">{t("sess.sessionNotes")}</label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-                placeholder="Añade notas sobre lo discutido en la sesión..."
+                placeholder={t("sess.sessionNotesPlaceholder")}
                 className="h-20 resize-none"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Resultados/Conclusiones</label>
+              <label className="text-sm font-medium">{t("sess.outcomesConclusions")}</label>
               <Textarea
                 value={formData.outcomes}
                 onChange={(e) =>
                   setFormData({ ...formData, outcomes: e.target.value })
                 }
-                placeholder="Documenta los resultados y conclusiones de la sesión..."
+                placeholder={t("sess.outcomesPlaceholder")}
                 className="h-20 resize-none"
               />
             </div>
@@ -349,10 +354,10 @@ export default function SessionsPage() {
                 onClick={() => setOpenDialog(false)}
                 className="flex-1"
               >
-                Cancelar
+                {t("chat.cancel")}
               </Button>
               <Button onClick={handleSaveSession} className="flex-1">
-                {editingSession ? "Actualizar" : "Guardar"}
+                {editingSession ? t("sess.update") : t("chat.save")}
               </Button>
             </div>
           </div>
