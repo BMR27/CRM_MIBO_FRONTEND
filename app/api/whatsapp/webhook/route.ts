@@ -673,7 +673,15 @@ function parseIncomingMessage(message: any): {
 }
 
 function normalizePhoneNumber(value: string) {
-  return String(value).replace("whatsapp:", "").replace(/\D/g, "")
+  let digits = String(value).replace("whatsapp:", "").replace(/\D/g, "")
+  // Celulares de México a veces llegan como 521XXXXXXXXXX (13 dígitos) en vez de
+  // 52XXXXXXXXXX (12 dígitos); se quita el "1" extra para que el contacto coincida
+  // sin importar si el número vino de un mensaje entrante o de un envío saliente.
+  // (No aplica a otros países, p. ej. Polonia con 48XXXXXXXXX de 11 dígitos.)
+  if (digits.length === 13 && digits.startsWith("521")) {
+    digits = "52" + digits.slice(3)
+  }
+  return digits
 }
 
 async function hasMessagesExternalMessageIdColumn(): Promise<boolean> {

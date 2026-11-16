@@ -121,18 +121,6 @@ const waTemplates = [
     paramFallbacks: {} as Record<string, string>,
   },
   {
-    name: "relivital_descuento20_v1",
-    sid: "HXf28c75519779a906bed40de37c57411d",
-    language: "pl",
-    body: "Pani {{1}}, wybrała już Pani Relivital — więc wie, jak ważna jest regularna pielęgnacja skóry.\nKolagen morski i elastyna działają stopniowo — dlatego warto kontynuować pielęgnację bez dłuższych przerw.\nWłaśnie dla naszych Klientek przygotowaliśmy rabat 20% na kolejne zamówienie Relivital, na dowolną liczbę opakowań.\nZwykle ten rabat obowiązuje tylko miesiąc po zakupie, ale dla Pani przedłużyliśmy go do 12.09.\nWystarczy zadzwonić pod numer +48 12 420 73 49 i podać naszej konsultantce kod KLIENT20.",
-    paramMap: {
-      "1": "CLIENTE",
-    } as Record<string, string>,
-    paramFallbacks: {} as Record<string, string>,
-    // Plantilla exclusiva: solo la ve el tenant Relivital, no el resto de espacios.
-    tenantIds: ["0b50210b-d7d0-47df-8fe1-71ce95b419e6"],
-  },
-  {
     name: "relivital_descuento20_v2",
     sid: "HX5dd56e7d661ce1e31d03e5115dac1b5a",
     language: "pl",
@@ -718,12 +706,12 @@ function EnviosMasivosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 lg:p-6">
+    <div className="min-h-screen bg-background p-4 lg:p-6">
       <div className="mx-auto flex max-w-[1500px] flex-col gap-4">
-        <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-center lg:justify-between">
+        <header className="flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-slate-950">{t("camp.pageTitle")}</h1>
-            <p className="text-sm text-slate-500">{t("camp.pageSubtitle")}</p>
+            <h1 className="text-2xl font-semibold tracking-normal text-foreground">{t("camp.pageTitle")}</h1>
+            <p className="text-sm text-muted-foreground">{t("camp.pageSubtitle")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={loadCampaigns} disabled={loadingCampaigns} className="gap-2">
@@ -756,14 +744,14 @@ function EnviosMasivosPage() {
         )}
 
         {showNewForm && (
-          <section className="grid gap-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm xl:grid-cols-[minmax(0,1fr)_420px]">
+          <section className="grid gap-4 rounded-md border border-border bg-card p-4 shadow-sm xl:grid-cols-[minmax(0,1fr)_420px]">
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">{t("camp.campaignNameLabel")}</label>
+                <label className="text-sm font-medium text-foreground">{t("camp.campaignNameLabel")}</label>
                 <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder={t("camp.campaignNamePlaceholder")} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">{t("camp.templateLabel")}</label>
+                <label className="text-sm font-medium text-foreground">{t("camp.templateLabel")}</label>
                 <div className="flex gap-2">
                   <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                     <SelectTrigger>
@@ -784,11 +772,11 @@ function EnviosMasivosPage() {
               </div>
               {extraTemplateFields.length > 0 && (
                 <div className="space-y-3 lg:col-span-2">
-                  <p className="text-sm font-medium text-slate-700">{t("camp.templateFields")}</p>
+                  <p className="text-sm font-medium text-foreground">{t("camp.templateFields")}</p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {extraTemplateFields.map((campo) => (
                       <div key={campo} className="space-y-1">
-                        <label className="text-xs font-medium text-slate-600">{campo}</label>
+                        <label className="text-xs font-medium text-muted-foreground">{campo}</label>
                         <Input
                           value={campaignParams[campo] || ""}
                           onChange={(e) => setCampaignParams((prev) => ({ ...prev, [campo]: e.target.value }))}
@@ -797,15 +785,15 @@ function EnviosMasivosPage() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     {t("camp.templateFieldsHint")}
                   </p>
                 </div>
               )}
               <div className="space-y-3 lg:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label className="text-sm font-medium text-slate-700">{t("camp.recipients")}</label>
-                  <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-1">
+                  <label className="text-sm font-medium text-foreground">{t("camp.recipients")}</label>
+                  <div className="inline-flex rounded-md border border-border bg-background p-1">
                     <Button
                       type="button"
                       size="sm"
@@ -826,13 +814,13 @@ function EnviosMasivosPage() {
                 </div>
 
                 {contactSource === "saved" ? (
-                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                  <div className="rounded-md border border-border bg-background p-3">
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                       <Input
                         value={savedContactSearch}
                         onChange={(e) => setSavedContactSearch(e.target.value)}
                         placeholder={t("camp.searchContactPlaceholder")}
-                        className="bg-white md:max-w-md"
+                        className="bg-card md:max-w-md"
                       />
                       <div className="flex flex-wrap gap-2">
                         <Button type="button" variant="outline" size="sm" onClick={selectAllFilteredSavedContacts} disabled={filteredSavedContacts.length === 0}>
@@ -843,29 +831,29 @@ function EnviosMasivosPage() {
                         </Button>
                       </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                       <span>{selectedSavedContactIds.size} {selectedSavedContactIds.size === 1 ? t("camp.selected") : t("camp.selectedPlural")}</span>
                       <span>{filteredSavedContacts.length} {filteredSavedContacts.length === 1 ? t("camp.visibleContact") : t("camp.visibleContacts")} {filteredSavedContacts.length === 1 ? t("camp.visible") : t("camp.visiblePlural")}</span>
                     </div>
                     {savedContactsError && <p className="mt-2 text-xs font-medium text-red-600">{savedContactsError}</p>}
-                    <div className="mt-3 max-h-64 overflow-auto rounded-md border border-slate-200 bg-white">
+                    <div className="mt-3 max-h-64 overflow-auto rounded-md border border-border bg-card">
                       {loadingSavedContacts ? (
-                        <div className="p-4 text-center text-sm text-slate-500">{t("camp.loadingContacts")}</div>
+                        <div className="p-4 text-center text-sm text-muted-foreground">{t("camp.loadingContacts")}</div>
                       ) : filteredSavedContacts.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-slate-500">{t("camp.noContactsAvailable")}</div>
+                        <div className="p-4 text-center text-sm text-muted-foreground">{t("camp.noContactsAvailable")}</div>
                       ) : (
                         filteredSavedContacts.map((contact) => (
                           <label
                             key={contact.id}
-                            className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-3 py-2 last:border-b-0 hover:bg-slate-50"
+                            className="flex cursor-pointer items-center gap-3 border-b border-border px-3 py-2 last:border-b-0 hover:bg-muted/50"
                           >
                             <Checkbox
                               checked={selectedSavedContactIds.has(contact.id)}
                               onCheckedChange={() => toggleSavedContact(contact.id)}
                             />
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-slate-900">{contact.name}</p>
-                              <p className="truncate text-xs text-slate-500">{contact.phone_number}</p>
+                              <p className="truncate text-sm font-medium text-foreground">{contact.name}</p>
+                              <p className="truncate text-xs text-muted-foreground">{contact.phone_number}</p>
                             </div>
                           </label>
                         ))
@@ -873,9 +861,9 @@ function EnviosMasivosPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                    <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="bg-white" />
-                    <p className="mt-2 text-xs text-slate-500">
+                  <div className="rounded-md border border-border bg-background p-3">
+                    <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="bg-card" />
+                    <p className="mt-2 text-xs text-muted-foreground">
                       {t("camp.excelSecondOption")}
                       {selectedTemplateData ? ` ${t("camp.excelAnd")} ${Object.values(selectedTemplateData.paramMap).filter((c) => c !== "CLIENTE" && c !== "ASESOR" && c !== "PHONE_A").join(", ")}` : ` ${t("camp.excelAnd")} PRODUCTS_A`}.
                     </p>
@@ -884,37 +872,37 @@ function EnviosMasivosPage() {
                 )}
               </div>
               <div className="space-y-2 lg:col-span-2">
-                <label className="text-sm font-medium text-slate-700">{t("camp.internalNotes")}</label>
+                <label className="text-sm font-medium text-foreground">{t("camp.internalNotes")}</label>
                 <Textarea value={campaignNotes} onChange={(e) => setCampaignNotes(e.target.value)} placeholder={t("camp.internalNotesPlaceholder")} />
               </div>
             </div>
 
-            <aside className="rounded-md border border-slate-200 bg-slate-50 p-4">
+            <aside className="rounded-md border border-border bg-background p-4">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold text-slate-900">{t("camp.summary")}</span>
-                <Badge variant="outline" className="bg-white">
+                <span className="text-sm font-semibold text-foreground">{t("camp.summary")}</span>
+                <Badge variant="outline" className="bg-card">
                   {effectiveContacts.length} {t("camp.contactsBadge")}
                 </Badge>
               </div>
               {selectedTemplateData ? (
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs font-medium uppercase text-slate-500">{t("camp.template")}</p>
-                    <p className="text-sm font-semibold text-slate-900">{selectedTemplateData.name}</p>
+                    <p className="text-xs font-medium uppercase text-muted-foreground">{t("camp.template")}</p>
+                    <p className="text-sm font-semibold text-foreground">{selectedTemplateData.name}</p>
                   </div>
-                  <pre className="max-h-44 overflow-auto whitespace-pre-wrap rounded-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-700">
+                  <pre className="max-h-44 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-card p-3 text-xs leading-relaxed text-foreground">
                     {selectedTemplateData.body}
                   </pre>
                 </div>
               ) : (
-                <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">{t("camp.selectTemplateToView")}</div>
+                <div className="rounded-md border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">{t("camp.selectTemplateToView")}</div>
               )}
               {effectiveContacts.length > 0 && (
-                <div className="mt-4 max-h-36 overflow-auto rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
+                <div className="mt-4 max-h-36 overflow-auto rounded-md border border-border bg-card p-2 text-xs text-muted-foreground">
                   {effectiveContacts.slice(0, 20).map((c, idx) => (
-                    <div key={`${c.telefono}-${idx}`} className="flex justify-between gap-2 border-b border-slate-100 py-1 last:border-b-0">
+                    <div key={`${c.telefono}-${idx}`} className="flex justify-between gap-2 border-b border-border py-1 last:border-b-0">
                       <span className="truncate">{c.nombre || t("camp.noName")}</span>
-                      <span className="shrink-0 text-slate-400">{c.telefono || t("camp.noPhone")}</span>
+                      <span className="shrink-0 text-muted-foreground">{c.telefono || t("camp.noPhone")}</span>
                     </div>
                   ))}
                 </div>
@@ -932,10 +920,10 @@ function EnviosMasivosPage() {
           </section>
         )}
 
-        <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-          <div className="grid gap-3 border-b border-slate-200 p-4 xl:grid-cols-[minmax(260px,1fr)_170px_170px_190px_190px_auto]">
+        <section className="rounded-md border border-border bg-card shadow-sm">
+          <div className="grid gap-3 border-b border-border p-4 xl:grid-cols-[minmax(260px,1fr)_170px_170px_190px_190px_auto]">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("camp.searchCampaignPlaceholder")} className="pl-9" />
             </div>
             <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
@@ -989,7 +977,7 @@ function EnviosMasivosPage() {
             <TableBody>
               {filteredCampaigns.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-36 text-center text-slate-500">
+                  <TableCell colSpan={8} className="h-36 text-center text-muted-foreground">
                     {loadingCampaigns ? t("camp.loadingCampaigns") : t("camp.noCampaignsFiltered")}
                   </TableCell>
                 </TableRow>
@@ -1003,28 +991,28 @@ function EnviosMasivosPage() {
                     <TableRow key={campaign.id}>
                       <TableCell>
                         <div className="min-w-0">
-                          <p className="truncate font-semibold text-slate-900">{campaign.name}</p>
-                          <p className="font-mono text-xs text-slate-500">{code}</p>
+                          <p className="truncate font-semibold text-foreground">{campaign.name}</p>
+                          <p className="font-mono text-xs text-muted-foreground">{code}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="text-slate-600">{formatDate(campaign.date)}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(campaign.date)}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={cn("rounded-full", statusClassName(campaign.status))}>
                           {formatStatus(campaign.status)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="max-w-64 truncate text-slate-600">{getTemplateLabel(campaign.templateName)}</TableCell>
+                      <TableCell className="max-w-64 truncate text-muted-foreground">{getTemplateLabel(campaign.templateName)}</TableCell>
                       <TableCell className="text-right font-medium">{recipients}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Progress value={progress} className="h-2 min-w-24" />
-                          <span className="w-16 text-right text-xs text-slate-500">
+                          <span className="w-16 text-right text-xs text-muted-foreground">
                             {delivered}/{recipients}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className={cn("font-medium", campaign.failed ? "text-red-600" : "text-slate-500")}>{campaign.failed || 0}</span>
+                        <span className={cn("font-medium", campaign.failed ? "text-red-600" : "text-muted-foreground")}>{campaign.failed || 0}</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
@@ -1070,12 +1058,12 @@ function EnviosMasivosPage() {
         </section>
 
         {selectedCampaign && (
-          <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-col gap-3 border-b border-slate-200 p-4 md:flex-row md:items-start md:justify-between">
+          <section className="rounded-md border border-border bg-card shadow-sm">
+            <div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <p className="text-xs font-medium uppercase text-slate-500">{t("camp.campaignDetail")}</p>
-                <h2 className="text-lg font-semibold text-slate-950">{selectedCampaign.name}</h2>
-                <p className="font-mono text-xs text-slate-500">{selectedCampaign.campaignCode || selectedCampaign.id}</p>
+                <p className="text-xs font-medium uppercase text-muted-foreground">{t("camp.campaignDetail")}</p>
+                <h2 className="text-lg font-semibold text-foreground">{selectedCampaign.name}</h2>
+                <p className="font-mono text-xs text-muted-foreground">{selectedCampaign.campaignCode || selectedCampaign.id}</p>
               </div>
               <Button variant="outline" size="sm" onClick={() => setSelectedCampaignId(null)}>
                 {t("camp.closeDetail")}
@@ -1097,28 +1085,28 @@ function EnviosMasivosPage() {
               <TableBody>
                 {loadingRecipients ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-28 text-center text-slate-500">
+                    <TableCell colSpan={5} className="h-28 text-center text-muted-foreground">
                       {t("camp.loadingSentContacts")}
                     </TableCell>
                   </TableRow>
                 ) : campaignRecipients.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-28 text-center text-slate-500">
+                    <TableCell colSpan={5} className="h-28 text-center text-muted-foreground">
                       {t("camp.noRecipientsRegistered")}
                     </TableCell>
                   </TableRow>
                 ) : (
                   campaignRecipients.map((recipient) => (
                     <TableRow key={recipient.id}>
-                      <TableCell className="font-medium text-slate-900">{recipient.contactName || t("camp.noName")}</TableCell>
-                      <TableCell className="text-slate-600">{recipient.phoneNumber || t("camp.noPhone")}</TableCell>
+                      <TableCell className="font-medium text-foreground">{recipient.contactName || t("camp.noName")}</TableCell>
+                      <TableCell className="text-muted-foreground">{recipient.phoneNumber || t("camp.noPhone")}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={recipient.status === "failed" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}>
                           {recipient.status === "failed" ? t("camp.statusFailed") : recipient.status === "skipped" ? t("camp.statusSkipped") : t("camp.statusSent")}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-slate-600">{formatDate(recipient.createdAt)}</TableCell>
-                      <TableCell className="max-w-xl whitespace-pre-wrap text-sm text-slate-700">{recipient.message || t("camp.noContent")}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(recipient.createdAt)}</TableCell>
+                      <TableCell className="max-w-xl whitespace-pre-wrap text-sm text-foreground">{recipient.message || t("camp.noContent")}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -1130,8 +1118,8 @@ function EnviosMasivosPage() {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent className="border-red-200">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-slate-950">{t("camp.deleteConfirmTitle")}</AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-600">
+              <AlertDialogTitle className="text-foreground">{t("camp.deleteConfirmTitle")}</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
                 {`${t("camp.deleteConfirmDesc1")} "${campaignToDelete?.name || ""}"${t("camp.deleteConfirmDesc2")}`}
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -1166,13 +1154,13 @@ function MetricCard({
   locale: string
 }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-md border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-slate-500">{label}</p>
-          <p className={cn("mt-1 text-2xl font-semibold text-slate-950", tone === "danger" && "text-red-600")}>{value.toLocaleString(locale)}</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className={cn("mt-1 text-2xl font-semibold text-foreground", tone === "danger" && "text-red-600")}>{value.toLocaleString(locale)}</p>
         </div>
-        <div className={cn("flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 text-slate-600", tone === "danger" && "bg-red-50 text-red-600")}>
+        <div className={cn("flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground", tone === "danger" && "bg-red-50 text-red-600")}>
           <Icon className="h-5 w-5" />
         </div>
       </div>

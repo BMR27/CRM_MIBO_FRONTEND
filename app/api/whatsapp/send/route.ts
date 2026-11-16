@@ -70,5 +70,11 @@ export async function POST(request: Request) {
 }
 
 function normalizePhoneNumber(value: string) {
-  return String(value).replace("whatsapp:", "").replace(/\D/g, "")
+  let digits = String(value).replace("whatsapp:", "").replace(/\D/g, "")
+  // Ver nota en app/api/whatsapp/webhook/route.ts: celulares MX a veces llegan con un
+  // "1" extra (521XXXXXXXXXX) que hay que quitar para que coincida con el mismo contacto.
+  if (digits.length === 13 && digits.startsWith("521")) {
+    digits = "52" + digits.slice(3)
+  }
+  return digits
 }
