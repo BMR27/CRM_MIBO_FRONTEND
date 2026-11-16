@@ -41,6 +41,7 @@ import { Loader2, MessageCircle, Pencil, Search, Trash2, Users } from "lucide-re
 import { cn, formatContactDisplayName, getContactAvatarText } from "@/lib/utils"
 import { useContacts, type Contact } from "@/hooks/use-contacts"
 import { toast } from "@/hooks/use-toast"
+import { useLanguage } from "@/components/language-provider"
 
 function stripWhatsappPrefix(value: string) {
   return String(value || "").replace(/^whatsapp:/i, "")
@@ -64,6 +65,7 @@ interface ContactsListProps {
 type DeleteMode = "single" | "selected" | "all"
 
 export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDeleted }: ContactsListProps) {
+  const { t } = useLanguage()
   const { contacts, stats, loading, error, refetch } = useContacts()
   const [query, setQuery] = useState("")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -172,7 +174,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
     if (selectedCount === 0) return
     setDeleteMode("selected")
     setDeleteId(null)
-    setDeleteLabel(`${selectedCount} contacto${selectedCount === 1 ? "" : "s"} seleccionado${selectedCount === 1 ? "" : "s"}`)
+    setDeleteLabel(`${selectedCount} ${selectedCount === 1 ? t("cl.contactSelected") : t("cl.contactsSelected")}`)
     setDeleteOpen(true)
   }
 
@@ -180,7 +182,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
     if (stats.total === 0) return
     setDeleteMode("all")
     setDeleteId(null)
-    setDeleteLabel(`${stats.total} contacto${stats.total === 1 ? "" : "s"}`)
+    setDeleteLabel(`${stats.total} ${stats.total === 1 ? t("cl.contactWord") : t("cl.contactsWord")}`)
     setDeleteOpen(true)
   }
 
@@ -201,13 +203,13 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
         phone_number: cleanPhone(editPhone),
         external_user_id: editExternal,
       })
-      toast({ title: "Contacto actualizado", description: "Se guardaron los cambios." })
+      toast({ title: t("cl.toast.updatedTitle"), description: t("cl.toast.updatedDesc") })
       setEditOpen(false)
       await refetch()
     } catch (e) {
       toast({
-        title: "Error",
-        description: e instanceof Error ? e.message : "No se pudo actualizar el contacto",
+        title: t("contacts.error"),
+        description: e instanceof Error ? e.message : t("cl.toast.updateFailDesc"),
         variant: "destructive",
       })
     } finally {
@@ -232,8 +234,8 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
         setBulkSelected(false)
         setExcludedIds(new Set())
         toast({
-          title: "Contactos eliminados correctamente",
-          description: `Se eliminaron ${deletedCount} contacto${deletedCount === 1 ? "" : "s"}.`,
+          title: t("cl.toast.deletedManyTitle"),
+          description: `${deletedCount} ${deletedCount === 1 ? t("cl.contactWord") : t("cl.contactsWord")}.`,
         })
       } else if (deleteMode === "selected") {
         const ids = selectedContactIds()
@@ -243,8 +245,8 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
         setBulkSelected(false)
         setExcludedIds(new Set())
         toast({
-          title: "Contactos eliminados correctamente",
-          description: `Se eliminaron ${deletedCount} contacto${deletedCount === 1 ? "" : "s"}.`,
+          title: t("cl.toast.deletedManyTitle"),
+          description: `${deletedCount} ${deletedCount === 1 ? t("cl.contactWord") : t("cl.contactsWord")}.`,
         })
       } else if (deleteId !== null) {
         await deleteOne(deleteId)
@@ -260,15 +262,15 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
           return next
         })
         onDeleted?.(String(deleteId))
-        toast({ title: "Contacto eliminado correctamente", description: "Se eliminó 1 contacto." })
+        toast({ title: t("cl.toast.deletedOneTitle"), description: t("cl.toast.deletedOneDesc") })
       }
 
       setDeleteOpen(false)
       await refetch()
     } catch (e) {
       toast({
-        title: "Error",
-        description: e instanceof Error ? e.message : "No se pudo eliminar",
+        title: t("contacts.error"),
+        description: e instanceof Error ? e.message : t("cl.toast.deleteFailDesc"),
         variant: "destructive",
       })
     } finally {
@@ -280,7 +282,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
     return (
       <div className="h-full p-3">
         <div className="h-full rounded-xl border bg-card shadow-sm flex items-center justify-center">
-          <p className="text-muted-foreground text-sm">Cargando contactos...</p>
+          <p className="text-muted-foreground text-sm">{t("cl.loading")}</p>
         </div>
       </div>
     )
@@ -292,7 +294,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
         <div className="h-full rounded-xl border bg-card shadow-sm flex flex-col items-center justify-center p-4 gap-3">
           <p className="text-red-500 text-sm text-center">{error}</p>
           <Button variant="outline" size="sm" onClick={() => void refetch()}>
-            Reintentar
+            {t("cl.retry")}
           </Button>
         </div>
       </div>
@@ -305,8 +307,8 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
         <div className="border-b border-border px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-base font-semibold">Contactos</p>
-              <p className="text-xs text-muted-foreground">Administra tu base y abre conversaciones desde el mismo listado.</p>
+              <p className="text-base font-semibold">{t("cl.title")}</p>
+              <p className="text-xs text-muted-foreground">{t("cl.subtitle")}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -317,7 +319,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
                 className="text-red-600 hover:text-red-700"
               >
                 {deleting && deleteMode === "selected" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                {deleting && deleteMode === "selected" ? "Eliminando..." : "Eliminar seleccionados"}
+                {deleting && deleteMode === "selected" ? t("cl.deleting") : t("cl.deleteSelected")}
               </Button>
               <Button
                 variant="outline"
@@ -327,7 +329,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
                 className="text-red-600 hover:text-red-700"
               >
                 {deleting && deleteMode === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                {deleting && deleteMode === "all" ? "Eliminando..." : "Eliminar todos"}
+                {deleting && deleteMode === "all" ? t("cl.deleting") : t("cl.deleteAll")}
               </Button>
               {headerRight}
             </div>
@@ -337,7 +339,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
             <div className="rounded-lg border bg-background px-3 py-2">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Users className="h-4 w-4" />
-                Total
+                {t("cl.total")}
               </div>
               <p className="mt-1 text-xl font-semibold">{stats.total}</p>
             </div>
@@ -346,7 +348,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
               <p className="mt-1 text-xl font-semibold text-green-700">{stats.whatsapp}</p>
             </div>
             <div className="rounded-lg border bg-background px-3 py-2">
-              <p className="text-xs text-muted-foreground">Seleccionados</p>
+              <p className="text-xs text-muted-foreground">{t("cl.selected")}</p>
               <p className="mt-1 text-xl font-semibold">{selectedCount}</p>
             </div>
           </div>
@@ -358,15 +360,15 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por nombre, teléfono, ID o canal..."
+              placeholder={t("cl.searchPlaceholder")}
               className="pl-9"
             />
           </div>
           <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-            <span>Mostrando {filteredContacts.length} de {stats.total}</span>
+            <span>{t("cl.showing")} {filteredContacts.length} {t("cl.of")} {stats.total}</span>
             {!!query.trim() && (
               <Button variant="ghost" size="sm" onClick={() => setQuery("")}>
-                Limpiar
+                {t("cl.clear")}
               </Button>
             )}
           </div>
@@ -375,7 +377,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
         <ScrollArea className="flex-1 min-h-0">
           {filteredContacts.length === 0 ? (
             <div className="m-4 rounded-lg border bg-background p-8 text-center text-sm text-muted-foreground">
-              {contacts.length === 0 ? "No hay contactos" : "Sin resultados"}
+              {contacts.length === 0 ? t("cl.noContacts") : t("cl.noResults")}
             </div>
           ) : (
             <Table>
@@ -385,14 +387,14 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
                     <Checkbox
                       checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
                       onCheckedChange={(value) => toggleSelectAllVisible(value === true)}
-                      aria-label="Seleccionar contactos visibles"
+                      aria-label={t("cl.selectVisible")}
                     />
                   </TableHead>
-                  <TableHead>Contacto</TableHead>
-                  <TableHead>Canal</TableHead>
-                  <TableHead>Teléfono / ID</TableHead>
-                  <TableHead>Creado</TableHead>
-                  <TableHead className="text-right pr-4">Acciones</TableHead>
+                  <TableHead>{t("cl.contact")}</TableHead>
+                  <TableHead>{t("cl.channel")}</TableHead>
+                  <TableHead>{t("cl.phoneOrId")}</TableHead>
+                  <TableHead>{t("cl.created")}</TableHead>
+                  <TableHead className="text-right pr-4">{t("cl.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -414,7 +416,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
                         <Checkbox
                           checked={checked}
                           onCheckedChange={(value) => toggleSelectContact(String(c.id), value === true)}
-                          aria-label={`Seleccionar ${displayName || "contacto"}`}
+                          aria-label={`${t("cl.selectVisible")} ${displayName || t("chat.contactFallback")}`}
                         />
                       </TableCell>
                       <TableCell>
@@ -425,7 +427,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <p className="truncate font-semibold text-sm">{displayName || "Contacto"}</p>
+                            <p className="truncate font-semibold text-sm">{displayName || t("chat.contactFallback")}</p>
                             <p className="text-xs text-muted-foreground">ID {String(c.id)}</p>
                           </div>
                         </div>
@@ -448,7 +450,7 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                           <Button size="sm" variant="outline" disabled={deleting} onClick={() => onChat(c)}>
                             <MessageCircle className="h-4 w-4" />
-                            Chatear
+                            {t("cl.chat")}
                           </Button>
                           <Button size="icon" variant="ghost" className="h-9 w-9" disabled={deleting} onClick={() => openEdit(c)}>
                             <Pencil className="h-4 w-4" />
@@ -476,38 +478,38 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Actualizar contacto</DialogTitle>
+            <DialogTitle>{t("cl.updateContact")}</DialogTitle>
             <DialogDescription>
-              Edita la información del contacto. El canal se mantiene como <span className="font-medium">{editChannel}</span>.
+              {t("cl.updateContactDesc")} <span className="font-medium">{editChannel}</span>.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label>Nombre</Label>
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Ej. Ana Martínez" />
+              <Label>{t("contacts.name")}</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder={t("contacts.namePlaceholder")} />
             </div>
 
             {String(editChannel).toLowerCase() === "facebook" ? (
               <div className="grid gap-2">
-                <Label>PSID (external_user_id)</Label>
-                <Input value={editExternal} onChange={(e) => setEditExternal(e.target.value)} placeholder="Ej. 1234567890" />
+                <Label>{t("contacts.psidLabel")}</Label>
+                <Input value={editExternal} onChange={(e) => setEditExternal(e.target.value)} placeholder={t("contacts.psidPlaceholder")} />
               </div>
             ) : (
               <div className="grid gap-2">
-                <Label>Teléfono</Label>
-                <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Ej. +52 1 5611 205 872" />
-                <p className="text-xs text-muted-foreground">Se normaliza a formato WhatsApp automáticamente.</p>
+                <Label>{t("contacts.phone")}</Label>
+                <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder={t("contacts.phonePlaceholder")} />
+                <p className="text-xs text-muted-foreground">{t("cl.phoneNormalizeHint")}</p>
               </div>
             )}
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)} disabled={editing}>
-              Cancelar
+              {t("chat.cancel")}
             </Button>
             <Button onClick={() => void handleSaveEdit()} disabled={editing}>
-              {editing ? "Guardando..." : "Guardar"}
+              {editing ? t("details.saving") : t("chat.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -517,22 +519,22 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {deleteMode === "all" ? "Eliminar todos los contactos" : deleteMode === "selected" ? "Eliminar contactos seleccionados" : "Eliminar contacto"}
+              {deleteMode === "all" ? t("cl.deleteAllTitle") : deleteMode === "selected" ? t("cl.deleteSelectedTitle") : t("cl.deleteOneTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará {deleteMode === "single" ? "el contacto" : "la selección"}{" "}
+              {t("cl.deleteConfirmPrefix")} {deleteMode === "single" ? t("cl.deleteConfirmSingle") : t("cl.deleteConfirmSelection")}{" "}
               <span className="font-medium">{deleteLabel}</span>.
-              {deleteMode === "all" ? " También se intentarán limpiar conversaciones y mensajes relacionados." : null}
+              {deleteMode === "all" ? ` ${t("cl.deleteAllExtra")}` : null}
             </AlertDialogDescription>
             {deleting ? (
               <div className="mt-4 flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Eliminando contactos, por favor espera...
+                {t("cl.deletingWait")}
               </div>
             ) : null}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t("chat.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => void handleConfirmDelete()}
               disabled={deleting}
@@ -541,10 +543,10 @@ export function ContactsList({ selectedId, onSelect, onChat, headerRight, onDele
               {deleting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Eliminando...
+                  {t("cl.deleting")}
                 </>
               ) : (
-                "Eliminar"
+                t("chat.delete")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

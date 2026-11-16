@@ -20,8 +20,10 @@ import {
 import { toast } from "@/hooks/use-toast"
 import type { Contact } from "@/hooks/use-contacts"
 import { Loader2, Upload } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 
 export default function ContactosPage() {
+    const { t } = useLanguage()
     // Normaliza el número de teléfono al formato internacional sin espacios
     const cleanPhone = (phone: string) => {
       if (!phone) return "";
@@ -40,8 +42,8 @@ export default function ContactosPage() {
       const phoneToSend = cleanPhone(newPhone);
       if (newChannel === "whatsapp" && !isValidPhone(phoneToSend)) {
         toast({
-          title: "Teléfono inválido",
-          description: "El número debe estar en formato internacional, ej: +5218443429366",
+          title: t("contacts.invalidPhoneTitle"),
+          description: t("contacts.invalidPhoneDesc"),
           variant: "destructive"
         });
         return;
@@ -55,17 +57,17 @@ export default function ContactosPage() {
           external_user_id: newChannel === "facebook" ? newExternalUserId : undefined,
         })
         if (res.status !== 201 && res.status !== 200) {
-          toast({ title: "Error", description: res.data?.error || "No se pudo crear el contacto", variant: "destructive" })
+          toast({ title: t("contacts.error"), description: res.data?.error || t("contacts.createFail"), variant: "destructive" })
           return
         }
-        toast({ title: "Contacto creado", description: "Ya puedes enviarle mensaje." })
+        toast({ title: t("contacts.createdTitle"), description: t("contacts.createdDesc") })
         setNewOpen(false)
         setNewName("")
         setNewPhone("")
         setNewExternalUserId("")
         setRefreshKey((p) => p + 1)
       } catch (e) {
-        toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo crear el contacto", variant: "destructive" })
+        toast({ title: t("contacts.error"), description: e instanceof Error ? e.message : t("contacts.createFail"), variant: "destructive" })
       } finally {
         setCreating(false)
       }
@@ -99,12 +101,12 @@ export default function ContactosPage() {
       const conversationId = data?.conversation?.id ? String(data.conversation.id) : "";
       if (!conversationId) throw new Error("No se pudo crear/obtener la conversación");
       toast({
-        title: data?.created ? "Conversación creada" : "Conversación abierta",
-        description: data?.created ? "Se creó un nuevo historial para este contacto." : "Se abrió el historial existente.",
+        title: data?.created ? t("contacts.convCreatedTitle") : t("contacts.convOpenedTitle"),
+        description: data?.created ? t("contacts.convCreatedDesc") : t("contacts.convOpenedDesc"),
       })
       router.push(`/inbox?conversationId=${encodeURIComponent(conversationId)}`);
     } catch (e) {
-      toast({ title: "Error", description: e instanceof Error ? e.message : "No se pudo abrir la conversación", variant: "destructive" })
+      toast({ title: t("contacts.error"), description: e instanceof Error ? e.message : t("contacts.convOpenFail"), variant: "destructive" })
     }
   }
 
@@ -130,14 +132,14 @@ export default function ContactosPage() {
 
       setPendingImportContacts(contacts)
       toast({
-        title: "Archivo leído",
-        description: `${contacts.length} contacto${contacts.length === 1 ? "" : "s"} listo${contacts.length === 1 ? "" : "s"} para importar.`,
+        title: t("contacts.fileReadTitle"),
+        description: `${contacts.length} ${contacts.length === 1 ? t("contacts.fileReadDescOne") : t("contacts.fileReadDescMany")}`,
       })
     } catch {
       setPendingImportContacts([])
       toast({
-        title: "Error al leer archivo",
-        description: "Revisa que sea un Excel o CSV válido.",
+        title: t("contacts.fileReadErrorTitle"),
+        description: t("contacts.fileReadErrorDesc"),
         variant: "destructive",
       })
     }
@@ -146,8 +148,8 @@ export default function ContactosPage() {
   const handleImportContacts = async () => {
     if (pendingImportContacts.length === 0) {
       toast({
-        title: "Sin contactos",
-        description: "Selecciona un archivo con contactos antes de importar.",
+        title: t("contacts.noContactsTitle"),
+        description: t("contacts.noContactsDesc"),
         variant: "destructive",
       })
       return
@@ -157,8 +159,8 @@ export default function ContactosPage() {
       setImporting(true)
       const { data } = await frontendApi.post("/api/contacts/import", { contacts: pendingImportContacts })
       toast({
-        title: "Contactos importados",
-        description: `${data.imported || 0} creados, ${data.updated || 0} actualizados, ${data.failed || 0} fallidos.`,
+        title: t("contacts.importedTitle"),
+        description: `${data.imported || 0} ${t("contacts.importedCreated")}, ${data.updated || 0} ${t("contacts.importedUpdated")}, ${data.failed || 0} ${t("contacts.importedFailed")}.`,
       })
       setImportOpen(false)
       setImportFileName("")
@@ -166,8 +168,8 @@ export default function ContactosPage() {
       setRefreshKey((p) => p + 1)
     } catch (error) {
       toast({
-        title: "Error al importar",
-        description: error instanceof Error ? error.message : "No se pudieron importar los contactos.",
+        title: t("contacts.importErrorTitle"),
+        description: error instanceof Error ? error.message : t("contacts.importErrorDesc"),
         variant: "destructive",
       })
     } finally {
@@ -195,33 +197,33 @@ export default function ContactosPage() {
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline" className="gap-2">
                       <Upload className="h-4 w-4" />
-                      Importar masivo
+                      {t("contacts.bulkImport")}
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Importar contactos masivamente</DialogTitle>
+                      <DialogTitle>{t("contacts.bulkImportTitle")}</DialogTitle>
                       <DialogDescription>
-                        Sube un Excel o CSV con columnas Nombre/name/CLIENTE y Teléfono/phone_number/PHONE_A.
+                        {t("contacts.bulkImportDesc")}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-3">
                       <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleImportFile} />
                       <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
                         {importFileName ? (
-                          <span>{importFileName}: {pendingImportContacts.length} contacto{pendingImportContacts.length === 1 ? "" : "s"} detectado{pendingImportContacts.length === 1 ? "" : "s"}.</span>
+                          <span>{importFileName}: {pendingImportContacts.length} {pendingImportContacts.length === 1 ? t("contacts.detectedOne") : t("contacts.detectedMany")}</span>
                         ) : (
-                          <span>Formato recomendado: CLIENTE, PHONE_A, canal.</span>
+                          <span>{t("contacts.recommendedFormat")}</span>
                         )}
                       </div>
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setImportOpen(false)} disabled={importing}>
-                        Cancelar
+                        {t("chat.cancel")}
                       </Button>
                       <Button onClick={() => void handleImportContacts()} disabled={importing || pendingImportContacts.length === 0}>
                         {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Importar
+                        {t("contacts.import")}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -229,18 +231,18 @@ export default function ContactosPage() {
 
                 <Dialog open={newOpen} onOpenChange={setNewOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm">Nuevo</Button>
+                    <Button size="sm">{t("contacts.new")}</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Nuevo contacto</DialogTitle>
+                      <DialogTitle>{t("contacts.newContact")}</DialogTitle>
                       <DialogDescription>
-                        Crea un contacto para iniciar una conversación y enviarle mensajes.
+                        {t("contacts.newContactDesc")}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4">
                       <div className="grid gap-2">
-                        <Label>Canal</Label>
+                        <Label>{t("contacts.channel")}</Label>
                         <select
                           value={newChannel}
                           onChange={(e) => setNewChannel(e.target.value === "facebook" ? "facebook" : "whatsapp")}
@@ -251,36 +253,36 @@ export default function ContactosPage() {
                         </select>
                       </div>
                       <div className="grid gap-2">
-                        <Label>Nombre</Label>
-                        <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Ej. Ana Martínez" />
+                        <Label>{t("contacts.name")}</Label>
+                        <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t("contacts.namePlaceholder")} />
                       </div>
                       {newChannel === "whatsapp" ? (
                         <div className="grid gap-2">
-                          <Label>Teléfono</Label>
+                          <Label>{t("contacts.phone")}</Label>
                           <Input
                             value={newPhone}
                             onChange={(e) => setNewPhone(e.target.value)}
-                            placeholder="Ej. +52 1 5611 205 872"
+                            placeholder={t("contacts.phonePlaceholder")}
                           />
-                          <p className="text-xs text-muted-foreground">Puedes pegarlo con o sin espacios; se normaliza automáticamente.</p>
+                          <p className="text-xs text-muted-foreground">{t("contacts.phoneHint")}</p>
                         </div>
                       ) : (
                         <div className="grid gap-2">
-                          <Label>PSID (external_user_id)</Label>
+                          <Label>{t("contacts.psidLabel")}</Label>
                           <Input
                             value={newExternalUserId}
                             onChange={(e) => setNewExternalUserId(e.target.value)}
-                            placeholder="Ej. 1234567890"
+                            placeholder={t("contacts.psidPlaceholder")}
                           />
                         </div>
                       )}
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setNewOpen(false)} disabled={creating}>
-                        Cancelar
+                        {t("chat.cancel")}
                       </Button>
                       <Button onClick={() => void handleCreateContact()} disabled={creating}>
-                        {creating ? "Creando..." : "Crear"}
+                        {creating ? t("contacts.creating") : t("contacts.create")}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
