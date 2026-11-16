@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { api } from "@/lib/api"
+import { api, frontendApi } from "@/lib/api"
 import {
   MessageSquare,
   Users,
-  Inbox,
   CheckCircle2,
   Clock,
   ArrowUpRight,
@@ -51,7 +50,6 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
   const locale = localeMap[language] || "es-MX"
   const router = useRouter()
   const [tenant, setTenant] = useState<TenantInfo | null>(null)
-  const [leadsCount, setLeadsCount] = useState<number | null>(null)
   const [messagingStats, setMessagingStats] = useState<{
     messagesSent: number
     messagesRead: number
@@ -62,15 +60,7 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
   useEffect(() => {
     let active = true
     api.get("/api/tenants/me").then(({ data }) => active && setTenant(data)).catch(() => {})
-    api
-      .get("/api/leads")
-      .then(({ data }) => {
-        if (!active) return
-        const list = Array.isArray(data) ? data : []
-        setLeadsCount(list.filter((l: any) => l.status === "new").length)
-      })
-      .catch(() => {})
-    api
+    frontendApi
       .get("/api/workspace/stats")
       .then(({ data }) => active && setMessagingStats(data))
       .catch(() => {})
@@ -101,12 +91,6 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
       value: `${agentsOnline}/${agents.length}`,
       icon: Users,
       accent: "bg-violet-50 text-violet-600",
-    },
-    {
-      label: t("overview.unattendedLeads"),
-      value: leadsCount ?? "—",
-      icon: Inbox,
-      accent: "bg-amber-50 text-amber-600",
     },
     {
       label: t("overview.messagesSent"),
@@ -179,7 +163,7 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
           ))}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -191,22 +175,6 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
             <CardContent>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => router.push("/inbox/agentes")}>
                 {t("overview.viewAgentPerformance")}
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Inbox className="h-4 w-4" />
-                {t("overview.leads")}
-              </CardTitle>
-              <CardDescription>{t("overview.leadsDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => router.push("/inbox/leads")}>
-                {t("overview.goToLeads")}
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Button>
             </CardContent>
