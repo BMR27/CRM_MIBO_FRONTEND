@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Phone, Video, Calendar, Clock, Trash2, CheckCircle, Search } from "lucide-react"
 import { format } from "date-fns"
-import { es } from "date-fns/locale"
+import { es, enUS, pl, ru } from "date-fns/locale"
+import { useLanguage } from "@/components/language-provider"
+
+const dateFnsLocales = { es, en: enUS, pl, ru }
 
 interface Call {
   id: string
@@ -20,6 +23,8 @@ interface Call {
 }
 
 export default function CallsPage() {
+  const { t, language } = useLanguage()
+  const dateLocale = dateFnsLocales[language] || es
   const [calls, setCalls] = useState<Call[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -63,7 +68,7 @@ export default function CallsPage() {
   }
 
   const handleDeleteCall = async (id: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar esta llamada?")) return
+    if (!confirm(t("calls.confirmDelete"))) return
 
     try {
       await fetch(`/api/calls/${id}`, {
@@ -78,7 +83,7 @@ export default function CallsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-muted-foreground">Cargando llamadas...</p>
+        <p className="text-muted-foreground">{t("calls.loading")}</p>
       </div>
     )
   }
@@ -91,10 +96,10 @@ export default function CallsPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Phone className="h-6 w-6" />
-              Gestión de Llamadas
+              {t("calls.title")}
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Administra y agenda llamadas con tus contactos
+              {t("calls.subtitle")}
             </p>
           </div>
         </div>
@@ -103,7 +108,7 @@ export default function CallsPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nombre o teléfono..."
+            placeholder={t("calls.searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -120,7 +125,7 @@ export default function CallsPage() {
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-blue-500" />
                 <h2 className="text-lg font-semibold">
-                  Llamadas Próximas ({pendingCalls.length})
+                  {t("calls.upcoming")} ({pendingCalls.length})
                 </h2>
               </div>
 
@@ -146,8 +151,8 @@ export default function CallsPage() {
                             <div className="flex items-center gap-2">
                               <Clock className="h-3 w-3" />
                               <span>
-                                {format(new Date(call.scheduled_at), "EEEE, dd 'de' MMMM 'a las' HH:mm", {
-                                  locale: es,
+                                {format(new Date(call.scheduled_at), t("calls.dateFormatLong"), {
+                                  locale: dateLocale,
                                 })}
                               </span>
                             </div>
@@ -172,7 +177,7 @@ export default function CallsPage() {
                         className="flex-1 h-8 text-xs"
                       >
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Marcar Completada
+                        {t("calls.markComplete")}
                       </Button>
                       <Button
                         size="sm"
@@ -195,7 +200,7 @@ export default function CallsPage() {
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
                 <h2 className="text-lg font-semibold">
-                  Llamadas Completadas ({completedCalls.length})
+                  {t("calls.completedSection")} ({completedCalls.length})
                 </h2>
               </div>
 
@@ -216,12 +221,12 @@ export default function CallsPage() {
                           <CardDescription className="text-xs mt-2">
                             <span>
                               {format(new Date(call.scheduled_at), "dd MMM HH:mm", {
-                                locale: es,
+                                locale: dateLocale,
                               })}
                             </span>
                           </CardDescription>
                         </div>
-                        <Badge variant="secondary">Completada</Badge>
+                        <Badge variant="secondary">{t("calls.completed")}</Badge>
                       </div>
                     </CardHeader>
                   </Card>
@@ -235,7 +240,7 @@ export default function CallsPage() {
             <div className="flex flex-col items-center justify-center py-12">
               <Phone className="h-12 w-12 text-muted-foreground/30 mb-4" />
               <p className="text-muted-foreground text-center">
-                {searchTerm ? "No se encontraron llamadas" : "No hay llamadas agendadas"}
+                {searchTerm ? t("calls.notFound") : t("calls.empty")}
               </p>
             </div>
           )}

@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek, subMonths } from "date-fns"
-import { es } from "date-fns/locale"
+import { es, enUS, pl, ru } from "date-fns/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Phone, Video, Users, ArrowLeft, ArrowRight, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/language-provider"
+
+const dateFnsLocales = { es, en: enUS, pl, ru }
 
 interface CallEvent {
   id: string
@@ -31,6 +34,8 @@ interface SessionEvent {
 type CalendarEvent = CallEvent | SessionEvent
 
 export default function CalendarPage() {
+  const { t, language } = useLanguage()
+  const dateLocale = dateFnsLocales[language] || es
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -67,8 +72,8 @@ export default function CalendarPage() {
   }, [])
 
   const days = useMemo(() => {
-    const start = startOfWeek(startOfMonth(currentMonth), { locale: es })
-    const end = endOfWeek(endOfMonth(currentMonth), { locale: es })
+    const start = startOfWeek(startOfMonth(currentMonth), { locale: dateLocale })
+    const end = endOfWeek(endOfMonth(currentMonth), { locale: dateLocale })
     return eachDayOfInterval({ start, end })
   }, [currentMonth])
 
@@ -90,13 +95,13 @@ export default function CalendarPage() {
       return (
         <Badge variant="outline" className="gap-1 text-xs">
           {event.call_type === "video" ? <Video className="h-3 w-3" /> : <Phone className="h-3 w-3" />}
-          {event.status || "pendiente"}
+          {event.status || t("cal.pending")}
         </Badge>
       )
     }
     return (
       <Badge variant="outline" className="gap-1 text-xs">
-        <Users className="h-3 w-3" /> {event.session_type || "sesión"}
+        <Users className="h-3 w-3" /> {event.session_type || t("cal.session")}
       </Badge>
     )
   }
@@ -107,8 +112,8 @@ export default function CalendarPage() {
         <div className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           <div>
-            <h1 className="text-xl font-bold">Calendario</h1>
-            <p className="text-muted-foreground text-sm">Llamadas y sesiones agendadas</p>
+            <h1 className="text-xl font-bold">{t("cal.title")}</h1>
+            <p className="text-muted-foreground text-sm">{t("cal.subtitle")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -116,7 +121,7 @@ export default function CalendarPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-[160px] text-center font-semibold">
-            {format(currentMonth, "MMMM yyyy", { locale: es })}
+            {format(currentMonth, "MMMM yyyy", { locale: dateLocale })}
           </div>
           <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
             <ArrowRight className="h-4 w-4" />
@@ -126,7 +131,7 @@ export default function CalendarPage() {
 
       <div className="flex-1 overflow-y-auto p-6">
         {loading ? (
-          <p className="text-center text-muted-foreground">Cargando eventos...</p>
+          <p className="text-center text-muted-foreground">{t("cal.loading")}</p>
         ) : (
           <div className="grid grid-cols-7 gap-3">
             {days.map((day) => {
@@ -143,8 +148,8 @@ export default function CalendarPage() {
                 >
                   <CardHeader className="py-3 px-3">
                     <div className="flex items-center justify-between">
-                      <span className={cn("text-sm font-semibold", isToday(day) && "text-primary")}>{format(day, "d", { locale: es })}</span>
-                      {isToday(day) && <Badge variant="secondary">Hoy</Badge>}
+                      <span className={cn("text-sm font-semibold", isToday(day) && "text-primary")}>{format(day, "d", { locale: dateLocale })}</span>
+                      {isToday(day) && <Badge variant="secondary">{t("cal.today")}</Badge>}
                     </div>
                   </CardHeader>
                   <CardContent className="px-3 pb-3 space-y-2">
@@ -158,25 +163,25 @@ export default function CalendarPage() {
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-semibold line-clamp-1">
                               {event.type === "call"
-                                ? event.contact_name || "Llamada"
-                                : event.user_name || "Sesión"}
+                                ? event.contact_name || t("cal.call")
+                                : event.user_name || t("cal.sessionFallback")}
                             </span>
                             {renderBadge(event)}
                           </div>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            {dateStr ? format(parseISO(dateStr), "HH:mm", { locale: es }) : "--:--"}
+                            {dateStr ? format(parseISO(dateStr), "HH:mm", { locale: dateLocale }) : "--:--"}
                           </div>
                           <p className="text-xs text-muted-foreground line-clamp-2">
                             {event.type === "call"
-                              ? event.phone_number || "Sin teléfono"
+                              ? event.phone_number || t("cal.noPhone")
                               : event.user_email}
                           </p>
                         </div>
                       )
                     })}
                     {dayEvents.length > 3 && (
-                      <p className="text-[11px] text-muted-foreground">+{dayEvents.length - 3} eventos más</p>
+                      <p className="text-[11px] text-muted-foreground">+{dayEvents.length - 3} {t("cal.moreEvents")}</p>
                     )}
                   </CardContent>
                 </Card>
