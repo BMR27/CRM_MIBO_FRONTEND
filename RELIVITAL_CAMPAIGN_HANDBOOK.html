@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Relivital Campaign Handbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600;6..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap">
+
+<style>
+  :root {
+    /* Relivital emblem: deep navy ground, brushed-chrome letterform */
+    --ink:        #0b1b38;
+    --navy:       #15346b;
+    --navy-soft:  #294f93;
+    --steel:      #5c7fb8;
+    --chrome:     #aeb8c6;
+    --platinum:   #dfe4ec;
+    --paper:      #f5f6f9;
+    --surface:    #ffffff;
+    --surface-2:  #eef1f6;
+    --line:       #d3dae5;
+    --line-soft:  #e4e9f1;
+    --text:       #16223a;
+    --text-dim:   #5a6880;
+    --text-faint: #8794a9;
+    --good:       #1f7a52;
+    --good-bg:    #e4f3eb;
+    --warn:       #8a5e0b;
+    --warn-bg:    #fbf0da;
+    --bad:        #ab2a20;
+    --bad-bg:     #fbe7e5;
+    --shadow:     0 1px 2px rgba(11,27,56,.06), 0 8px 24px -16px rgba(11,27,56,.35);
+
+    --f-display: "Bodoni Moda", "Didot", Georgia, serif;
+    --f-body: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink:        #060e1f;
+      --navy:       #0f2a5a;
+      --navy-soft:  #3763ab;
+      --steel:      #7ea0d6;
+      --chrome:     #9fabbd;
+      --platinum:   #c9d3e2;
+      --paper:      #0a1428;
+      --surface:    #101d37;
+      --surface-2:  #16254260;
+      --line:       #27395c;
+      --line-soft:  #1d2d4c;
+      --text:       #e3e9f4;
+      --text-dim:   #9fadc6;
+      --text-faint: #7585a1;
+      --good:       #6fd3a2;
+      --good-bg:    #0f2e22;
+      --warn:       #e3b65c;
+      --warn-bg:    #32260c;
+      --bad:        #f09a90;
+      --bad-bg:     #35150f;
+      --shadow:     0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:        #060e1f;
+    --navy:       #0f2a5a;
+    --navy-soft:  #3763ab;
+    --steel:      #7ea0d6;
+    --chrome:     #9fabbd;
+    --platinum:   #c9d3e2;
+    --paper:      #0a1428;
+    --surface:    #101d37;
+    --surface-2:  #16254260;
+    --line:       #27395c;
+    --line-soft:  #1d2d4c;
+    --text:       #e3e9f4;
+    --text-dim:   #9fadc6;
+    --text-faint: #7585a1;
+    --good:       #6fd3a2;
+    --good-bg:    #0f2e22;
+    --warn:       #e3b65c;
+    --warn-bg:    #32260c;
+    --bad:        #f09a90;
+    --bad-bg:     #35150f;
+    --shadow:     0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--text);
+    font-family: var(--f-body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- cover ---------- */
+  .cover {
+    background:
+      radial-gradient(120% 90% at 18% 12%, #1c4486 0%, transparent 60%),
+      radial-gradient(90% 80% at 90% 100%, #10326c 0%, transparent 62%),
+      var(--ink);
+    color: #eef2f8;
+    padding: 56px 16px 46px;
+    border-bottom: 1px solid var(--line);
+  }
+  .cover-inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 36px;
+  }
+  .emblem { width: 132px; height: 132px; flex: none; filter: drop-shadow(0 10px 22px rgba(0,0,0,.45)); }
+  .cover-copy { flex: 1 1 340px; min-width: 0; }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: #9fb4d8;
+    margin: 0 0 14px;
+  }
+  .cover h1 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: clamp(2.3rem, 6vw, 3.6rem);
+    line-height: 1.04;
+    letter-spacing: -.01em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+    color: #fff;
+  }
+  .cover .lede {
+    font-size: 1.08rem;
+    color: #c3d1e6;
+    max-width: 60ch;
+    margin: 0 0 24px;
+    font-weight: 300;
+  }
+  .cover-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #8da5cb;
+    border-top: 1px solid rgba(255,255,255,.14);
+    padding-top: 18px;
+  }
+  .cover-meta b { color: #dde6f4; font-weight: 600; }
+
+  /* ---------- shell ---------- */
+  .shell {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 16px 80px;
+    display: grid;
+    grid-template-columns: 228px minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 880px) {
+    .shell { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  }
+
+  nav.toc {
+    position: sticky;
+    top: 20px;
+    padding: 28px 0 0;
+    font-size: 14px;
+  }
+  @media (max-width: 880px) {
+    nav.toc {
+      position: static;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 18px 18px 14px;
+      margin-top: 24px;
+    }
+  }
+  .toc h2 {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 14px;
+    font-weight: 500;
+  }
+  .toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: toc; }
+  .toc a {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 4px;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 5px 0;
+    border-bottom: 1px solid transparent;
+    line-height: 1.35;
+  }
+  .toc a:hover { color: var(--navy-soft); }
+  .toc a span.n { font-family: var(--f-mono); font-size: 11.5px; color: var(--text-faint); padding-top: 2px; }
+  .toc a:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+
+  main { padding-top: 28px; min-width: 0; }
+
+  section { scroll-margin-top: 20px; padding-bottom: 14px; }
+  section + section { border-top: 1px solid var(--line-soft); padding-top: 40px; }
+
+  .chapter-no {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: .2em;
+    color: var(--steel);
+    text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+  h2.chapter {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: clamp(1.6rem, 3.4vw, 2.1rem);
+    line-height: 1.14;
+    margin: 0 0 12px;
+    color: var(--text);
+    text-wrap: balance;
+    letter-spacing: -.005em;
+  }
+  h3 {
+    font-family: var(--f-body);
+    font-weight: 700;
+    font-size: 1.04rem;
+    letter-spacing: .005em;
+    margin: 32px 0 8px;
+    color: var(--text);
+  }
+  h4 {
+    font-family: var(--f-mono);
+    font-weight: 500;
+    font-size: 11.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 26px 0 10px;
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  .intro { font-size: 1.05rem; color: var(--text-dim); max-width: 66ch; }
+  ul, ol.plain { max-width: 68ch; padding-left: 20px; margin: 0 0 14px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 600; }
+  a.inline { color: var(--navy-soft); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+  code, .mono {
+    font-family: var(--f-mono);
+    font-size: .86em;
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--navy-soft);
+    white-space: nowrap;
+  }
+  :root[data-theme="dark"] code, :root[data-theme="dark"] .mono { color: var(--steel); }
+
+  /* ---------- steps ---------- */
+  ol.steps {
+    list-style: none;
+    counter-reset: step;
+    margin: 18px 0 20px;
+    padding: 0;
+    display: grid;
+    gap: 2px;
+  }
+  ol.steps > li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line-soft);
+    margin: 0;
+    max-width: none;
+  }
+  ol.steps > li:first-child { border-top: 1px solid var(--line-soft); }
+  /* the marker owns column 1, row 1; every real child stacks in column 2 */
+  ol.steps > li > * { grid-column: 2; min-width: 0; }
+  ol.steps > li::before {
+    grid-column: 1;
+    grid-row: 1;
+    content: counter(step, decimal-leading-zero);
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--surface);
+    background: var(--navy);
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    letter-spacing: 0;
+  }
+  :root[data-theme="dark"] ol.steps > li::before { color: #dfe8f7; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) ol.steps > li::before { color: #dfe8f7; }
+  }
+  ol.steps .st { font-weight: 600; display: block; margin-bottom: 3px; }
+  ol.steps p { margin: 0 0 8px; }
+  ol.steps p:last-child { margin-bottom: 0; }
+  ol.steps ul { margin: 6px 0 0; }
+
+  /* ---------- tables ---------- */
+  .table-wrap { overflow-x: auto; margin: 16px 0 22px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 480px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  thead th {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.mono-cell { font-family: var(--f-mono); font-size: 13px; color: var(--navy-soft); white-space: nowrap; }
+  :root[data-theme="dark"] td.mono-cell { color: var(--steel); }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    border-left: 3px solid var(--steel);
+    background: var(--surface);
+    border-top: 1px solid var(--line-soft);
+    border-right: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
+    padding: 14px 18px;
+    margin: 18px 0 22px;
+    font-size: 15px;
+  }
+  .note p { margin: 0; max-width: 64ch; }
+  .note p + p { margin-top: 8px; }
+  .note .tag {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--steel);
+    display: block;
+    margin-bottom: 5px;
+  }
+  .note.warn { border-left-color: var(--warn); }
+  .note.warn .tag { color: var(--warn); }
+  .note.stop { border-left-color: var(--bad); }
+  .note.stop .tag { color: var(--bad); }
+
+  /* ---------- pills ---------- */
+  .pill {
+    display: inline-block;
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .pill.ok   { color: var(--good); background: var(--good-bg); border-color: color-mix(in srgb, var(--good) 35%, transparent); }
+  .pill.warn { color: var(--warn); background: var(--warn-bg); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+  .pill.bad  { color: var(--bad);  background: var(--bad-bg);  border-color: color-mix(in srgb, var(--bad) 35%, transparent); }
+  .pill.info { color: var(--navy-soft); background: var(--surface-2); border-color: var(--line); }
+  :root[data-theme="dark"] .pill.info { color: var(--steel); }
+
+  /* ---------- module grid ---------- */
+  .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0; margin: 18px 0 24px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--surface); }
+  .module { padding: 16px 18px; border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
+  .module h5 { margin: 0 0 4px; font-size: 15px; font-weight: 700; font-family: var(--f-body); }
+  .module p { margin: 0; font-size: 14px; color: var(--text-dim); max-width: none; }
+  .module .who { font-family: var(--f-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); display: block; margin-top: 7px; }
+
+  /* ---------- screen mock ---------- */
+  .mock {
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    margin: 20px 0 24px;
+    overflow: hidden;
+  }
+  .mock-bar {
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+    padding: 9px 14px;
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .mock-body { padding: 16px 18px; display: grid; gap: 14px; }
+  .field { display: grid; gap: 5px; }
+  .field .lbl { font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
+  .field .box {
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 8px 11px;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--paper);
+    font-family: var(--f-mono);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .field .hint { font-size: 12.5px; color: var(--text-faint); }
+  .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .preview-msg {
+    border: 1px dashed var(--line);
+    border-radius: 3px;
+    padding: 12px 14px;
+    background: var(--paper);
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    color: var(--text);
+    max-height: 190px;
+    overflow: auto;
+  }
+  .var { background: color-mix(in srgb, var(--steel) 20%, transparent); border-radius: 2px; padding: 0 3px; font-family: var(--f-mono); font-size: .88em; }
+
+  /* ---------- pipeline diagram ---------- */
+  figure { margin: 22px 0 26px; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { font-size: 13px; color: var(--text-faint); margin-top: 10px; font-family: var(--f-mono); letter-spacing: .04em; }
+
+  /* ---------- checklist ---------- */
+  ul.check { list-style: none; padding: 0; display: grid; gap: 0; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); margin: 18px 0 22px; max-width: none; }
+  ul.check li { position: relative; padding: 11px 16px 11px 42px; border-bottom: 1px solid var(--line-soft); margin: 0; font-size: 15px; }
+  ul.check li:last-child { border-bottom: 0; }
+  ul.check li::before {
+    content: "";
+    position: absolute;
+    left: 16px; top: 16px;
+    width: 15px; height: 15px;
+    border: 1.5px solid var(--steel);
+    border-radius: 2px;
+  }
+
+  .colophon {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 26px 16px 60px;
+    border-top: 1px solid var(--line);
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 26px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+  html { scroll-behavior: smooth; }
+</style>
+
+<header class="cover">
+  <div class="cover-inner">
+    <svg class="emblem" viewBox="0 0 200 200" role="img" aria-label="Relivital emblem">
+      <defs>
+        <radialGradient id="disc" cx="38%" cy="30%" r="78%">
+          <stop offset="0%" stop-color="#2b5596"/>
+          <stop offset="55%" stop-color="#17386f"/>
+          <stop offset="100%" stop-color="#0a1c3c"/>
+        </radialGradient>
+        <linearGradient id="chromeRing" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f4f6f9"/>
+          <stop offset="22%" stop-color="#9aa5b4"/>
+          <stop offset="46%" stop-color="#eef1f5"/>
+          <stop offset="70%" stop-color="#7d8798"/>
+          <stop offset="100%" stop-color="#e6eaf0"/>
+        </linearGradient>
+        <linearGradient id="chromeLetter" x1="0.1" y1="0" x2="0.9" y2="1">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="30%" stop-color="#b6c0cd"/>
+          <stop offset="52%" stop-color="#f7f9fb"/>
+          <stop offset="74%" stop-color="#8d97a6"/>
+          <stop offset="100%" stop-color="#dfe4ea"/>
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r="96" fill="url(#chromeRing)"/>
+      <circle cx="100" cy="100" r="88" fill="url(#disc)"/>
+      <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+      <text x="100" y="150" text-anchor="middle"
+            font-family="Bodoni Moda, Didot, Georgia, serif" font-size="136" font-weight="600"
+            fill="url(#chromeLetter)" stroke="#6f7988" stroke-width="1.1">R</text>
+    </svg>
+    <div class="cover-copy">
+      <p class="eyebrow">Relivital&nbsp;·&nbsp;CRM Operations</p>
+      <h1>The Relivital Campaign Handbook</h1>
+      <p class="lede">Everything an agent or supervisor needs to run the CRM day to day — the inbox, the contact base, and above all how to build, send and audit a WhatsApp campaign, whether the recipients come from your saved contacts or straight out of an Excel file.</p>
+      <div class="cover-meta">
+        <span><b>Edition</b> November 2026</span>
+        <span><b>Audience</b> Agents · Supervisors · Admins</span>
+        <span><b>Channel</b> WhatsApp Business via Twilio</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc" aria-label="Contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#ch1"><span class="n">01</span><span>What this system is</span></a></li>
+      <li><a href="#ch2"><span class="n">02</span><span>First login &amp; the workspace</span></a></li>
+      <li><a href="#ch3"><span class="n">03</span><span>The eight modules</span></a></li>
+      <li><a href="#ch4"><span class="n">04</span><span>Before you can send</span></a></li>
+      <li><a href="#ch5"><span class="n">05</span><span>Contacts: the recipient base</span></a></li>
+      <li><a href="#ch6"><span class="n">06</span><span>Templates and their variables</span></a></li>
+      <li><a href="#ch7"><span class="n">07</span><span>Campaign A — saved contacts</span></a></li>
+      <li><a href="#ch8"><span class="n">08</span><span>Campaign B — from Excel</span></a></li>
+      <li><a href="#ch9"><span class="n">09</span><span>What happens on send</span></a></li>
+      <li><a href="#ch10"><span class="n">10</span><span>Tracking &amp; auditing</span></a></li>
+      <li><a href="#ch11"><span class="n">11</span><span>Errors and what to do</span></a></li>
+      <li><a href="#ch12"><span class="n">12</span><span>Pre-flight checklist</span></a></li>
+      <li><a href="#ch13"><span class="n">13</span><span>Glossary</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <!-- 01 -->
+    <section id="ch1">
+      <p class="chapter-no">Chapter 01</p>
+      <h2 class="chapter">What this system is</h2>
+      <p class="intro">A multi-channel CRM built around one WhatsApp Business number. Every customer message lands in a shared inbox, every customer is a contact record, and every outbound mass message is a <strong>campaign</strong> with its own code, recipient list and audit trail.</p>
+
+      <p>Three ideas carry the whole product. Learn them once and the rest of the interface explains itself.</p>
+
+      <h3>Workspace</h3>
+      <p>Your company is a workspace (internally, a <em>tenant</em>). Contacts, conversations, campaigns, agents and settings all belong to it, and nothing crosses between workspaces. Features are switched on per workspace, so a menu entry a colleague at another company describes may simply not exist in yours. Relivital also has its own private template that no other workspace can see or send.</p>
+
+      <h3>Conversation</h3>
+      <p>One continuous thread per contact. When a campaign message goes out, it is written into that same thread — so the agent who later picks up the reply sees the exact promotional text the customer received, not a placeholder.</p>
+
+      <h3>Campaign</h3>
+      <p>A single approved WhatsApp template, sent to many contacts in one operation, recorded under a generated code such as <code>CMP-20261116094500</code>. The code is what you quote in a meeting, paste into a ticket, or search for three weeks later.</p>
+
+      <figure>
+        <svg viewBox="0 0 880 150" role="img" aria-labelledby="flowtitle">
+          <title id="flowtitle">From recipient list to audited campaign</title>
+          <defs>
+            <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <g fill="currentColor" color="var(--steel)">
+            <g font-family="IBM Plex Mono, monospace" font-size="11.5" letter-spacing="1">
+              <rect x="2" y="34" width="150" height="60" rx="3" fill="var(--surface)" stroke="var(--line)"/>
+              <text x="77" y="58" text-anchor="middle" fill="var(--text)" font-size="12.5">Recipients</text>
+              <text x="77" y="76" text-anchor="middle" fill="var(--text-faint)">SAVED · EXCEL</text>
+
+              <rect x="186" y="34" width="150" height="60" rx="3" fill="var(--surface)" stroke="var(--line)"/>
+              <text x="261" y="58" text-anchor="middle" fill="var(--text)" font-size="12.5">Template</text>
+              <text x="261" y="76" text-anchor="middle" fill="var(--text-faint)">+ VARIABLES</text>
+
+              <rect x="370" y="34" width="150" height="60" rx="3" fill="var(--navy)" stroke="var(--navy)"/>
+              <text x="445" y="58" text-anchor="middle" fill="#ffffff" font-size="12.5">Validation</text>
+              <text x="445" y="76" text-anchor="middle" fill="#a9c0e4">ROW BY ROW</text>
+
+              <rect x="554" y="34" width="150" height="60" rx="3" fill="var(--surface)" stroke="var(--line)"/>
+              <text x="629" y="58" text-anchor="middle" fill="var(--text)" font-size="12.5">WhatsApp</text>
+              <text x="629" y="76" text-anchor="middle" fill="var(--text-faint)">TWILIO SEND</text>
+
+              <rect x="738" y="34" width="140" height="60" rx="3" fill="var(--surface)" stroke="var(--line)"/>
+              <text x="808" y="58" text-anchor="middle" fill="var(--text)" font-size="12.5">Campaign log</text>
+              <text x="808" y="76" text-anchor="middle" fill="var(--text-faint)">CMP-CODE</text>
+            </g>
+            <g stroke="var(--steel)" stroke-width="1.4" marker-end="url(#arw)" fill="none">
+              <path d="M154 64 H180"/>
+              <path d="M338 64 H364"/>
+              <path d="M522 64 H548"/>
+              <path d="M706 64 H732"/>
+            </g>
+            <text x="445" y="122" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--text-faint)">one blocking stop: a single incomplete row halts the whole send before message #1</text>
+          </g>
+        </svg>
+        <figcaption>Fig. 1 — The path every campaign takes, left to right.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 02 -->
+    <section id="ch2">
+      <p class="chapter-no">Chapter 02</p>
+      <h2 class="chapter">First login and the workspace</h2>
+
+      <ol class="steps">
+        <li>
+          <span class="st">Sign in</span>
+          <p>Open the CRM URL and sign in with the email and password your administrator created for you. Sessions are per browser — signing in on your phone does not sign you out on your desktop.</p>
+        </li>
+        <li>
+          <span class="st">Let the guided tour run</span>
+          <p>The very first time you open the CRM in a given browser, an interactive guide opens by itself: a module list on the left, numbered steps on the right. It appears once per browser, and you can reopen it any time from <strong>Guide</strong> at the bottom of the sidebar. This handbook is the long-form version of the same material.</p>
+        </li>
+        <li>
+          <span class="st">Set your language and theme</span>
+          <p>In <strong>Settings → Appearance</strong>, choose light, dark or system theme, and set the interface language: Spanish, English, Polish or Russian. The choice affects the whole interface, including this manual's terminology. Polish matters here: the Relivital discount template is written in Polish for Polish customers.</p>
+        </li>
+        <li>
+          <span class="st">Check what your role lets you see</span>
+          <p>Agents see conversations, contacts, campaigns and appointments. Supervisors additionally see Agents, Leads and Statistics. Administrators also get Settings; integrations and security panels are reserved for the platform super-admin. If a module named in this handbook is missing from your sidebar, it is either off for your workspace or above your role.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 03 -->
+    <section id="ch3">
+      <p class="chapter-no">Chapter 03</p>
+      <h2 class="chapter">The eight modules</h2>
+      <p class="intro">A map of the sidebar, so you know where each task lives before you start hunting for it.</p>
+
+      <div class="modules">
+        <div class="module">
+          <h5>Conversations</h5>
+          <p>The unified inbox. Reply, attach images and documents, insert saved macros, set status and priority, reassign to another agent, and leave internal notes the customer never sees.</p>
+          <span class="who">All roles</span>
+        </div>
+        <div class="module">
+          <h5>Contacts</h5>
+          <p>The customer directory. Create one by hand, bulk-import from Excel or CSV, edit a wrong number, or jump straight into a person's WhatsApp thread.</p>
+          <span class="who">All roles</span>
+        </div>
+        <div class="module">
+          <h5>Campaigns</h5>
+          <p>Bulk sends of approved templates, plus the full history: recipients, delivered, failed, status, and the message text each person actually received.</p>
+          <span class="who">All roles</span>
+        </div>
+        <div class="module">
+          <h5>Appointments</h5>
+          <p>A shared calendar for calls and video calls, with day, week and month views and a WhatsApp invite button for the customer.</p>
+          <span class="who">Admin · if enabled</span>
+        </div>
+        <div class="module">
+          <h5>Agents</h5>
+          <p>Your team roster with live availability, account creation with a role, and handled-versus-resolved counts per agent.</p>
+          <span class="who">Supervisor+</span>
+        </div>
+        <div class="module">
+          <h5>Leads</h5>
+          <p>Prospects captured from a website form or an external system through an API key, convertible into contacts in one click.</p>
+          <span class="who">Supervisor+</span>
+        </div>
+        <div class="module">
+          <h5>API documentation</h5>
+          <p>Endpoints grouped by topic with copyable examples, token authentication, and outgoing webhooks for replies and delivery status.</p>
+          <span class="who">If enabled</span>
+        </div>
+        <div class="module">
+          <h5>Statistics</h5>
+          <p>Open versus resolved conversations, agents online, messages sent, read and replied — the operational pulse.</p>
+          <span class="who">Supervisor+</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section id="ch4">
+      <p class="chapter-no">Chapter 04</p>
+      <h2 class="chapter">Before you can send anything</h2>
+      <p class="intro">Campaigns depend on three things being true. Confirm them before you spend an afternoon preparing a list.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Requirement</th><th>Who arranges it</th><th>How you know it is missing</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Bulk messaging enabled</strong> for your workspace</td>
+              <td>Platform administrator</td>
+              <td>The Campaigns entry is absent, or the send is rejected outright</td>
+            </tr>
+            <tr>
+              <td><strong>A WhatsApp sender number</strong> connected to the workspace</td>
+              <td>Platform administrator</td>
+              <td>“WhatsApp is not configured for this workspace”</td>
+            </tr>
+            <tr>
+              <td><strong>At least one approved template</strong> visible to you</td>
+              <td>Meta approval + platform admin</td>
+              <td>The template dropdown is empty or lacks the one you expected</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="tag">Why templates at all</span>
+        <p>WhatsApp only lets a business open a conversation with a customer using a message template that Meta has reviewed and approved in advance. Free-form text is allowed only inside the 24-hour window that follows a customer's own message. That is why a campaign is always built around a template and never around a sentence you type on the spot — and why a brand-new template can sit pending for hours before it will send.</p>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section id="ch5">
+      <p class="chapter-no">Chapter 05</p>
+      <h2 class="chapter">Contacts: the recipient base</h2>
+      <p class="intro">Campaigns can read recipients from your saved contacts, so the quality of the directory is the quality of your campaigns. Spend the time here, not in the send form.</p>
+
+      <h3>Phone numbers are strict</h3>
+      <p>Every WhatsApp number must be full international E.164 format: a leading <code>+</code>, a country code that does not start with zero, and 9 to 14 digits after it — no spaces, dashes or parentheses. The form normalizes spacing and adds the <code>+</code> if you forgot it, but it will reject anything that is not a plausible international number.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Written as</th><th>Verdict</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td class="mono-cell">+48 12 420 73 49</td><td><span class="pill ok">Accepted</span></td><td>Spaces are stripped automatically</td></tr>
+            <tr><td class="mono-cell">+525512345678</td><td><span class="pill ok">Accepted</span></td><td>Canonical E.164</td></tr>
+            <tr><td class="mono-cell">5512345678</td><td><span class="pill warn">Risky</span></td><td>A <code>+</code> is prepended, but with no country code it will not deliver</td></tr>
+            <tr><td class="mono-cell">(55) 1234-5678</td><td><span class="pill bad">Rejected</span></td><td>Punctuation is not a digit</td></tr>
+            <tr><td class="mono-cell">5.25635E+11</td><td><span class="pill bad">Rejected</span></td><td>Excel turned the number into scientific notation — see Chapter 08</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Adding contacts one at a time</h3>
+      <ol class="steps">
+        <li><span class="st">Open Contacts and choose New</span><p>Pick the channel first — WhatsApp or Facebook — because it changes the rest of the form.</p></li>
+        <li><span class="st">Fill the identifying field</span><p>WhatsApp contacts need a name and an E.164 phone number. Facebook contacts need the page-scoped user ID (PSID) instead of a phone.</p></li>
+        <li><span class="st">Create, then chat</span><p>The new contact appears in the list immediately. The chat action opens their existing conversation if there is one, and only creates a fresh thread when there is no history — so you never end up with two threads for the same person.</p></li>
+      </ol>
+
+      <h3>Bulk import from Excel</h3>
+      <p>Contacts → <strong>Bulk import</strong> accepts <code>.xlsx</code>, <code>.xls</code> and <code>.csv</code>. The importer reads the first sheet and is deliberately forgiving about header names, so an export from another system usually works untouched.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Accepted column headers</th><th>Required</th></tr></thead>
+          <tbody>
+            <tr><td>Name</td><td class="mono-cell">name · nombre · Nombre · CLIENTE · Cliente</td><td>Recommended</td></tr>
+            <tr><td>Phone</td><td class="mono-cell">phone_number · telefono · Teléfono · Telefono · PHONE_A · phone</td><td>Yes, for WhatsApp</td></tr>
+            <tr><td>Channel</td><td class="mono-cell">channel · canal</td><td>No — defaults to <code>whatsapp</code></td></tr>
+            <tr><td>Facebook ID</td><td class="mono-cell">external_user_id · externalUserId</td><td>Only for Facebook contacts</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ol class="steps">
+        <li><span class="st">Choose the file</span><p>The CRM reads it in your browser and reports how many usable rows it found. Rows with neither a phone number nor a Facebook ID are discarded silently at this stage — if the count looks low, that is why.</p></li>
+        <li><span class="st">Review the count, then import</span><p>Nothing is written until you press Import. The result tells you three numbers: created, updated and failed.</p></li>
+        <li><span class="st">Understand “updated”</span><p>A row whose number already exists updates that contact instead of duplicating it. Re-importing a corrected list is therefore safe and is the normal way to fix a batch of bad names.</p></li>
+      </ol>
+    </section>
+
+    <!-- 06 -->
+    <section id="ch6">
+      <p class="chapter-no">Chapter 06</p>
+      <h2 class="chapter">Templates and their variables</h2>
+      <p class="intro">A template is fixed text with numbered slots — <span class="var">{{1}}</span>, <span class="var">{{2}}</span>, <span class="var">{{3}}</span> — and each slot is mapped to a named field the CRM fills per recipient.</p>
+
+      <h3>Which templates you can see</h3>
+      <p>Workspaces with a dedicated template see <em>only</em> their own; everyone else sees the shared defaults. Relivital is in the first group, which is why the Relivital discount template is the only option in that workspace rather than one option among three.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Template</th><th>Language</th><th>Slots → fields</th><th>Visibility</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="mono-cell">customer_service_intro_v1</td>
+              <td>es_MX</td>
+              <td class="mono-cell">1 CLIENTE · 2 ASESOR · 3 PRODUCTS_A</td>
+              <td>Shared default</td>
+            </tr>
+            <tr>
+              <td class="mono-cell">pedido_enviado_v1</td>
+              <td>es_MX</td>
+              <td class="mono-cell">1 TOTAL_PEDIDO · 2 TRACKING · 3 PAQUETERIA</td>
+              <td>Shared default</td>
+            </tr>
+            <tr>
+              <td class="mono-cell">relivital_descuento20_v2</td>
+              <td>pl</td>
+              <td class="mono-cell">1 CLIENTE · 2 FECHA_LIMITE</td>
+              <td><span class="pill info">Relivital only</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Fields the CRM fills for you</h3>
+      <p>Three names are resolved automatically and never appear as something to type:</p>
+      <ul>
+        <li><code>CLIENTE</code> — the contact's name, from the selected contact or the Excel row.</li>
+        <li><code>PHONE_A</code> — the destination number, same source.</li>
+        <li><code>ASESOR</code> — the signed-in agent's name; if it is somehow blank, the template's own fallback is used, so a send is never blocked on it.</li>
+      </ul>
+      <p>Everything else is an <strong>extra field</strong>: <code>PRODUCTS_A</code>, <code>TOTAL_PEDIDO</code>, <code>TRACKING</code>, <code>PAQUETERIA</code>, <code>FECHA_LIMITE</code>. Extras are the single most common cause of a blocked send, and Chapters 07 and 08 show the two ways to supply them.</p>
+
+      <div class="note">
+        <span class="tag">Version note</span>
+        <p>The Relivital template ends with a deadline the customer must beat. In <code>v1</code> that date was baked into the approved text; <code>v2</code> promotes it to <span class="var">{{2}}</span> = <code>FECHA_LIMITE</code>, so the same template can be reused every month by typing a new date. A freshly submitted version cannot send until Meta approves it.</p>
+      </div>
+    </section>
+
+    <!-- 07 -->
+    <section id="ch7">
+      <p class="chapter-no">Chapter 07</p>
+      <h2 class="chapter">Campaign A — sending to saved contacts</h2>
+      <p class="intro">The route to use when the recipients already live in your CRM: a hand-picked segment, a follow-up to last week's buyers, a retry to a handful of people. One value per extra field applies to the whole batch.</p>
+
+      <ol class="steps">
+        <li>
+          <span class="st">Open Campaigns and press New campaign</span>
+          <p>The composer opens above the history table: the form on the left, a live summary panel on the right. Nothing is sent until you press Send in that panel.</p>
+        </li>
+        <li>
+          <span class="st">Name the campaign</span>
+          <p>Use something you will recognize in a list of fifty — “Polish customers · November 20% discount”. Leave it blank and the CRM names it after the template plus the generated code, which is accurate but anonymous.</p>
+        </li>
+        <li>
+          <span class="st">Choose the template</span>
+          <p>Only templates visible to your workspace are listed. The summary panel on the right immediately shows the full approved text with its slots in place, so you can read exactly what the customer will get before committing.</p>
+        </li>
+        <li>
+          <span class="st">Fill the template's extra fields</span>
+          <p>If the template has extras, an input appears for each one. Whatever you type applies to <em>every</em> recipient in this campaign — that is the defining limit of this route. One date, one courier, one product name for the whole batch.</p>
+        </li>
+        <li>
+          <span class="st">Switch the recipient source to Saved contacts</span>
+          <p>This is the default. Only WhatsApp contacts are listed; Facebook contacts cannot receive a WhatsApp template and are filtered out of the picker entirely.</p>
+        </li>
+        <li>
+          <span class="st">Search, then tick</span>
+          <p>The search box filters by name, number or contact ID. <strong>Select filtered</strong> ticks everything currently matching — the fast way to take a whole segment — and <strong>Clear selection</strong> empties it. Two counters under the box keep you honest: how many are selected, and how many are visible under the current filter. They are different numbers, and the one that matters is <em>selected</em>.</p>
+        </li>
+        <li>
+          <span class="st">Add internal notes</span>
+          <p>Optional, never sent to anyone. This is where the segmentation reasoning belongs: “bought in September, no reorder since”.</p>
+        </li>
+        <li>
+          <span class="st">Read the summary panel, then send</span>
+          <p>The badge shows the recipient count, and the first twenty names and numbers are listed beneath the template text. Check that count against what you intended. Then press <strong>Send now</strong> — the button stays disabled while there are no recipients or no template.</p>
+        </li>
+      </ol>
+
+      <div class="mock" aria-label="Example of the composer filled for a saved-contacts campaign">
+        <div class="mock-bar"><span>New campaign · saved contacts</span><span>24 recipients</span></div>
+        <div class="mock-body">
+          <div class="two-col">
+            <div class="field"><span class="lbl">Campaign name</span><span class="box">Polish customers · Nov 20% discount</span></div>
+            <div class="field"><span class="lbl">Template</span><span class="box">relivital_descuento20_v2</span></div>
+          </div>
+          <div class="field">
+            <span class="lbl">Template fields</span>
+            <span class="box">FECHA_LIMITE = 30.11.2026</span>
+            <span class="hint">Applies to all 24 recipients. CLIENTE and PHONE_A come from each contact.</span>
+          </div>
+          <div class="field">
+            <span class="lbl">Message preview</span>
+            <div class="preview-msg">Pani <span class="var">{{1}}</span>, wybrała już Pani Relivital — więc wie, jak ważna jest regularna pielęgnacja skóry.
+Kolagen morski i elastyna działają stopniowo — dlatego warto kontynuować pielęgnację bez dłuższych przerw.
+Właśnie dla naszych Klientek przygotowaliśmy rabat 20% na kolejne zamówienie Relivital, na dowolną liczbę opakowań.
+Zwykle ten rabat obowiązuje tylko miesiąc po zakupie, ale dla Pani przedłużyliśmy go do <span class="var">{{2}}</span>.
+Wystarczy zadzwonić pod numer +48 12 420 73 49 i podać naszej konsultantce kod KLIENT20.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note warn">
+        <span class="tag">Blocking rule</span>
+        <p>On this route, every extra field must be filled before anything is sent. Leave one empty and the send stops with “Enter the field <em>FIELD</em>…” — no partial batch goes out. If different recipients need different values, that is the Excel route, not this one.</p>
+      </div>
+    </section>
+
+    <!-- 08 -->
+    <section id="ch8">
+      <p class="chapter-no">Chapter 08</p>
+      <h2 class="chapter">Campaign B — sending from an Excel file</h2>
+      <p class="intro">The route for large lists, for people who are not in the CRM yet, and — crucially — for campaigns where each recipient needs <em>their own</em> values: their own tracking number, their own order total, their own deadline.</p>
+
+      <ol class="steps">
+        <li>
+          <span class="st">Pick the template first, then download its spreadsheet</span>
+          <p>With the template selected, press <strong>Download Excel</strong>. The file you get is generated for that specific template: a header row of exactly the columns it needs, plus one example row. Never build the sheet from memory — the headers are the contract.</p>
+        </li>
+        <li>
+          <span class="st">Understand the columns</span>
+          <p>Column 1 is always <code>CLIENTE</code>, column 2 is always <code>PHONE_A</code>, and after them comes one column per extra field. For <code>pedido_enviado_v1</code>, that means <code>CLIENTE</code>, <code>PHONE_A</code>, <code>TOTAL_PEDIDO</code>, <code>TRACKING</code>, <code>PAQUETERIA</code>.</p>
+        </li>
+        <li>
+          <span class="st">Fill one row per recipient</span>
+          <p>Delete the example row. Every row must have a destination number and a value in every extra column — a blank cell anywhere stops the whole send.</p>
+        </li>
+        <li>
+          <span class="st">Format the phone column as text</span>
+          <p>This is the one Excel habit worth drilling. Select the phone column, set the cell format to <em>Text</em> before pasting, and keep the leading <code>+</code>. Left as a number, Excel displays long numbers as <code>5.25635E+11</code> and strips the <code>+</code>. The CRM defends against this — it reads the underlying numeric value rather than the displayed text, and converts whole numbers back to digits — but a number that lost its country code cannot be recovered by anyone.</p>
+        </li>
+        <li>
+          <span class="st">Let dates be real dates</span>
+          <p>A date cell is read as a date and rewritten as <code>DD/MM/YYYY</code> before it reaches the message, so the customer never sees an Excel serial number like <code>46368</code>. Either a true date cell or plain text works; what fails is a date typed into a cell someone pre-formatted as General and then switched to Number.</p>
+        </li>
+        <li>
+          <span class="st">Switch the recipient source to Excel and upload</span>
+          <p>In the composer, flip the recipient toggle from Saved contacts to <strong>Excel</strong> and choose the file. Only the first sheet is read. <code>.xlsx</code>, <code>.xls</code> and <code>.csv</code> are all accepted.</p>
+        </li>
+        <li>
+          <span class="st">Verify in the summary panel</span>
+          <p>The badge count must match your row count, and the preview list must show real names against real numbers. A count that is one too high usually means the example row is still there; names reading “undefined” mean the header spelling drifted.</p>
+        </li>
+        <li>
+          <span class="st">Send</span>
+          <p>The per-recipient extra-field inputs are not used on this route — the spreadsheet supplies those values row by row. That is the whole point of choosing it.</p>
+        </li>
+      </ol>
+
+      <h3>Accepted header spellings</h3>
+      <p>Extra-field columns must match the template's field names exactly. The two identity columns are more tolerant:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Purpose</th><th>Preferred header</th><th>Also accepted</th></tr></thead>
+          <tbody>
+            <tr><td>Recipient name</td><td class="mono-cell">CLIENTE</td><td class="mono-cell">Nombre · name</td></tr>
+            <tr><td>Destination number</td><td class="mono-cell">PHONE_A</td><td class="mono-cell">Teléfono · phone</td></tr>
+            <tr><td>Extra fields</td><td class="mono-cell">TRACKING, FECHA_LIMITE, …</td><td>Exact name only — no synonyms</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>A correct sheet, in full</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>CLIENTE</th><th>PHONE_A</th><th>TOTAL_PEDIDO</th><th>TRACKING</th><th>PAQUETERIA</th></tr></thead>
+          <tbody>
+            <tr><td>Anna Kowalska</td><td class="mono-cell">+48124207349</td><td class="num">349.00 PLN</td><td class="mono-cell">PL884512003</td><td>DPD</td></tr>
+            <tr><td>Juan Pérez</td><td class="mono-cell">+525512345678</td><td class="num">1,280.00 MXN</td><td class="mono-cell">MX552310774</td><td>Estafeta</td></tr>
+            <tr><td>Marta Nowak</td><td class="mono-cell">+48501223118</td><td class="num">698.00 PLN</td><td class="mono-cell">PL884512044</td><td>InPost</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="tag">Which route, when</span>
+        <p><strong>Saved contacts</strong> — the segment is already in the CRM and one set of values fits everyone. <strong>Excel</strong> — the list is long, the people are new, or each recipient needs different values. A useful third pattern: import the sheet through Contacts first so the people are permanently on file, then run the campaign from saved contacts.</p>
+      </div>
+    </section>
+
+    <!-- 09 -->
+    <section id="ch9">
+      <p class="chapter-no">Chapter 09</p>
+      <h2 class="chapter">What happens the moment you press Send</h2>
+      <p class="intro">Knowing this sequence is what lets you read a half-finished result and know exactly where it stopped.</p>
+
+      <ol class="steps">
+        <li>
+          <span class="st">Local checks, before anything leaves your browser</span>
+          <p>A template must be chosen, there must be at least one recipient, and on the saved-contacts route every extra field must be filled.</p>
+        </li>
+        <li>
+          <span class="st">Row-by-row validation — the blocking stop</span>
+          <p>Every recipient is checked against every slot in the template. The first row missing a value with no fallback aborts the entire campaign, and the message names the offending person and the field. <strong>Nothing has been sent at this point</strong> — fix the row and send again with no risk of duplicates.</p>
+        </li>
+        <li>
+          <span class="st">The campaign gets its identity</span>
+          <p>A code is minted from the current timestamp — <code>CMP-YYYYMMDDHHMMSS</code> — alongside an internal ID. If you left the name blank, it is composed now from the template name and that code.</p>
+        </li>
+        <li>
+          <span class="st">The server processes recipients one at a time</span>
+          <p>For each one, in order: find the contact by number or create it; find their conversation or open one assigned to you; resolve the slot values; send through WhatsApp; then write the fully rendered message — real values, no placeholders — into the conversation, tagged with the campaign code.</p>
+        </li>
+        <li>
+          <span class="st">Failures are isolated, not fatal</span>
+          <p>Past validation, a recipient who fails (unreachable number, provider rejection) is recorded as an error and the loop moves on. One bad number does not cost you the other 199.</p>
+        </li>
+        <li>
+          <span class="st">The result banner appears</span>
+          <p>Green, at the top: the code, how many of how many were sent, how many failed, and the first error text if there was one. The composer then clears itself and the history reloads. <strong>Read the banner before you leave the page</strong> — it is the most compact account of what just happened.</p>
+        </li>
+      </ol>
+
+      <div class="note">
+        <span class="tag">Side effects worth knowing</span>
+        <p>A campaign to people who were not in the CRM <em>creates</em> those contacts and opens conversations assigned to you. Replies will land in your inbox. Plan capacity for a large send accordingly — a 500-person campaign is also 500 potential conversations on your desk.</p>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section id="ch10">
+      <p class="chapter-no">Chapter 10</p>
+      <h2 class="chapter">Tracking, filtering and auditing</h2>
+
+      <h3>The five metric tiles</h3>
+      <p>The tiles at the top of Campaigns describe <strong>the filtered set, not all time</strong>. Narrow the dates and the tiles narrow with them — which makes them a reporting tool, but also means a tile is never an all-time figure unless the filters are cleared.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tile</th><th>Counts</th></tr></thead>
+          <tbody>
+            <tr><td>Campaigns</td><td>Campaigns matching the current filters</td></tr>
+            <tr><td>Recipients</td><td>Total intended recipients across those campaigns</td></tr>
+            <tr><td>Sent</td><td>Messages successfully handed to WhatsApp</td></tr>
+            <tr><td>Failed</td><td>Messages rejected per recipient</td></tr>
+            <tr><td>Active</td><td>Campaigns still scheduled or sending</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Statuses</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Status</th><th>Meaning</th><th>Normal next step</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill info">Scheduled</span></td><td>Queued, not yet started</td><td>Wait</td></tr>
+            <tr><td><span class="pill warn">Sending</span></td><td>Working through the recipients</td><td>Refresh in a minute</td></tr>
+            <tr><td><span class="pill ok">Completed</span></td><td>Finished — possibly with some failures</td><td>Open View and check the failed rows</td></tr>
+            <tr><td><span class="pill bad">Failed</span></td><td>Finished with failures and <em>zero</em> deliveries</td><td>Treat as systemic: sender, template or number format</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The distinction is deliberate and worth internalizing: a campaign is only marked Failed when nothing at all got through. Mixed results stay Completed, so the failure count in the row — not the status pill — is what you check after every send.</p>
+
+      <h3>Finding a campaign again</h3>
+      <ul>
+        <li><strong>Search</strong> matches the campaign name, its code, and the template name.</li>
+        <li><strong>Date range</strong> opens at the first of the current month through today. Widen it before concluding that an older campaign has vanished.</li>
+        <li><strong>Status</strong> and <strong>Template</strong> narrow further; <strong>Clear</strong> resets everything to that default month window.</li>
+      </ul>
+
+      <h3>The three row actions</h3>
+      <ol class="steps">
+        <li><span class="st">View</span><p>Opens the recipient-level detail below the table: contact, number, status (sent, skipped, failed), date, and the complete message that person received. This is your evidence when a customer asks what you sent them.</p></li>
+        <li><span class="st">Copy</span><p>Copies the campaign code to the clipboard for a ticket, a report or a message to support.</p></li>
+        <li><span class="st">Delete</span><p>Removes the campaign from the history behind a confirmation dialog. It deletes the <em>record</em> — messages already delivered to customers are gone from your reports, not from their phones.</p></li>
+      </ol>
+
+      <div class="note warn">
+        <span class="tag">Two histories, one table</span>
+        <p>Recent campaigns are also cached in your browser so the list is never empty after a send, and that cache holds the last 100. Campaigns sent from another computer or another browser appear only once the server history loads — so if a colleague's campaign seems missing, press <strong>Refresh</strong> before raising it.</p>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section id="ch11">
+      <p class="chapter-no">Chapter 11</p>
+      <h2 class="chapter">When something goes wrong</h2>
+      <p class="intro">Every message the campaign screen can show you, what it actually means, and the fix. The left column is paraphrased — your interface shows it in the language you selected.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Message</th><th>What it means</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Select a valid template</td>
+              <td>No template chosen, or the chosen one is no longer available to your workspace</td>
+              <td>Reopen the dropdown and pick again; if it is empty, your workspace has no visible template</td>
+            </tr>
+            <tr>
+              <td>Select contacts or upload an Excel file</td>
+              <td>Zero recipients. Commonly: the file loaded but every row was discarded</td>
+              <td>Check the recipient count badge; confirm the phone column header and that rows have numbers</td>
+            </tr>
+            <tr>
+              <td>Enter the field <em>NAME</em></td>
+              <td>Saved-contacts route with an empty extra field</td>
+              <td>Fill every input under “Template fields”, or switch to the Excel route for per-recipient values</td>
+            </tr>
+            <tr>
+              <td>Contact <em>X</em> is missing <span class="var">{{n}}</span> (<em>FIELD</em>)</td>
+              <td>Validation hit a row with a blank value. <strong>Nothing was sent</strong></td>
+              <td>Fix that row in the sheet, re-upload, send again — no duplicates can result</td>
+            </tr>
+            <tr>
+              <td>Could not process the Excel file</td>
+              <td>Corrupt file, an unsupported format, or a password-protected workbook</td>
+              <td>Re-save as <code>.xlsx</code> from Excel or Sheets and retry</td>
+            </tr>
+            <tr>
+              <td>WhatsApp is not configured for this workspace</td>
+              <td>No sender number attached to your workspace</td>
+              <td>Administrator task — nothing you can do from the campaign screen</td>
+            </tr>
+            <tr>
+              <td>This template is not allowed for bulk sends</td>
+              <td>The template is not on the approved server-side list</td>
+              <td>Administrator must approve and register it; a brand-new version may still be pending with Meta</td>
+            </tr>
+            <tr>
+              <td>Connection error</td>
+              <td>The browser could not reach the server</td>
+              <td>Check your connection, then check the history before resending — the send may have gone through</td>
+            </tr>
+            <tr>
+              <td>Could not load history / contacts</td>
+              <td>The server list did not load; the screen falls back to the local cache</td>
+              <td>Press Refresh; if it persists, report it with the time and your workspace name</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note stop">
+        <span class="tag">If you are unsure whether a send happened</span>
+        <p>Do not immediately resend. Press <strong>Refresh</strong>, look for a campaign code with the current timestamp, and open <strong>View</strong> to see which recipients already have a message. Resending blindly means customers receive the same promotion twice, and on WhatsApp that is a reported-as-spam risk for the whole number.</p>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section id="ch12">
+      <p class="chapter-no">Chapter 12</p>
+      <h2 class="chapter">Pre-flight checklist</h2>
+      <p class="intro">Run this before any campaign above roughly fifty recipients. It takes two minutes and has prevented every expensive mistake in this chapter list.</p>
+
+      <ul class="check">
+        <li>The template selected is the one approved for this campaign, in the right language for these recipients.</li>
+        <li>The message preview in the summary panel has been read end to end, including the final line.</li>
+        <li>Extra fields are filled — in the form if one value fits everyone, in the spreadsheet if they differ per recipient.</li>
+        <li>Any date value is written in the format the customer expects, and the deadline is still in the future.</li>
+        <li>The phone column is formatted as text, every number carries its country code, and none shows as <code>5.2E+11</code>.</li>
+        <li>The example row from the downloaded template has been deleted.</li>
+        <li>The recipient count on the badge matches the number of people you intended to reach.</li>
+        <li>The campaign has a name you will still recognize in three weeks.</li>
+        <li>A test send to your own number has been made and checked on a real phone.</li>
+        <li>Someone is available to handle the replies this campaign will generate.</li>
+      </ul>
+
+      <h3>After the send</h3>
+      <ol class="steps">
+        <li><span class="st">Read the green banner</span><p>Record the campaign code. Note the sent-of-total figure and any failures.</p></li>
+        <li><span class="st">Open View on the new row</span><p>Scan the failed recipients. Failures clustered on one country code point at number formatting; scattered single failures are usually numbers that are not on WhatsApp.</p></li>
+        <li><span class="st">Fix and re-run narrowly</span><p>Correct the bad numbers in Contacts, then run a second small campaign for just those people — never re-run the full list.</p></li>
+        <li><span class="st">Watch the inbox</span><p>Replies arrive in Conversations on the same thread as the campaign message, so the agent answering sees the exact text that prompted the reply.</p></li>
+      </ol>
+    </section>
+
+    <!-- 13 -->
+    <section id="ch13">
+      <p class="chapter-no">Chapter 13</p>
+      <h2 class="chapter">Glossary</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Workspace</strong></td><td>Your company's isolated area of the CRM. Determines which modules, templates and contacts you see.</td></tr>
+            <tr><td><strong>Campaign</strong></td><td>One bulk send of one approved template, identified by a code like <code>CMP-20261116094500</code>.</td></tr>
+            <tr><td><strong>Campaign code</strong></td><td>Timestamped identifier generated at send time; the reference you quote everywhere else.</td></tr>
+            <tr><td><strong>Template</strong></td><td>Pre-approved WhatsApp message text with numbered variable slots. The only way to start a conversation with a customer.</td></tr>
+            <tr><td><strong>Slot / variable</strong></td><td><span class="var">{{1}}</span>, <span class="var">{{2}}</span> … inside the template text, each mapped to a named field.</td></tr>
+            <tr><td><strong>Extra field</strong></td><td>A variable not resolved automatically — typed into the form or supplied as an Excel column.</td></tr>
+            <tr><td><strong>Fallback</strong></td><td>A default used when a row has no value for a slot. Only some slots have one; the rest block the send.</td></tr>
+            <tr><td><strong>E.164</strong></td><td>International phone format: <code>+</code>, country code, then 9–14 digits, no spaces.</td></tr>
+            <tr><td><strong>Conversation</strong></td><td>The single ongoing thread with one contact, where campaign messages and replies both live.</td></tr>
+            <tr><td><strong>Lead</strong></td><td>A prospect captured from a form or external system, not yet a contact you can message.</td></tr>
+            <tr><td><strong>Macro</strong></td><td>A saved reply inserted into the chat box with one click.</td></tr>
+            <tr><td><strong>24-hour window</strong></td><td>The period after a customer's own message during which you may send free-form text instead of a template.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="colophon">
+  <span>Relivital CRM</span>
+  <span>Campaign Handbook · Edition November 2026</span>
+  <span>Internal use</span>
+</footer>
+<style>
+@media print {
+  @page { size: A4; margin: 16mm 14mm 14mm; }
+
+  /* Always print the light palette, whatever the screen theme is */
+  :root, :root[data-theme="dark"] {
+    color-scheme: light;
+    --ink:#0b1b38; --navy:#15346b; --navy-soft:#294f93; --steel:#5c7fb8;
+    --chrome:#aeb8c6; --platinum:#dfe4ec; --paper:#ffffff; --surface:#ffffff;
+    --surface-2:#eef1f6; --line:#c9d2e0; --line-soft:#e0e6f0;
+    --text:#16223a; --text-dim:#4e5c75; --text-faint:#75829a;
+    --good:#1f7a52; --good-bg:#e4f3eb; --warn:#8a5e0b; --warn-bg:#fbf0da;
+    --bad:#ab2a20; --bad-bg:#fbe7e5; --shadow:none;
+  }
+
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body { background: #fff; font-size: 11pt; line-height: 1.52; }
+  p, .intro, ul, ol.plain, .note p { max-width: 94%; }
+
+  /* Cover fills its own page */
+  .cover { padding: 26mm 10mm 22mm; break-after: page; }
+  .cover h1 { font-size: 30pt; }
+  .cover .lede { font-size: 12pt; }
+  .emblem { width: 104px; height: 104px; }
+
+  /* The sidebar becomes a contents page */
+  .shell { display: block; padding: 0; max-width: none; }
+  nav.toc { position: static; padding: 0 0 6mm; border: 0; background: none; break-after: page; }
+  .toc h2 { font-size: 10pt; letter-spacing: .18em; margin-bottom: 6mm; }
+  .toc ol { gap: 0; }
+  .toc a { padding: 7px 0; border-bottom: 1px solid var(--line-soft); color: var(--text); font-size: 11pt; }
+
+  main { padding-top: 0; }
+
+  /* One chapter per page, nothing orphaned mid-element */
+  section { break-before: page; padding-top: 0; border-top: 0; }
+  section:first-of-type { break-before: avoid; }
+  h2.chapter, h3, h4 { break-after: avoid; }
+  h2.chapter { font-size: 20pt; }
+  p, li { orphans: 3; widows: 3; }
+  ol.steps > li, .note, .mock, figure, ul.check li, .module { break-inside: avoid; }
+  .table-wrap { break-inside: auto; overflow: visible; }
+  tr, thead { break-inside: avoid; }
+  thead { display: table-header-group; }
+  table { min-width: 0; font-size: 9.5pt; }
+  .preview-msg { max-height: none; overflow: visible; }
+  .field .box { white-space: normal; overflow: visible; }
+
+  a { text-decoration: none; color: inherit; }
+  .colophon { break-before: avoid; border-top: 1px solid var(--line); }
+  html { scroll-behavior: auto; }
+}
+</style>
+</html>
