@@ -150,6 +150,22 @@ const waTemplates = [
     // Plantilla exclusiva: solo la ve el tenant Relivital, no el resto de espacios.
     tenantIds: ["0b50210b-d7d0-47df-8fe1-71ce95b419e6"],
   },
+  {
+    name: "relivital_bono30_v2",
+    sid: "HX51fef263183df3843df860d8e7c47b0e",
+    language: "pl",
+    // Igual que v1 pero con dos botones: uno copia el código ZNIZKA30 al portapapeles
+    // (WhatsApp le pone el título solo, traducido) y el otro abre el catálogo. Por eso
+    // el cuerpo ya no termina con el enlace. Pendiente de aprobación de WhatsApp al
+    // crearla — los envíos fallarán hasta que Meta la apruebe.
+    body: "Droga {{1}}, dziękujemy, że wybrałaś RELIVITAL 💛\nJako nasza klientka masz 30 zł na swoim koncie. Wykorzystasz je do 30.11 przy zamówieniu od 100 zł — wpisz w koszyku kod ZNIZKA30.\n\nTwój krem na dzień RELIVITAL to świetna podstawa. Jesienią skóra potrzebuje więcej nawilżenia i troski, dlatego przygotowaliśmy dla Ciebie 3 nowości:\n🌙 Anti-age Night Cream — odżywia skórę nocą, rano wygląda na gładszą\n💧 Double Hydration Boost Gel + HA — natychmiast nawilża i wygładza\n👁 Brightening Eye Cream — mniej widoczne cienie i opuchnięcia pod oczami\n\n30 zł wykorzystasz na nowości albo na kolejne opakowanie swojego kremu na dzień.\n\n🎁 Wybierz pełny kurs pielęgnacji i odbierz dodatkowy rabat −20% na zestaw 👇\n\n[Botón] Kopiuj kod oferty → ZNIZKA30\n[Botón] Odbieram rabat 30 zł → https://relivital.pl/catalog",
+    paramMap: {
+      "1": "CLIENTE",
+    } as Record<string, string>,
+    paramFallbacks: {} as Record<string, string>,
+    // Plantilla exclusiva: solo la ve el tenant Relivital, no el resto de espacios.
+    tenantIds: ["0b50210b-d7d0-47df-8fe1-71ce95b419e6"],
+  },
 ]
 
 const templateBySid = new Map(waTemplates.map((t) => [t.sid, t]))
