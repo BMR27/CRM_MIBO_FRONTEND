@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, MessageSquare, Users, Settings, LogOut, Menu, X, Calendar, User, Send, Inbox, BarChart3 } from "lucide-react"
+import { BookOpen, MessageSquare, Users, Settings, LogOut, Menu, X, Calendar, User, Send, Inbox, BarChart3, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
@@ -20,10 +20,19 @@ interface InboxSidebarProps {
     email: string
     status: string
     role?: string
+    is_platform_admin?: boolean
   }
 }
 
 const SIDEBAR_COLLAPSED_KEY = "inbox_sidebar_collapsed"
+
+/**
+ * Módulos ocultos por ahora a nivel de producto: no se muestran en el menú ni en la
+ * guía, sin importar lo que tenga habilitado cada espacio de trabajo. Las páginas
+ * siguen existiendo (se llega por URL directa); esto solo los saca de la navegación.
+ * Para devolverlos, quita la clave de aquí.
+ */
+const HIDDEN_MODULES = { citas: false, agentes: false, leads: false }
 
 export function InboxSidebar({ user }: InboxSidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
@@ -65,6 +74,10 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
   })()
   const isAdmin = normalizedRole === "admin"
   const isAgent = normalizedRole === "agent"
+  // El flag viaja en la sesión y se mantiene aunque el super-admin esté viendo otro
+  // espacio, para que no pierda el acceso al módulo global mientras impersona.
+  const isPlatformAdmin = user.is_platform_admin === true
+  const modules = { ...branding.modules, ...HIDDEN_MODULES }
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
@@ -111,6 +124,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
   const isLeads = pathname.startsWith("/inbox/leads")
   const isDocumentacionApi = pathname.startsWith("/inbox/documentacion-api")
   const isConfiguracion = pathname.startsWith("/inbox/configuracion")
+  const isUsuariosPlataforma = pathname.startsWith("/inbox/usuarios")
 
   return (
     <div
@@ -228,7 +242,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
         </Button>
         
         {/* Citas: solo visible para administrador, y si el super-admin lo habilitó para este espacio */}
-        {isAdmin && branding.modules.citas && (
+        {isAdmin && modules.citas && (
           <Button
             variant="ghost"
             onClick={() => router.push("/inbox/citas")}
@@ -246,7 +260,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
         )}
         
         {/* Agentes tab - visible para admin y supervisor, y si el super-admin lo habilitó */}
-        {!isAgent && branding.modules.agentes && (
+        {!isAgent && modules.agentes && (
           <Button
             variant="ghost"
             onClick={() => router.push("/inbox/agentes")}
@@ -264,7 +278,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
         )}
 
         {/* Leads: visible para admin y supervisor, y si el super-admin lo habilitó */}
-        {!isAgent && branding.modules.leads && (
+        {!isAgent && modules.leads && (
           <Button
             variant="ghost"
             onClick={() => router.push("/inbox/leads")}
@@ -282,7 +296,7 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
         )}
 
         {/* Documentación API: solo si el super-admin lo habilitó para este espacio */}
-        {branding.modules.docsApi && (
+        {modules.docsApi && (
           <Button
             variant="ghost"
             onClick={() => router.push("/inbox/documentacion-api")}
@@ -296,6 +310,24 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           >
             <BookOpen className="h-5 w-5" />
             {!collapsed && <span className="ml-3">{t("nav.docsApi")}</span>}
+          </Button>
+        )}
+
+        {/* Usuarios de plataforma: módulo global, solo para el super-admin */}
+        {isPlatformAdmin && (
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/inbox/usuarios")}
+            className={cn(
+              "w-full justify-start transition-colors",
+              collapsed && "justify-center px-2",
+              isUsuariosPlataforma
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+                : "text-foreground hover:bg-sidebar-accent hover:text-foreground",
+            )}
+          >
+            <ShieldCheck className="h-5 w-5" />
+            {!collapsed && <span className="ml-3">{t("nav.platformUsers")}</span>}
           </Button>
         )}
 
@@ -316,7 +348,13 @@ export function InboxSidebar({ user }: InboxSidebarProps) {
           </Button>
         )}
 
-        <HelpGuideDialog collapsed={collapsed} isAdmin={isAdmin} isAgent={isAgent} modules={branding.modules} />
+        <HelpGuideDialog
+          collapsed={collapsed}
+          isAdmin={isAdmin}
+          isAgent={isAgent}
+          isPlatformAdmin={isPlatformAdmin}
+          modules={modules}
+        />
       </nav>
 
       <Separator className="bg-sidebar-border" />

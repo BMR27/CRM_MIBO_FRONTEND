@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server"
-import { isDemoMode, sql } from "@/lib/db"
+import { ensureLastLoginColumns, isDemoMode, sql } from "@/lib/db"
 import type { User } from "@/lib/auth"
 import { randomUUID } from "crypto"
+
+// La IP real llega en el header que pone el proxy (Railway/Vercel); el primer valor
+// de x-forwarded-for es el cliente, el resto son los saltos intermedios.
+function getClientIp(request: Request): string | null {
+  const forwarded = request.headers.get("x-forwarded-for")
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim()
+    if (first) return first.slice(0, 100)
+  }
+  const realIp = request.headers.get("x-real-ip")?.trim()
+  return realIp ? realIp.slice(0, 100) : null
+}
 
 export async function POST(request: Request) {
   try {
@@ -45,6 +57,7 @@ export async function POST(request: Request) {
 
     if (!isDemoMode) {
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS session_key TEXT`
+      await ensureLastLoginColumns()
 
       const [state] = (await sql`
         SELECT status, session_key
@@ -69,9 +82,14 @@ export async function POST(request: Request) {
     const sessionKey = randomUUID()
 
     if (!isDemoMode) {
+      // Se sella el último ingreso aquí, que es por donde pasan todos los logins de la
+      // interfaz (incluido el que reemplaza una sesión activa).
       await sql`
         UPDATE users
-        SET status = 'available', session_key = ${sessionKey}
+        SET status = 'available',
+            session_key = ${sessionKey},
+            last_login_at = NOW(),
+            last_login_ip = ${getClientIp(request)}
         WHERE id = ${backendUser.id}
       `
     }

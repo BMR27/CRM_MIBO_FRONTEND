@@ -26,6 +26,7 @@ import {
   ChevronRight,
   CircleHelp,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react"
 
 const MODULE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -38,16 +39,18 @@ const MODULE_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   "documentacion-api": BookOpen,
   configuracion: Settings,
   estadisticas: BarChart3,
+  "usuarios-plataforma": ShieldCheck,
 }
 
 interface HelpGuideDialogProps {
   collapsed?: boolean
   isAdmin?: boolean
   isAgent?: boolean
+  isPlatformAdmin?: boolean
   modules?: { citas?: boolean; agentes?: boolean; leads?: boolean; docsApi?: boolean }
 }
 
-export function HelpGuideDialog({ collapsed, isAdmin, isAgent, modules }: HelpGuideDialogProps) {
+export function HelpGuideDialog({ collapsed, isAdmin, isAgent, isPlatformAdmin, modules }: HelpGuideDialogProps) {
   const { t, language } = useLanguage()
   const [open, setOpen] = useState(false)
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null)
@@ -63,9 +66,10 @@ export function HelpGuideDialog({ collapsed, isAdmin, isAgent, modules }: HelpGu
       if (m.id === "documentacion-api") return Boolean(modules?.docsApi)
       if (m.id === "configuracion") return Boolean(isAdmin)
       if (m.id === "estadisticas") return !isAgent
+      if (m.id === "usuarios-plataforma") return Boolean(isPlatformAdmin)
       return true
     })
-  }, [allModules, isAdmin, isAgent, modules])
+  }, [allModules, isAdmin, isAgent, isPlatformAdmin, modules])
 
   const activeModule = visibleModules.find((m) => m.id === activeModuleId) || visibleModules[0]
   const step = activeModule?.steps[stepIndex]

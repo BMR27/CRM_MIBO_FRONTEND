@@ -257,6 +257,38 @@ export const guideContent: GuideContent = {
         },
       ],
     },
+    {
+      id: "usuarios-plataforma",
+      title: "Usuarios (plataforma)",
+      tagline: "Vista global de todos los usuarios, solo para el super-admin.",
+      steps: [
+        {
+          title: "Qué muestra este módulo",
+          description:
+            "Lista a todos los usuarios de todos los espacios de trabajo en una sola tabla. Es distinto a Agentes, que solo muestra el equipo del espacio en el que estás parado.",
+        },
+        {
+          title: "Buscar y filtrar",
+          description:
+            "El buscador acepta nombre, correo, ID de usuario o nombre del espacio. Además puedes filtrar por espacio, por rol y por estado de sesión: con sesión activa, sin sesión, nunca ingresaron o solo super-admins.",
+        },
+        {
+          title: "Revisar el último ingreso",
+          description:
+            "La columna \"Último ingreso\" muestra hace cuánto entró cada persona y la fecha exacta. Se registra en cada inicio de sesión; quien nunca haya entrado desde que se activó el registro aparece marcado en ámbar.",
+        },
+        {
+          title: "Ver el detalle de una persona",
+          description:
+            "\"Ver detalle\" abre toda su ficha: rol y sus permisos, espacio con plan, estado y módulos habilitados, IP del último ingreso, si tiene sesión abierta ahora mismo, conversaciones asignadas y mensajes enviados.",
+        },
+        {
+          title: "Exportar a CSV",
+          description:
+            "El botón \"Exportar CSV\" descarga exactamente lo que estás viendo con los filtros aplicados, listo para una auditoría o un reporte.",
+        },
+      ],
+    },
   ],
   en: [
     {
@@ -499,6 +531,38 @@ export const guideContent: GuideContent = {
           title: "Quick access",
           description:
             "From here you can jump straight to agent performance to dig deeper into how your team is doing.",
+        },
+      ],
+    },
+    {
+      id: "usuarios-plataforma",
+      title: "Users (platform)",
+      tagline: "A global view of every user, for the super-admin only.",
+      steps: [
+        {
+          title: "What this module shows",
+          description:
+            "Every user from every workspace in a single table. It is different from Agents, which only shows the team of the workspace you are currently in.",
+        },
+        {
+          title: "Search and filter",
+          description:
+            "The search box accepts a name, an email, a user ID or a workspace name. You can also filter by workspace, by role and by session state: active session, no session, never signed in, or super-admins only.",
+        },
+        {
+          title: "Check the last login",
+          description:
+            "The \"Last login\" column shows how long ago each person signed in and the exact date. It is recorded on every sign-in; anyone who has not signed in since tracking was enabled is flagged in amber.",
+        },
+        {
+          title: "Open a person's detail",
+          description:
+            "\"View detail\" opens the full record: role and its permissions, workspace with plan, status and enabled modules, last login IP, whether they have a session open right now, assigned conversations and messages sent.",
+        },
+        {
+          title: "Export to CSV",
+          description:
+            "The \"Export CSV\" button downloads exactly what you are seeing with the current filters applied, ready for an audit or a report.",
         },
       ],
     },
@@ -747,6 +811,38 @@ export const guideContent: GuideContent = {
         },
       ],
     },
+    {
+      id: "usuarios-plataforma",
+      title: "Użytkownicy (platforma)",
+      tagline: "Globalny widok wszystkich użytkowników, tylko dla super-admina.",
+      steps: [
+        {
+          title: "Co pokazuje ten moduł",
+          description:
+            "Wszystkich użytkowników ze wszystkich przestrzeni roboczych w jednej tabeli. To nie to samo co Agenci, gdzie widać tylko zespół przestrzeni, w której właśnie jesteś.",
+        },
+        {
+          title: "Szukanie i filtrowanie",
+          description:
+            "Wyszukiwarka przyjmuje nazwę, e-mail, ID użytkownika lub nazwę przestrzeni. Możesz też filtrować po przestrzeni, roli i stanie sesji: aktywna sesja, brak sesji, nigdy nie logowali się lub tylko super-adminzy.",
+        },
+        {
+          title: "Sprawdzanie ostatniego logowania",
+          description:
+            "Kolumna \"Ostatnie logowanie\" pokazuje, jak dawno dana osoba się logowała, oraz dokładną datę. Zapisuje się przy każdym logowaniu; kto nie logował się od włączenia rejestracji, jest oznaczony na bursztynowo.",
+        },
+        {
+          title: "Szczegóły użytkownika",
+          description:
+            "\"Zobacz szczegóły\" otwiera pełną kartę: rolę i jej uprawnienia, przestrzeń wraz z planem, statusem i włączonymi modułami, IP ostatniego logowania, czy ma teraz otwartą sesję, przypisane rozmowy i wysłane wiadomości.",
+        },
+        {
+          title: "Eksport do CSV",
+          description:
+            "Przycisk \"Eksportuj CSV\" pobiera dokładnie to, co widzisz z zastosowanymi filtrami — gotowe do audytu lub raportu.",
+        },
+      ],
+    },
   ],
   ru: [
     {
@@ -989,6 +1085,38 @@ export const guideContent: GuideContent = {
           title: "Быстрый доступ",
           description:
             "Отсюда вы можете сразу перейти к эффективности агентов, чтобы подробнее изучить работу вашей команды.",
+        },
+      ],
+    },
+    {
+      id: "usuarios-plataforma",
+      title: "Пользователи (платформа)",
+      tagline: "Глобальный список всех пользователей, только для супер-админа.",
+      steps: [
+        {
+          title: "Что показывает модуль",
+          description:
+            "Всех пользователей всех рабочих пространств в одной таблице. Это не то же самое, что Агенты, где видна только команда того пространства, в котором вы сейчас находитесь.",
+        },
+        {
+          title: "Поиск и фильтры",
+          description:
+            "Поиск принимает имя, почту, ID пользователя или название пространства. Также можно фильтровать по пространству, роли и состоянию сессии: активная сессия, без сессии, никогда не входили или только супер-админы.",
+        },
+        {
+          title: "Проверка последнего входа",
+          description:
+            "Колонка «Последний вход» показывает, как давно человек заходил, и точную дату. Она заполняется при каждом входе; тот, кто не входил с момента включения записи, отмечен янтарным цветом.",
+        },
+        {
+          title: "Карточка пользователя",
+          description:
+            "«Подробнее» открывает полную карточку: роль и её права, пространство с тарифом, статусом и включёнными модулями, IP последнего входа, есть ли сейчас открытая сессия, назначенные диалоги и отправленные сообщения.",
+        },
+        {
+          title: "Экспорт в CSV",
+          description:
+            "Кнопка «Экспорт CSV» скачивает именно то, что вы видите с текущими фильтрами — готово для аудита или отчёта.",
         },
       ],
     },
