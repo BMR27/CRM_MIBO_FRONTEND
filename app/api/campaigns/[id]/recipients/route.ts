@@ -20,6 +20,17 @@ async function getMessagesColumns(db: Db) {
   }
 }
 
+async function hasCampaignRecipientsTable(db: Db) {
+  try {
+    const rows: any[] = await db`
+      SELECT to_regclass('public.campaign_recipients') AS tabla
+    `
+    return Boolean(rows?.[0]?.tabla)
+  } catch {
+    return false
+  }
+}
+
 function normalizeStatus(metadata: any) {
   const send = metadata?.send || {}
   if (String(send?.skipped || "false") === "true") return "skipped"
@@ -45,6 +56,35 @@ export async function GET(
     }
 
     const db = sql
+
+    // Fuente principal: la bitácora de la campaña. Incluye los envíos fallidos y no se
+    // pierde aunque después se borre la conversación o el contacto.
+    if (await hasCampaignRecipientsTable(db)) {
+      const logged: any[] = await db`
+        SELECT id, contact_name, phone_number, status, error, content, created_at
+        FROM campaign_recipients
+        WHERE (campaign_id = ${id} OR campaign_code = ${id})
+          AND tenant_id = ${tenantId}
+        ORDER BY created_at DESC
+        LIMIT 1000
+      `
+      if (logged.length > 0) {
+        return NextResponse.json({
+          source: "log",
+          recipients: logged.map((row) => ({
+            id: String(row.id),
+            contactName: String(row.contact_name || ""),
+            phoneNumber: String(row.phone_number || ""),
+            message: String(row.content || ""),
+            error: row.error ? String(row.error) : "",
+            status: String(row.status || "sent"),
+            createdAt: row.created_at || "",
+          })),
+        })
+      }
+    }
+
+    // Respaldo para campañas anteriores a la bitácora: reconstruir desde los mensajes.
     const cols = await getMessagesColumns(db)
     if (!cols.has("metadata")) {
       return NextResponse.json({ recipients: [] })
@@ -82,12 +122,13 @@ export async function GET(
         contactName: String(metadata?.contactName || metadata?.name || row?.contact_name || ""),
         phoneNumber: String(metadata?.phone || metadata?.to || row?.phone_number || ""),
         message: String(row?.content || metadata?.message || metadata?.templateName || ""),
+        error: "",
         status: normalizeStatus(metadata),
         createdAt: row?.created_at || "",
       }
     })
 
-    return NextResponse.json({ recipients })
+    return NextResponse.json({ source: "messages", recipients })
   } catch (error) {
     console.error("[Campaign Recipients] Error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

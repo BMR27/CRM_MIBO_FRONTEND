@@ -86,6 +86,7 @@ type CampaignRecipient = {
   contactName: string
   phoneNumber: string
   message: string
+  error?: string
   status: string
   createdAt: string
 }
@@ -1121,8 +1122,9 @@ function EnviosMasivosPage() {
                   </TableRow>
                 ) : campaignRecipients.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-28 text-center text-muted-foreground">
-                      {t("camp.noRecipientsRegistered")}
+                    <TableCell colSpan={5} className="h-28 px-6 text-center text-muted-foreground">
+                      <p>{t("camp.noRecipientsRegistered")}</p>
+                      <p className="mx-auto mt-1 max-w-xl text-xs">{t("camp.noRecipientsHint")}</p>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -1136,7 +1138,13 @@ function EnviosMasivosPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{formatDate(recipient.createdAt)}</TableCell>
-                      <TableCell className="max-w-xl whitespace-pre-wrap text-sm text-foreground">{recipient.message || t("camp.noContent")}</TableCell>
+                      <TableCell className="max-w-xl whitespace-pre-wrap text-sm text-foreground">
+                        {recipient.error ? (
+                          <span className="text-red-600">{recipient.error}</span>
+                        ) : (
+                          recipient.message || t("camp.noContent")
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
