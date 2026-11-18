@@ -90,10 +90,12 @@ export async function GET(
       return NextResponse.json({ recipients: [] })
     }
 
-    const outboundPredicate = cols.has("direction")
-      ? db`m.direction = 'outbound'`
-      : cols.has("sender_type")
-        ? db`m.sender_type = 'agent'`
+    // sender_type antes que direction: direction vale 'inbound' por defecto y el backend
+    // nunca la asigna, así que los envíos de campaña no aparecían como salientes.
+    const outboundPredicate = cols.has("sender_type")
+      ? db`m.sender_type = 'agent'`
+      : cols.has("direction")
+        ? db`m.direction = 'outbound'`
         : db`TRUE`
 
     const rows: any[] = await db`
