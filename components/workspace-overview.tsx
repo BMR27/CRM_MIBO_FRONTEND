@@ -19,6 +19,7 @@ import {
   CheckCheck,
   XCircle,
   Megaphone,
+  CalendarClock,
 } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import {
@@ -50,6 +51,7 @@ interface TenantInfo {
   name: string
   plan: string
   status: string
+  plan_expires_at?: string | null
   bulk_messaging_enabled: boolean
   wa_templates_enabled: boolean
 }
@@ -73,6 +75,8 @@ const localeMap: Record<string, string> = { es: "es-MX", en: "en-US", pl: "pl-PL
 function percent(part: number, total: number) {
   return total > 0 ? Math.round((part / total) * 100) : 0
 }
+
+const PLAN_EXPIRY_WARNING_DAYS = 5
 
 // "YYYY-MM-DD" como fecha local; new Date("YYYY-MM-DD") la toma en UTC y puede
 // mostrar el día anterior.
@@ -104,6 +108,13 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
   const resolved = conversations.filter((c) => c.status === "resolved" || c.status === "closed").length
   const agentsOnline = agents.filter((a) => a.status === "available").length
   const fmt = (n: number) => n.toLocaleString(locale)
+
+  const planKey = `overview.planName.${String(tenant?.plan || "").toLowerCase()}`
+  const planName = t(planKey) !== planKey ? t(planKey) : tenant?.plan
+  const planExpiresAt = tenant?.plan_expires_at ? new Date(tenant.plan_expires_at) : null
+  const planDaysLeft = planExpiresAt ? Math.ceil((planExpiresAt.getTime() - Date.now()) / 86_400_000) : null
+  const planExpired = planDaysLeft !== null && planDaysLeft <= 0
+  const planExpiringSoon = planDaysLeft !== null && !planExpired && planDaysLeft <= PLAN_EXPIRY_WARNING_DAYS
   const sent = messagingStats?.messagesSent ?? 0
 
   const stats = [
@@ -183,8 +194,24 @@ export function WorkspaceOverview({ conversations, agents }: WorkspaceOverviewPr
           {tenant && (
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="capitalize">
-                {t("overview.plan")} {tenant.plan}
+                {t("overview.plan")} {planName}
               </Badge>
+              {planExpiresAt && (
+                <Badge
+                  variant="outline"
+                  className={
+                    planExpired
+                      ? "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+                      : planExpiringSoon
+                        ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300"
+                        : ""
+                  }
+                >
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  {planExpired ? t("overview.planExpired") : t("overview.planExpires")}{" "}
+                  {planExpiresAt.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}
+                </Badge>
+              )}
               <Badge variant={tenant.bulk_messaging_enabled ? "default" : "secondary"}>
                 {t("overview.bulkMessaging")} {tenant.bulk_messaging_enabled ? t("overview.enabled") : t("overview.disabled")}
               </Badge>
